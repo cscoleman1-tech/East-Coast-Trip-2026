@@ -544,7 +544,7 @@ function NearbyTab({tripDayIdx}){
 }
 
 // ── PLAN MY DAY ───────────────────────────────────────────────────────────────
-function PlanMyDaySection({day,dayPlans,dayPlanStatus,planDay,customTasks}){
+function PlanMyDaySection({day,dayPlans,dayPlanStatus,dayPlanError,planDay,customTasks}){
   const prominent=day.city==="NYC"||day.city==="Philly";
   const transitNote=day.city==="NYC"?"+ subway directions":day.city==="Philly"?"+ driving/walking":null;
   const status=dayPlanStatus[day.date];
@@ -583,8 +583,8 @@ function PlanMyDaySection({day,dayPlans,dayPlanStatus,planDay,customTasks}){
       )}
       {status==="error"&&(
         <div style={{background:"#fff1f2",borderRadius:13,padding:"13px 15px",border:"1.5px solid #fecdd3",marginTop:10}}>
-          <div style={{fontWeight:800,fontSize:13,color:"#9f1239"}}>⚠️ Couldn't reach AI planner</div>
-          <div style={{fontSize:12,color:"#be123c",marginTop:4}}>Check your connection and Worker URL, then try again.</div>
+          <div style={{fontWeight:800,fontSize:13,color:"#9f1239"}}>⚠️ AI planner error</div>
+          <div style={{fontSize:12,color:"#be123c",marginTop:4,lineHeight:1.5}}>{dayPlanError[day.date]||"Check your connection and Worker URL, then try again."}</div>
         </div>
       )}
       {plan&&status!=="loading"&&(
@@ -633,6 +633,7 @@ function App(){
   const [lastBy,setLastBy]=useState(null);
   const [dayPlans,setDayPlans]=useState({});
   const [dayPlanStatus,setDayPlanStatus]=useState({});
+  const [dayPlanError,setDayPlanError]=useState({});
 
   const reverseGeocode=async(lat,lng)=>{
     const fb=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;
@@ -704,9 +705,13 @@ function App(){
         body:JSON.stringify({city:day.city,date:day.label,activities:allItems}),
         signal:AbortSignal.timeout(30000),
       });
-      if(!resp.ok)throw new Error("Worker returned "+resp.status);
+      if(!resp.ok){
+        let detail="Status "+resp.status;
+        try{const e=await resp.json();detail=e.detail||e.error||detail;}catch{}
+        throw new Error(detail);
+      }
       const result=await resp.json();
-      if(!result.plan)throw new Error("No plan in response");
+      if(!result.plan)throw new Error("Worker returned ok but no plan field");
       const newEntry={plan:result.plan,generatedAt:Date.now()};
       const newDayPlans={...dayPlans,[day.date]:newEntry};
       setDayPlans(newDayPlans);
@@ -715,6 +720,7 @@ function App(){
     }catch(e){
       console.error("planDay:",e);
       setDayPlanStatus(p=>({...p,[day.date]:"error"}));
+      setDayPlanError(p=>({...p,[day.date]:e?.message||String(e)}));
     }
   };
 
@@ -923,7 +929,7 @@ function App(){
                 {(customTasks[ITINERARY[dayIdx].date]||[]).map((t,i)=>(
                   <TaskItem key={`c${i}`} task={t} checkKey={`trip-${ITINERARY[dayIdx].date}-c${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(ITINERARY[dayIdx].date,i)} onEdit={u=>editTask(ITINERARY[dayIdx].date,i,u)}/>
                 ))}
-                <PlanMyDaySection day={ITINERARY[dayIdx]} dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} planDay={planDay} customTasks={customTasks}/>
+                <PlanMyDaySection day={ITINERARY[dayIdx]} dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay} customTasks={customTasks}/>
                 {addingTo===ITINERARY[dayIdx].date?(
                   <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
                 ):(
@@ -989,7 +995,7 @@ function App(){
                       {cust.map((t,j)=>(
                         <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)}/>
                       ))}
-                      <PlanMyDaySection day={day} dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} planDay={planDay} customTasks={customTasks}/>
+                      <PlanMyDaySection day={day} dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay} customTasks={customTasks}/>
                       {addingTo===day.date?(
                         <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
                       ):(
