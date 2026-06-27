@@ -66,10 +66,16 @@ Create an optimized day plan that:
 Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise.`;
 
     try {
-      // Support both naming conventions for the Anthropic key
-      const apiKey = env.ANTHROPIC_API_KEY || env["Anthropic-Key"] || env.AnthropicKey;
+      // Resolve secret: handles plain string (env var) and Secrets Store binding (object with .get())
+      async function resolveSecret(binding) {
+        if (!binding) return null;
+        if (typeof binding === "string") return binding;
+        if (typeof binding.get === "function") return await binding.get();
+        return null;
+      }
+      const apiKey = await resolveSecret(env.ANTHROPIC_API_KEY) || await resolveSecret(env["Anthropic-Key"]);
       if (!apiKey) {
-        return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY secret not configured in Cloudflare Worker" }), {
+        return new Response(JSON.stringify({ error: "ANTHROPIC_API_KEY secret not found — check Bindings in Cloudflare dashboard" }), {
           status: 500, headers: { ...CORS, "Content-Type": "application/json" },
         });
       }
