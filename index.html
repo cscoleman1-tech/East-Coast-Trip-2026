@@ -8,38 +8,30 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="East Coast Trip">
 <title>East Coast Trip 2026</title>
-<!-- Geolocation permission hint for browsers -->
-<meta http-equiv="Permissions-Policy" content="geolocation=*">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script>
-  // Suppress Babel's in-browser transformer warning — we're using it intentionally
-  // for a private family app, not a public production site.
   (function(){
-    var _warn = console.warn.bind(console);
-    console.warn = function(){
-      var msg = arguments[0];
-      if(typeof msg === 'string' && msg.indexOf('Babel') !== -1 && msg.indexOf('precompile') !== -1) return;
-      _warn.apply(console, arguments);
-    };
-    // Also set NODE_ENV so Babel thinks it's in production mode
-    window.process = window.process || {};
-    window.process.env = window.process.env || {};
-    window.process.env.NODE_ENV = 'production';
+    var _warn=console.warn.bind(console);
+    console.warn=function(){var msg=arguments[0];if(typeof msg==='string'&&msg.indexOf('Babel')!==-1&&msg.indexOf('precompile')!==-1)return;_warn.apply(console,arguments);};
+    window.process=window.process||{};window.process.env=window.process.env||{};window.process.env.NODE_ENV='production';
   })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
 <style>
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;background:#f0f4f8;overscroll-behavior:none;}
-  input,button{font-family:inherit;}
-  @keyframes bounce0{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-  @keyframes bounce1{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
-  @keyframes bounce2{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  ::-webkit-scrollbar{display:none;}
-  input:focus{outline:none;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif;background:#f0f4f8;overscroll-behavior:none;}
+input,button{font-family:inherit;}
+@keyframes bounce0{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes bounce1{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes bounce2{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{display:none;}
+input:focus{outline:none;}
+button{transition:opacity 0.15s,transform 0.1s;}
+button:active{transform:scale(0.96);opacity:0.85;}
+a{-webkit-tap-highlight-color:transparent;}
 </style>
 </head>
 <body>
@@ -50,8 +42,6 @@ const {useState,useEffect,useRef,useCallback}=React;
 
 // ── DATA ─────────────────────────────────────────────────────────────────────
 const TRIP_START="2026-07-09",TRIP_END="2026-07-24";
-// JSONBin.io — free shared JSON store. Each family gets their own bin ID.
-// This one is pre-created for Chris's family:
 const BIN_ID="6850fa418561e97a50fb3889";
 const BIN_KEY="$2a$10$i/QIdpHty2WPEnD1NnplYubnVVWsYJOMVwYHT/gIeyrn0xL38tbqW";
 
@@ -67,7 +57,6 @@ const TYPE_COLORS={
   optional:{bg:"#f9fafb",border:"#d1d5db",text:"#6b7280"},
   tip:{bg:"#fefce8",border:"#fde047",text:"#854d0e"},
 };
-
 
 const MASTER_PACKING={
   "👕 Clothes & Personal Care":["T-shirts (2 per day)","Shorts","Pants/jeans (2-3 pairs)","Underwear & socks","Pajamas","Swimsuits (2 each)","Light jacket or hoodie","Rain jacket","Walking shoes / sneakers","Sandals / flip flops","Dress clothes (1 outfit)","Sunglasses","Hat / baseball cap","Toothbrush & toothpaste","Shampoo & conditioner","Body wash / soap","Deodorant","Sunscreen (SPF 50+)","After-sun lotion / aloe vera","Razor & shaving supplies","Hair products","Feminine hygiene products","Nail clippers","First aid kit","Prescription medications","Pain relievers (Tylenol/Advil)","Allergy medicine","Motion sickness meds","Hand sanitizer","Face masks"],
@@ -115,6 +104,111 @@ const ITINERARY=[
 
 const STILL_NEEDED_ITEMS=["Statue Cruises (Statue of Liberty ferry) — book NOW","9/11 Museum timed entry — book NOW","Independence Hall timed entry — book NOW","OBX beach gear rentals (Farmdog / Beach EZ / Ocean Atlantic)","Williamsburg Woodlands — call to confirm dog weight limit","Decide: Colonial Williamsburg vs Jamestown (Jul 18 morning)"];
 
+// ── NEARBY SUGGESTIONS BY DAY ─────────────────────────────────────────────────
+const NEARBY_BY_DATE={
+  "2026-07-09":{ctx:"Arriving tonight — late-night options",loc:"Brooklyn / LaGuardia",spots:[
+    {e:"🍕",label:"Late-night food near LGA",q:"restaurants open late near LaGuardia Airport New York"},
+    {e:"🚕",label:"Rideshare pickup at LGA",q:"rideshare taxi LaGuardia Airport New York"},
+    {e:"🏘️",label:"Brooklyn VRBO neighborhood",q:"Herkimer Street Nostrand Avenue Brooklyn New York"},
+  ]},
+  "2026-07-10":{ctx:"Full NYC day — subway around",loc:"New York City",spots:[
+    {e:"🗽",label:"Statue of Liberty ferry (Statue Cruises)",q:"Statue Cruises Battery Park NYC"},
+    {e:"🍕",label:"Joe's Pizza NYC",q:"Joe's Pizza New York City"},
+    {e:"🌉",label:"Brooklyn Bridge",q:"Brooklyn Bridge New York"},
+    {e:"🌳",label:"Central Park coffee & food",q:"coffee food Central Park New York"},
+    {e:"🚇",label:"Subway stations & OMNY info",q:"NYC subway station map"},
+  ]},
+  "2026-07-11":{ctx:"Morning NYC → Train to Philly 3:13pm",loc:"NYC / Penn Station",spots:[
+    {e:"🚆",label:"Penn Station / Moynihan Train Hall",q:"Moynihan Train Hall Penn Station New York"},
+    {e:"🥯",label:"Breakfast near Penn Station",q:"breakfast brunch near Penn Station New York"},
+    {e:"🍔",label:"Lunch before train",q:"restaurants near Penn Station NYC"},
+    {e:"🧳",label:"Luggage storage NYC",q:"luggage storage Penn Station New York"},
+  ]},
+  "2026-07-12":{ctx:"Philadelphia day — borrow Lynn's car",loc:"Philadelphia / West Chester PA",spots:[
+    {e:"🔔",label:"Liberty Bell & Independence Hall",q:"Liberty Bell Center Philadelphia PA"},
+    {e:"🥩",label:"Best cheesesteak in Philly",q:"best cheesesteak Philadelphia Pat's Geno's Jim's"},
+    {e:"🍦",label:"Scoops DeVille ice cream",q:"Scoops DeVille West Chester PA"},
+    {e:"🏛️",label:"Reading Terminal Market",q:"Reading Terminal Market Philadelphia"},
+    {e:"⛽",label:"Gas near West Chester PA",q:"gas station West Chester PA"},
+  ]},
+  "2026-07-13":{ctx:"Morning Philly → Amtrak 4:40pm to Harrisburg",loc:"Philadelphia 30th St Station",spots:[
+    {e:"🚆",label:"30th Street Station Amtrak",q:"30th Street Station Philadelphia Amtrak"},
+    {e:"🥪",label:"Lunch near 30th St Station",q:"restaurants near 30th Street Station Philadelphia"},
+    {e:"🍽️",label:"Dinner in Harrisburg",q:"restaurants near Harrisburg PA"},
+    {e:"⛽",label:"Gas near Harrisburg hotel",q:"gas station Harrisburg PA"},
+  ]},
+  "2026-07-14":{ctx:"Hershey Park all day with Steve & Tina 🍫",loc:"Hershey, PA",spots:[
+    {e:"🎢",label:"Hersheypark entrance & info",q:"Hersheypark Hershey PA entrance"},
+    {e:"🍫",label:"Hershey's Chocolate World",q:"Hershey's Chocolate World Hershey PA"},
+    {e:"☕",label:"Morning coffee near hotel",q:"coffee near Harrisburg PA Hershey"},
+    {e:"⛽",label:"Gas near Hershey Park",q:"gas station near Hersheypark Hershey PA"},
+    {e:"🏥",label:"Urgent care near Hershey",q:"urgent care near Hershey PA"},
+  ]},
+  "2026-07-15":{ctx:"Amish country · Visit Allie · Teaberry ice cream",loc:"Harrisburg / Lancaster County",spots:[
+    {e:"🌽",label:"Amish country (Intercourse, PA)",q:"Amish country Intercourse Pennsylvania Lancaster County"},
+    {e:"🍦",label:"3 B's Dairy — teaberry ice cream",q:"3 B's Dairy Harrisburg PA"},
+    {e:"🧀",label:"Amish markets & cheese shops",q:"Amish market Lancaster County PA"},
+    {e:"⛽",label:"Sheetz near Harrisburg",q:"Sheetz Harrisburg PA"},
+    {e:"🛒",label:"Middleswarth BBQ chips",q:"grocery store Harrisburg PA Middleswarth chips"},
+  ]},
+  "2026-07-16":{ctx:"Broad Street Market · City Island · Jeana",loc:"Harrisburg, PA",spots:[
+    {e:"🥙",label:"Broad Street Market",q:"Broad Street Market Harrisburg PA"},
+    {e:"🏝️",label:"City Island Harrisburg",q:"City Island Harrisburg PA"},
+    {e:"🍺",label:"Restaurants near City Island",q:"restaurants City Island Harrisburg PA"},
+    {e:"⛽",label:"Wawa near Harrisburg",q:"Wawa Harrisburg PA"},
+  ]},
+  "2026-07-17":{ctx:"Drive Harrisburg → Williamsburg (~4.5 hrs)",loc:"I-81 / I-66 / I-95 Corridor",spots:[
+    {e:"⛽",label:"Gas on I-81 South",q:"gas station I-81 South Virginia"},
+    {e:"🍬",label:"Gateway Candyland",q:"Gateway Candyland Virginia"},
+    {e:"⛪",label:"DC LDS Temple (Kensington MD)",q:"Washington DC LDS Temple Kensington Maryland"},
+    {e:"🍔",label:"Lunch near DC / Northern VA",q:"restaurants I-95 Northern Virginia"},
+    {e:"🐕",label:"Dog-friendly rest area",q:"rest area dog park I-95 Virginia"},
+  ]},
+  "2026-07-18":{ctx:"Williamsburg → Costco → Outer Banks!",loc:"Williamsburg / Outer Banks NC",spots:[
+    {e:"🏛️",label:"Colonial Williamsburg",q:"Colonial Williamsburg VA"},
+    {e:"🛒",label:"Costco Newport News",q:"Costco Newport News VA"},
+    {e:"⛽",label:"Gas before OBX bridge",q:"gas station before Outer Banks NC Wright Memorial Bridge"},
+    {e:"🏖️",label:"South Nags Head beach access",q:"South Nags Head beach access NC"},
+  ]},
+  "2026-07-19":{ctx:"Mom's Birthday 🎂 — Church, beach, private chef dinner",loc:"Nags Head, OBX",spots:[
+    {e:"⛪",label:"LDS Church Nags Head",q:"3342 W Windjammer Rd Nags Head NC"},
+    {e:"🎂",label:"Birthday cake / bakery OBX",q:"bakery birthday cake Nags Head Outer Banks NC"},
+    {e:"🛒",label:"Grocery store Nags Head",q:"grocery store Nags Head NC"},
+    {e:"🍦",label:"Ice cream OBX",q:"ice cream Nags Head Outer Banks NC"},
+    {e:"🌊",label:"Beach near house (Milepost 19)",q:"beach access milepost 19 South Nags Head NC"},
+  ]},
+  "2026-07-20":{ctx:"Wright Brothers · Jockey's Ridge · Beach",loc:"Kill Devil Hills / Nags Head, OBX",spots:[
+    {e:"✈️",label:"Wright Brothers Memorial",q:"Wright Brothers National Memorial Kill Devil Hills NC"},
+    {e:"🏜️",label:"Jockey's Ridge State Park",q:"Jockey's Ridge State Park Nags Head NC"},
+    {e:"🍔",label:"Restaurants in Kill Devil Hills",q:"restaurants Kill Devil Hills NC"},
+    {e:"☕",label:"Coffee near Jockey's Ridge",q:"coffee shop Nags Head Kill Devil Hills NC"},
+  ]},
+  "2026-07-21":{ctx:"First Flight Market (Tues) · Roanoke Island · Aquarium",loc:"Manteo / Roanoke Island, OBX",spots:[
+    {e:"🛍️",label:"First Flight Market (Aviation Park)",q:"First Flight Centennial Park Nags Head NC Tuesday market"},
+    {e:"⛵",label:"Roanoke Island Festival Park",q:"Roanoke Island Festival Park Manteo NC"},
+    {e:"🐠",label:"NC Aquarium Roanoke Island",q:"North Carolina Aquarium Roanoke Island Manteo NC"},
+    {e:"🍽️",label:"Restaurants in Manteo",q:"restaurants Manteo Roanoke Island NC"},
+  ]},
+  "2026-07-22":{ctx:"Ocracoke · Cape Hatteras · Wild Horses",loc:"Cape Hatteras / Corolla, OBX",spots:[
+    {e:"🌊",label:"Cape Hatteras Lighthouse",q:"Cape Hatteras Lighthouse NC"},
+    {e:"⛴️",label:"Ocracoke ferry from Cape Hatteras",q:"Ocracoke Island ferry Cape Hatteras NC"},
+    {e:"🐴",label:"Wild horses — Corolla 4x4 beach",q:"wild horses Corolla Outer Banks NC 4x4 tours"},
+    {e:"⛽",label:"Gas near Cape Hatteras",q:"gas station Cape Hatteras Buxton NC"},
+  ]},
+  "2026-07-23":{ctx:"Dowdy Park Market (Thurs) · Last beach day · Pack up",loc:"Nags Head, OBX",spots:[
+    {e:"🌽",label:"Dowdy Park Farmers Market",q:"Dowdy Park Nags Head NC Thursday farmers market"},
+    {e:"💦",label:"H2OBX Water Park",q:"H2OBX Water Park Outer Banks NC"},
+    {e:"🛍️",label:"OBX souvenir shops",q:"souvenir shops Nags Head Outer Banks NC"},
+    {e:"🍽️",label:"Best OBX dinner spots",q:"best restaurants Outer Banks Nags Head NC seafood"},
+  ]},
+  "2026-07-24":{ctx:"Drive OBX → Norfolk → Fly home to SLC",loc:"Norfolk, VA (ORF)",spots:[
+    {e:"✈️",label:"Norfolk Airport (ORF)",q:"Norfolk International Airport ORF"},
+    {e:"🚗",label:"Enterprise drop-off at ORF",q:"Enterprise car rental Norfolk Airport 2200 Norview Ave Norfolk VA"},
+    {e:"⛽",label:"Gas before car return",q:"gas station near Norfolk Airport ORF"},
+    {e:"🍔",label:"Food near ORF airport",q:"restaurants near Norfolk International Airport VA"},
+  ]},
+};
+
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 const todayStr=()=>new Date().toISOString().split("T")[0];
 const getDaysBetween=d=>{const t=new Date();t.setHours(0,0,0,0);const x=new Date(d);x.setHours(0,0,0,0);return Math.round((x-t)/86400000);};
@@ -122,30 +216,19 @@ const getPhase=()=>{const t=todayStr();if(t<TRIP_START)return"pretrip";if(t>TRIP
 const getTripDayIdx=()=>{const t=todayStr();const i=ITINERARY.findIndex(d=>d.date===t);return i>=0?i:0;};
 const fmtDate=d=>new Date(d+"T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
 
-// ── SYNC via localStorage (works offline; shared via manual refresh) ──────────
-// Note: localStorage is per-device. For true cross-device sync without a server,
-// we use a free JSONBin.io bin as shared cloud storage.
+// ── SYNC ──────────────────────────────────────────────────────────────────────
 const LS_KEY="trip2026_local";
-
 function loadLocal(){try{const s=localStorage.getItem(LS_KEY);return s?JSON.parse(s):{};}catch{return{};}}
 function saveLocal(data){try{localStorage.setItem(LS_KEY,JSON.stringify(data));}catch{}}
 
-// Cloud sync via JSONBin.io (free, no account needed for reads/writes to an existing bin)
 const JSONBIN_URL=`https://api.jsonbin.io/v3/b/${BIN_ID}`;
 const JSONBIN_HEADERS={"Content-Type":"application/json","X-Master-Key":BIN_KEY,"X-Bin-Meta":false};
 
 async function cloudLoad(){
-  try{
-    const r=await fetch(JSONBIN_URL+"/latest",{headers:JSONBIN_HEADERS,signal:AbortSignal.timeout(8000)});
-    if(!r.ok) return null;
-    return await r.json();
-  }catch{return null;}
+  try{const r=await fetch(JSONBIN_URL+"/latest",{headers:JSONBIN_HEADERS,signal:AbortSignal.timeout(8000)});if(!r.ok)return null;return await r.json();}catch{return null;}
 }
 async function cloudSave(data){
-  try{
-    const r=await fetch(JSONBIN_URL,{method:"PUT",headers:JSONBIN_HEADERS,body:JSON.stringify(data),signal:AbortSignal.timeout(8000)});
-    return r.ok;
-  }catch{return false;}
+  try{const r=await fetch(JSONBIN_URL,{method:"PUT",headers:JSONBIN_HEADERS,body:JSON.stringify(data),signal:AbortSignal.timeout(8000)});return r.ok;}catch{return false;}
 }
 
 // ── COMPONENTS ────────────────────────────────────────────────────────────────
@@ -158,50 +241,50 @@ function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit}){
   const colors=TYPE_COLORS[task.type]||TYPE_COLORS.tip;
   const save=()=>{if(editText.trim())onEdit&&onEdit({text:editText.trim(),type:editType});setEditing(false);};
   if(editing) return(
-    <div style={{background:"#f0f6ff",borderRadius:10,padding:"10px 12px",marginBottom:7,border:"1px solid #93c5fd"}}>
+    <div style={{background:"#f0f6ff",borderRadius:12,padding:"12px 14px",marginBottom:8,border:"1px solid #93c5fd"}}>
       <input value={editText} onChange={e=>setEditText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")save();if(e.key==="Escape")setEditing(false);}} autoFocus
-        style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #93c5fd",fontSize:15,marginBottom:8,boxSizing:"border-box"}}/>
+        style={{width:"100%",padding:"9px 12px",borderRadius:10,border:"1px solid #93c5fd",fontSize:15,marginBottom:8,boxSizing:"border-box"}}/>
       <div style={{display:"flex",gap:5,marginBottom:8,flexWrap:"wrap"}}>
         {[["booking","🎟️"],["confirm","📞"],["pack","🎒"],["activity","🎯"],["food","🍽️"],["tip","💡"]].map(([v,ic])=>(
-          <button key={v} onClick={()=>setEditType(v)} style={{padding:"4px 10px",borderRadius:16,border:"1px solid",fontSize:12,cursor:"pointer",fontWeight:editType===v?700:400,background:editType===v?"#1a3a5c":"white",color:editType===v?"white":"#555",borderColor:editType===v?"#1a3a5c":"#ddd"}}>{ic} {v}</button>
+          <button key={v} onClick={()=>setEditType(v)} style={{padding:"4px 10px",borderRadius:20,border:"1px solid",fontSize:12,cursor:"pointer",fontWeight:editType===v?700:400,background:editType===v?"#1a3a5c":"white",color:editType===v?"white":"#555",borderColor:editType===v?"#1a3a5c":"#ddd"}}>{ic} {v}</button>
         ))}
       </div>
       <div style={{display:"flex",gap:8}}>
-        <button onClick={save} style={{flex:1,padding:"8px",background:"#1a3a5c",color:"white",border:"none",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer"}}>Save</button>
-        <button onClick={()=>setEditing(false)} style={{padding:"8px 14px",background:"white",color:"#666",border:"1px solid #ddd",borderRadius:8,fontSize:14,cursor:"pointer"}}>Cancel</button>
+        <button onClick={save} style={{flex:1,padding:"9px",background:"#1a3a5c",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer"}}>Save</button>
+        <button onClick={()=>setEditing(false)} style={{padding:"9px 14px",background:"white",color:"#666",border:"1px solid #ddd",borderRadius:10,fontSize:14,cursor:"pointer"}}>Cancel</button>
       </div>
     </div>
   );
   return(
-    <div style={{display:"flex",alignItems:"flex-start",gap:10,background:done?"#f9fafb":colors.bg,border:`1px solid ${done?"#e5e7eb":colors.border}`,borderRadius:10,padding:"11px 12px",marginBottom:8}}>
-      <div onClick={()=>onToggle(checkKey)} style={{width:24,height:24,borderRadius:6,border:done?"none":`2px solid ${colors.border}`,background:done?"#6b7280":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,cursor:"pointer"}}>
+    <div style={{display:"flex",alignItems:"flex-start",gap:10,background:done?"#f9fafb":colors.bg,border:`1px solid ${done?"#e5e7eb":colors.border}`,borderRadius:12,padding:"12px 13px",marginBottom:8,transition:"background 0.2s"}}>
+      <div onClick={()=>onToggle(checkKey)} style={{width:24,height:24,borderRadius:7,border:done?"none":`2px solid ${colors.border}`,background:done?"#6b7280":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,cursor:"pointer",transition:"background 0.15s"}}>
         {done&&<span style={{color:"white",fontSize:14,fontWeight:800}}>✓</span>}
       </div>
-      <div style={{flex:1,fontSize:15,color:done?"#9ca3af":colors.text,lineHeight:1.4,textDecoration:done?"line-through":"none",cursor:"pointer"}} onClick={()=>onToggle(checkKey)}>
+      <div style={{flex:1,fontSize:15,color:done?"#9ca3af":colors.text,lineHeight:1.45,textDecoration:done?"line-through":"none",cursor:"pointer"}} onClick={()=>onToggle(checkKey)}>
         <span style={{marginRight:5}}>{TYPE_ICONS[task.type]||"•"}</span>{task.text}
       </div>
       <div style={{display:"flex",gap:6,flexShrink:0,alignItems:"center"}}>
-        {onEdit&&!done&&<span onClick={()=>{setEditText(task.text);setEditType(task.type);setEditing(true);}} style={{fontSize:15,cursor:"pointer",opacity:0.4}}>✏️</span>}
-        {!onEdit&&!onRemove&&<span style={{fontSize:12,opacity:0.15}}>🔒</span>}
-        {onRemove&&<span onClick={onRemove} style={{color:"#d1d5db",fontSize:22,cursor:"pointer",lineHeight:1}}>×</span>}
+        {onEdit&&!done&&<span onClick={()=>{setEditText(task.text);setEditType(task.type);setEditing(true);}} style={{fontSize:15,cursor:"pointer",opacity:0.35}}>✏️</span>}
+        {!onEdit&&!onRemove&&<span style={{fontSize:12,opacity:0.12}}>🔒</span>}
+        {onRemove&&<span onClick={onRemove} style={{color:"#d1d5db",fontSize:22,cursor:"pointer",lineHeight:1,padding:"0 2px"}}>×</span>}
       </div>
     </div>
   );
 }
 
-function AddTaskForm({taskText,setTaskText,taskType,setTaskType,taskDate,today,onAdd,onCancel}){
+function AddTaskForm({taskText,setTaskText,taskType,setTaskType,onAdd,onCancel}){
   return(
-    <div style={{background:"#f8fafc",borderRadius:12,padding:12,border:"1px dashed #cbd5e1",marginBottom:8}}>
+    <div style={{background:"#f8fafc",borderRadius:14,padding:14,border:"1px dashed #cbd5e1",marginBottom:8}}>
       <input value={taskText} onChange={e=>setTaskText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&onAdd()} placeholder="What needs to get done?" autoFocus
-        style={{width:"100%",padding:"10px 12px",borderRadius:8,border:"1px solid #dde1e7",fontSize:15,marginBottom:8,boxSizing:"border-box"}}/>
+        style={{width:"100%",padding:"11px 13px",borderRadius:10,border:"1px solid #dde1e7",fontSize:15,marginBottom:9,boxSizing:"border-box"}}/>
       <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
         {[["booking","🎟️ Book"],["confirm","📞 Confirm"],["pack","🎒 Pack"],["activity","🎯 Do"],["food","🍽️ Food"]].map(([v,l])=>(
           <button key={v} onClick={()=>setTaskType(v)} style={{padding:"5px 11px",borderRadius:20,border:"1px solid",fontSize:12,cursor:"pointer",fontWeight:taskType===v?700:400,background:taskType===v?"#1a3a5c":"white",color:taskType===v?"white":"#555",borderColor:taskType===v?"#1a3a5c":"#ddd"}}>{l}</button>
         ))}
       </div>
       <div style={{display:"flex",gap:8}}>
-        <button onClick={onAdd} style={{flex:1,padding:"10px",background:"#1a3a5c",color:"white",border:"none",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer"}}>Add Task</button>
-        <button onClick={onCancel} style={{padding:"10px 16px",background:"white",color:"#666",border:"1px solid #ddd",borderRadius:8,fontSize:14,cursor:"pointer"}}>Cancel</button>
+        <button onClick={onAdd} style={{flex:1,padding:"11px",background:"#1a3a5c",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer"}}>Add Task</button>
+        <button onClick={onCancel} style={{padding:"11px 16px",background:"white",color:"#666",border:"1px solid #ddd",borderRadius:10,fontSize:14,cursor:"pointer"}}>Cancel</button>
       </div>
     </div>
   );
@@ -218,8 +301,8 @@ function MiniCalendar({markedDates,onSelect,selectedDate,onClose}){
   const nm=()=>vm===11?setVm(0)||setVy(y=>y+1):setVm(m=>m+1);
   const td=todayStr();
   return(
-    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.5)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-      <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:20,padding:20,width:"100%",maxWidth:340,boxShadow:"0 12px 48px rgba(0,0,0,0.25)"}}>
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.55)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:22,padding:20,width:"100%",maxWidth:340,boxShadow:"0 16px 56px rgba(0,0,0,0.28)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
           <button onClick={pm} style={{width:36,height:36,borderRadius:10,border:"1px solid #eee",background:"white",cursor:"pointer",fontSize:18}}>‹</button>
           <div style={{fontWeight:700,fontSize:16,color:"#1a3a5c"}}>{mn}</div>
@@ -244,7 +327,7 @@ function MiniCalendar({markedDates,onSelect,selectedDate,onClose}){
             );
           })}
         </div>
-        <button onClick={onClose} style={{width:"100%",marginTop:14,padding:"11px",background:"#f0f4f8",border:"none",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",color:"#555"}}>Close</button>
+        <button onClick={onClose} style={{width:"100%",marginTop:14,padding:"12px",background:"#f0f4f8",border:"none",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",color:"#555"}}>Close</button>
       </div>
     </div>
   );
@@ -255,17 +338,16 @@ function CountdownCard(){
   if(days<=0)return null;
   const emojis=["🌴","✈️","🗽","🏖️","🍕","🍫","🚂","🌊","🎉"];
   return(
-    <div style={{background:"linear-gradient(135deg,#1a3a5c 0%,#2d7dd2 100%)",borderRadius:18,padding:"22px 20px",textAlign:"center",color:"white",marginBottom:16}}>
+    <div style={{background:"linear-gradient(135deg,#1a3a5c 0%,#2d7dd2 100%)",borderRadius:20,padding:"24px 20px",textAlign:"center",color:"white",marginBottom:16,boxShadow:"0 8px 32px rgba(26,58,92,0.28)"}}>
       <div style={{fontSize:28,marginBottom:6,letterSpacing:2}}>
         {emojis.map((e,i)=><span key={i} style={{display:"inline-block",animation:`bounce${i%3} ${1.2+i*0.1}s ease-in-out infinite`,animationDelay:`${i*0.12}s`}}>{e}</span>)}
       </div>
-      <div style={{fontSize:56,fontWeight:900,lineHeight:1,letterSpacing:"-2px"}}>{days}</div>
+      <div style={{fontSize:58,fontWeight:900,lineHeight:1,letterSpacing:"-2px"}}>{days}</div>
       <div style={{fontSize:15,opacity:0.85,marginTop:4,fontWeight:600}}>days until the East Coast! 🌊</div>
-      <div style={{marginTop:14,background:"rgba(255,255,255,0.15)",borderRadius:10,padding:"8px 16px",fontSize:13}}>✈️ Departs SLC · Thu Jul 9, 2:05pm</div>
+      <div style={{marginTop:14,background:"rgba(255,255,255,0.15)",borderRadius:12,padding:"9px 16px",fontSize:13}}>✈️ Departs SLC · Thu Jul 9, 2:05pm</div>
     </div>
   );
 }
-
 
 function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems,packPerson,setPackPerson,deletedItems,onDeleteItem}){
   const [addingCat,setAddingCat]=useState(null);
@@ -287,12 +369,12 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
     <div>
       <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,marginBottom:12}}>
         {persons.map(p=>(
-          <button key={p} onClick={()=>setPackPerson(p)} style={{whiteSpace:"nowrap",padding:"7px 16px",borderRadius:20,border:"1px solid",fontSize:13,fontWeight:packPerson===p?700:400,cursor:"pointer",background:packPerson===p?"#1a3a5c":"white",color:packPerson===p?"white":"#555",borderColor:packPerson===p?"#1a3a5c":"#ddd",flexShrink:0}}>
+          <button key={p} onClick={()=>setPackPerson(p)} style={{whiteSpace:"nowrap",padding:"7px 16px",borderRadius:22,border:"1px solid",fontSize:13,fontWeight:packPerson===p?700:400,cursor:"pointer",background:packPerson===p?"#1a3a5c":"white",color:packPerson===p?"white":"#555",borderColor:packPerson===p?"#1a3a5c":"#ddd",flexShrink:0}}>
             {p==="Master"?"📋 Master":p==="Chris"?"👨 Chris":p==="McKenna"?"👩 McKenna":`👦 ${p}`}
           </button>
         ))}
       </div>
-      <div style={{background:"white",borderRadius:12,padding:"12px 16px",marginBottom:12,boxShadow:"0 1px 4px rgba(0,0,0,0.07)"}}>
+      <div style={{background:"white",borderRadius:16,padding:"14px 16px",marginBottom:12,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <div style={{fontWeight:700,fontSize:15,color:"#1a3a5c"}}>{packPerson==="Master"?"Family Pack List":`${packPerson}'s List`}</div>
           <div style={{fontSize:14,fontWeight:700,color:pct===100?"#166534":"#2d7dd2"}}>{done}/{total}</div>
@@ -308,12 +390,12 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
         const activeAll=all.filter((_,i)=>!(i<base.length&&isBaseDeleted(cat,i)));
         const cd=activeAll.filter((_,i2)=>{const origI=all.indexOf(activeAll[i2]);return packChecked[`pack-${packPerson}-${cat}-${origI}`];}).length;
         return(
-          <div key={cat} style={{background:"white",borderRadius:12,marginBottom:10,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.07)"}}>
-            <div style={{background:"#f8f9fa",padding:"10px 14px",borderBottom:"1px solid #f0f0f0",display:"flex",justifyContent:"space-between"}}>
+          <div key={cat} style={{background:"white",borderRadius:16,marginBottom:10,overflow:"hidden",boxShadow:"0 2px 10px rgba(0,0,0,0.07)"}}>
+            <div style={{background:"#f8f9fa",padding:"10px 15px",borderBottom:"1px solid #f0f0f0",display:"flex",justifyContent:"space-between"}}>
               <div style={{fontWeight:700,fontSize:14,color:"#1a3a5c"}}>{cat}</div>
               <div style={{fontSize:13,color:"#888"}}>{cd}/{activeAll.length}</div>
             </div>
-            <div style={{padding:"8px 14px"}}>
+            <div style={{padding:"8px 15px"}}>
               {all.map((item,i)=>{
                 const isBase=i<base.length;
                 if(isBase&&isBaseDeleted(cat,i))return null;
@@ -323,13 +405,13 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
                 const visIdx=visibleAll.indexOf(item);
                 return(
                   <div key={i} onClick={()=>onTogglePack(key)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:visIdx<visibleAll.length-1?"1px solid #f9fafb":"none",cursor:"pointer"}}>
-                    <div style={{width:22,height:22,borderRadius:6,border:dk?"none":"2px solid #d1d5db",background:dk?"#22c55e":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <div style={{width:22,height:22,borderRadius:6,border:dk?"none":"2px solid #d1d5db",background:dk?"#22c55e":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"background 0.15s"}}>
                       {dk&&<span style={{color:"white",fontSize:13,fontWeight:800}}>✓</span>}
                     </div>
                     <div style={{fontSize:14,color:dk?"#9ca3af":"#333",textDecoration:dk?"line-through":"none",flex:1}}>{item}</div>
                     {isBase
-                      ?<span onClick={e=>{e.stopPropagation();onDeleteItem(`pack-base-${packPerson}-${cat}-${i}`);}} style={{color:"#e5e7eb",fontSize:20,cursor:"pointer",flexShrink:0}}>×</span>
-                      :<span onClick={e=>{e.stopPropagation();removeIt(cat,i,base.length);}} style={{color:"#e5e7eb",fontSize:20,cursor:"pointer",flexShrink:0}}>×</span>
+                      ?<span onClick={e=>{e.stopPropagation();onDeleteItem(`pack-base-${packPerson}-${cat}-${i}`);}} style={{color:"#e5e7eb",fontSize:20,cursor:"pointer",flexShrink:0,padding:"0 2px"}}>×</span>
+                      :<span onClick={e=>{e.stopPropagation();removeIt(cat,i,base.length);}} style={{color:"#e5e7eb",fontSize:20,cursor:"pointer",flexShrink:0,padding:"0 2px"}}>×</span>
                     }
                   </div>
                 );
@@ -337,17 +419,197 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
               {addingCat===`${packPerson}-${cat}`?(
                 <div style={{display:"flex",gap:8,marginTop:8}}>
                   <input value={newItem} onChange={e=>setNewItem(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addIt(cat)} placeholder="Add item..." autoFocus
-                    style={{flex:1,padding:"8px 10px",borderRadius:8,border:"1px solid #ddd",fontSize:14}}/>
-                  <button onClick={()=>addIt(cat)} style={{padding:"8px 14px",background:"#1a3a5c",color:"white",border:"none",borderRadius:8,fontSize:14,cursor:"pointer"}}>+</button>
-                  <button onClick={()=>{setAddingCat(null);setNewItem("");}} style={{padding:"8px 12px",background:"white",color:"#888",border:"1px solid #ddd",borderRadius:8,fontSize:14,cursor:"pointer"}}>✕</button>
+                    style={{flex:1,padding:"8px 10px",borderRadius:10,border:"1px solid #ddd",fontSize:14}}/>
+                  <button onClick={()=>addIt(cat)} style={{padding:"8px 14px",background:"#1a3a5c",color:"white",border:"none",borderRadius:10,fontSize:14,cursor:"pointer"}}>+</button>
+                  <button onClick={()=>{setAddingCat(null);setNewItem("");}} style={{padding:"8px 12px",background:"white",color:"#888",border:"1px solid #ddd",borderRadius:10,fontSize:14,cursor:"pointer"}}>✕</button>
                 </div>
               ):(
-                <button onClick={()=>setAddingCat(`${packPerson}-${cat}`)} style={{width:"100%",marginTop:6,padding:"6px",background:"transparent",color:"#2d7dd2",border:"none",fontSize:13,cursor:"pointer",textAlign:"left"}}>+ Add item</button>
+                <button onClick={()=>setAddingCat(`${packPerson}-${cat}`)} style={{width:"100%",marginTop:6,padding:"7px",background:"transparent",color:"#2d7dd2",border:"none",fontSize:13,cursor:"pointer",textAlign:"left"}}>+ Add item</button>
               )}
             </div>
           </div>
         );
       })}
+    </div>
+  );
+}
+
+// ── SEARCH TAB ────────────────────────────────────────────────────────────────
+function SearchTab({setTab,setDayIdx,setPackPerson}){
+  const [q,setQ]=useState("");
+  const results=[];
+
+  if(q.trim().length>=2){
+    const lq=q.toLowerCase();
+
+    ITINERARY.forEach((day,di)=>{
+      const texts=[day.title,day.summary,day.city,day.lodging||"",day.transit||"",...day.items.map(it=>it.text)];
+      const matchItem=day.items.find(it=>it.text.toLowerCase().includes(lq));
+      const matchHead=texts.slice(0,5).some(t=>t.toLowerCase().includes(lq));
+      if(matchItem||matchHead){
+        results.push({
+          cat:"Trip",label:`${day.emoji} ${day.label} · ${day.city}`,
+          text:matchItem?matchItem.text:day.title,
+          icon:matchItem?(TYPE_ICONS[matchItem.type]||"📍"):day.emoji,
+          action:()=>{setDayIdx(di);setTab("trip");}
+        });
+      }
+    });
+
+    Object.entries(DEFAULT_PRETRIP).forEach(([date,tasks])=>{
+      tasks.forEach(task=>{
+        if(task.text.toLowerCase().includes(lq)){
+          results.push({cat:"Pre-trip",label:fmtDate(date),text:task.text,icon:TYPE_ICONS[task.type]||"📋",action:()=>setTab("today")});
+        }
+      });
+    });
+
+    STILL_NEEDED_ITEMS.forEach(text=>{
+      if(text.toLowerCase().includes(lq)){
+        results.push({cat:"Needed",label:"Still to book",text,icon:"🎟️",action:()=>setTab("today")});
+      }
+    });
+
+    Object.entries(MASTER_PACKING).forEach(([cat,items])=>{
+      items.forEach(item=>{
+        if(item.toLowerCase().includes(lq)){
+          results.push({cat:"Master Pack",label:cat,text:item,icon:"🎒",action:()=>{setPackPerson("Master");setTab("pack");}});
+        }
+      });
+    });
+
+    Object.entries(INDIVIDUAL_PACKING).forEach(([person,items])=>{
+      items.forEach(item=>{
+        if(item.toLowerCase().includes(lq)){
+          results.push({cat:`${person}'s Pack`,label:person,text:item,icon:"👜",action:()=>{setPackPerson(person);setTab("pack");}});
+        }
+      });
+    });
+  }
+
+  return(
+    <div>
+      <div style={{position:"relative",marginBottom:16}}>
+        <span style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:17,opacity:0.45,pointerEvents:"none"}}>🔍</span>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search activities, packing, tasks…" autoFocus
+          style={{width:"100%",padding:"13px 42px 13px 46px",borderRadius:14,border:"1.5px solid #e2e8f0",fontSize:16,background:"white",boxShadow:"0 2px 10px rgba(0,0,0,0.07)",boxSizing:"border-box"}}/>
+        {q&&<button onClick={()=>setQ("")} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:20,cursor:"pointer",color:"#bbb",lineHeight:1,padding:0}}>×</button>}
+      </div>
+
+      {q.trim().length<2&&(
+        <div style={{textAlign:"center",padding:"48px 20px",animation:"fadeIn 0.3s ease"}}>
+          <div style={{fontSize:44,marginBottom:14}}>🔍</div>
+          <div style={{fontSize:16,fontWeight:700,color:"#333",marginBottom:6}}>Search everything</div>
+          <div style={{fontSize:13,color:"#aaa",lineHeight:1.7}}>Activities & itinerary<br/>Packing list items<br/>Pre-trip tasks & bookings</div>
+        </div>
+      )}
+
+      {q.trim().length>=2&&results.length===0&&(
+        <div style={{textAlign:"center",padding:"48px 20px",animation:"fadeIn 0.2s ease"}}>
+          <div style={{fontSize:44,marginBottom:14}}>🤷</div>
+          <div style={{fontSize:16,fontWeight:700,color:"#333"}}>No results for "{q}"</div>
+          <div style={{fontSize:13,color:"#aaa",marginTop:6}}>Try a different search term</div>
+        </div>
+      )}
+
+      {results.length>0&&(
+        <div style={{animation:"fadeIn 0.2s ease"}}>
+          <div style={{fontSize:12,color:"#aaa",marginBottom:10,fontWeight:600,textTransform:"uppercase",letterSpacing:"0.06em"}}>{results.length} result{results.length!==1?"s":""}</div>
+          {results.map((r,i)=>(
+            <div key={i} onClick={r.action} style={{background:"white",borderRadius:14,padding:"13px 15px",marginBottom:8,boxShadow:"0 2px 10px rgba(0,0,0,0.07)",cursor:"pointer",display:"flex",gap:12,alignItems:"flex-start",border:"1px solid #f0f2f5"}}>
+              <div style={{fontSize:22,flexShrink:0,marginTop:1}}>{r.icon}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                  <span style={{fontSize:10,fontWeight:700,color:"#2d7dd2",background:"#e8f4fd",borderRadius:6,padding:"2px 7px",whiteSpace:"nowrap"}}>{r.cat}</span>
+                  <span style={{fontSize:11,color:"#bbb",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.label}</span>
+                </div>
+                <div style={{fontSize:14,color:"#1a3a5c",fontWeight:500,lineHeight:1.4}}>{r.text}</div>
+              </div>
+              <div style={{color:"#d1d5db",fontSize:18,flexShrink:0,marginTop:2}}>›</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── NEARBY TAB ────────────────────────────────────────────────────────────────
+function NearbyTab({tripDayIdx}){
+  const phase=getPhase();
+  const nearbyDay=phase==="trip"?ITINERARY[tripDayIdx]:null;
+  const nearbyData=nearbyDay?NEARBY_BY_DATE[nearbyDay.date]:null;
+  const cityLabel=nearbyData?.loc||(nearbyDay?.city||"your location");
+
+  const quickSearches=[
+    {e:"🍔",label:"Food",q:"restaurants"},
+    {e:"⛽",label:"Gas",q:"gas station"},
+    {e:"💊",label:"Pharmacy",q:"pharmacy"},
+    {e:"☕",label:"Coffee",q:"coffee shop"},
+    {e:"🛒",label:"Grocery",q:"grocery store"},
+    {e:"🏧",label:"ATM",q:"ATM bank"},
+    {e:"🏥",label:"Urgent Care",q:"urgent care"},
+    {e:"🅿️",label:"Parking",q:"parking"},
+  ];
+
+  const mapsUrl=q=>`https://www.google.com/maps/search/${encodeURIComponent(q+(cityLabel?` near ${cityLabel}`:""))}`;
+
+  return(
+    <div>
+      {phase==="trip"&&nearbyData&&(
+        <div style={{background:"linear-gradient(135deg,#1a3a5c 0%,#2d7dd2 100%)",borderRadius:18,padding:"18px 20px",marginBottom:18,color:"white",boxShadow:"0 6px 24px rgba(26,58,92,0.22)"}}>
+          <div style={{fontSize:10,fontWeight:700,opacity:0.65,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Today's Location</div>
+          <div style={{fontSize:20,fontWeight:800,marginBottom:3}}>{nearbyData.loc}</div>
+          <div style={{fontSize:13,opacity:0.8,lineHeight:1.4}}>{nearbyData.ctx}</div>
+        </div>
+      )}
+
+      {phase==="pretrip"&&(
+        <div style={{background:"linear-gradient(135deg,#1a3a5c 0%,#2d7dd2 100%)",borderRadius:18,padding:"18px 20px",marginBottom:18,color:"white",boxShadow:"0 6px 24px rgba(26,58,92,0.22)"}}>
+          <div style={{fontSize:10,fontWeight:700,opacity:0.65,textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:4}}>Before the Trip</div>
+          <div style={{fontSize:20,fontWeight:800,marginBottom:3}}>Trip starts in {getDaysBetween(TRIP_START)} days</div>
+          <div style={{fontSize:13,opacity:0.8}}>Searching near your current location</div>
+        </div>
+      )}
+
+      {nearbyData?.spots&&nearbyData.spots.length>0&&(
+        <div style={{marginBottom:22}}>
+          <div style={{fontSize:11,fontWeight:700,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>Today's Spots</div>
+          {nearbyData.spots.map((s,i)=>(
+            <a key={i} href={`https://www.google.com/maps/search/${encodeURIComponent(s.q)}`} target="_blank" rel="noreferrer"
+              style={{background:"white",borderRadius:14,padding:"14px 16px",marginBottom:8,boxShadow:"0 2px 10px rgba(0,0,0,0.07)",display:"flex",alignItems:"center",gap:13,textDecoration:"none",border:"1px solid #f0f2f5"}}>
+              <div style={{fontSize:26,flexShrink:0}}>{s.e}</div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:14,fontWeight:600,color:"#1a3a5c"}}>{s.label}</div>
+              </div>
+              <div style={{fontSize:13,fontWeight:600,color:"#2d7dd2",flexShrink:0}}>Maps →</div>
+            </a>
+          ))}
+        </div>
+      )}
+
+      <div>
+        <div style={{fontSize:11,fontWeight:700,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>
+          Quick Search{cityLabel?` · ${cityLabel}`:""}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:9}}>
+          {quickSearches.map(qs=>(
+            <a key={qs.q} href={mapsUrl(qs.q)} target="_blank" rel="noreferrer"
+              style={{background:"white",borderRadius:14,padding:"14px 6px",textAlign:"center",textDecoration:"none",boxShadow:"0 2px 10px rgba(0,0,0,0.07)",display:"flex",flexDirection:"column",gap:5,alignItems:"center",border:"1px solid #f0f2f5"}}>
+              <span style={{fontSize:24}}>{qs.e}</span>
+              <span style={{fontSize:11,fontWeight:600,color:"#444",lineHeight:1.2}}>{qs.label}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      {phase==="posttrip"&&(
+        <div style={{textAlign:"center",padding:"48px 20px",animation:"fadeIn 0.3s ease"}}>
+          <div style={{fontSize:48,marginBottom:12}}>🏠</div>
+          <div style={{fontWeight:700,fontSize:18,color:"#1a3a5c"}}>You made it home!</div>
+          <div style={{fontSize:14,color:"#888",marginTop:8}}>Hope the trip was incredible. 🌊🗽🍫</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -358,20 +620,16 @@ function App(){
   const tripDayIdx=getTripDayIdx();
   const today=todayStr();
 
-  const [userName,setUserName]=useState(()=>localStorage.getItem("trip2026_user")||null);
-  const [showLocModal,setShowLocModal]=useState(false);
   const [tab,setTab]=useState("today");
   const [dayIdx,setDayIdx]=useState(tripDayIdx);
   const [preTripDate,setPreTripDate]=useState(today);
 
-  // All synced state
   const [customTasks,setCustomTasks]=useState({});
   const [checked,setChecked]=useState({});
   const [packChecked,setPackChecked]=useState({});
   const [customPackItems,setCustomPackItems]=useState({Master:{},Chris:{},McKenna:{},Sawyer:{},Pierce:{},Bennett:{}});
   const [deletedItems,setDeletedItems]=useState({});
 
-  // UI state
   const [packPerson,setPackPerson]=useState("Master");
   const [addingTo,setAddingTo]=useState(null);
   const [taskText,setTaskText]=useState("");
@@ -380,20 +638,16 @@ function App(){
   const [showCalendar,setShowCalendar]=useState(false);
   const [expandedDay,setExpandedDay]=useState(null);
 
-  // Location
   const [locLabel,setLocLabel]=useState(null);
   const [locError,setLocError]=useState(null);
   const [locLoading,setLocLoading]=useState(false);
   const [locAsked,setLocAsked]=useState(false);
   const [location,setLocation]=useState(null);
 
-  // Sync
   const [syncStatus,setSyncStatus]=useState("idle");
   const [syncLabel,setSyncLabel]=useState("Tap ↻ to sync");
   const [lastBy,setLastBy]=useState(null);
 
-
-  // ── Location ──────────────────────────────────────────────────────────────
   const reverseGeocode=async(lat,lng)=>{
     const fb=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;
     try{
@@ -423,7 +677,6 @@ function App(){
     );
   };
 
-  // ── Cloud Sync ────────────────────────────────────────────────────────────
   const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems});
 
   const applyRemoteData=(data)=>{
@@ -433,16 +686,14 @@ function App(){
     if(data.packChecked)setPackChecked(data.packChecked);
     if(data.customPackItems)setCustomPackItems(data.customPackItems);
     if(data.deletedItems)setDeletedItems(data.deletedItems);
-    if(data._by&&data._by!==(userName||"")){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
+    if(data._by){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
 
   const syncNow=async(patch)=>{
     setSyncStatus("saving");setSyncLabel("Saving…");
-    // Always save locally first
     const local=loadLocal();
-    const merged={...local,...patch,_by:userName||"Someone",_at:Date.now()};
+    const merged={...local,...patch,_by:"Someone",_at:Date.now()};
     saveLocal(merged);
-    // Try cloud
     const ok=await cloudSave(merged);
     if(ok){setSyncStatus("ok");setSyncLabel("Synced ✓");}
     else{setSyncStatus("local");setSyncLabel("Saved locally");}
@@ -453,24 +704,19 @@ function App(){
     const remote=await cloudLoad();
     if(remote){
       const local=loadLocal();
-      // Use whichever is newer
       const useRemote=!local._at||(remote._at&&remote._at>local._at);
       if(useRemote){applyRemoteData(remote);saveLocal(remote);}
       setSyncStatus("ok");setSyncLabel("Synced ✓");
     } else {
-      // Fall back to local
       const local=loadLocal();
       if(local)applyRemoteData(local);
       setSyncStatus("local");setSyncLabel("Offline — local data");
     }
   };
 
-  // Load on mount
   useEffect(()=>{pullSync();},[]);
-  // Auto-poll every 20s
   useEffect(()=>{const id=setInterval(()=>pullSync(),20000);return()=>clearInterval(id);},[]);
 
-  // ── State mutators (all sync) ─────────────────────────────────────────────
   const toggleCheck=key=>{setChecked(p=>{const n={...p,[key]:!p[key]};syncNow({...getState(),checked:n});return n;});};
   const togglePack=key=>{setPackChecked(p=>{const n={...p,[key]:!p[key]};syncNow({...getState(),packChecked:n});return n;});};
   const deleteItem=key=>{if(!window.confirm("Delete this item permanently?"))return;setDeletedItems(p=>{const n={...p,[key]:true};syncNow({...getState(),deletedItems:n});return n;});};
@@ -492,165 +738,104 @@ function App(){
   };
 
   const openAddForm=dateKey=>{setAddingTo(dateKey);setTaskDate(dateKey);setTaskText("");setTaskType("confirm");};
-
   const allPreDates=()=>[...new Set([...Object.keys(DEFAULT_PRETRIP),...Object.keys(customTasks)])].sort();
   const tasksForDate=d=>({def:DEFAULT_PRETRIP[d]||[],cust:customTasks[d]||[]});
-
-
   const markedDates=allPreDates();
 
-  // ── SELECT USER ───────────────────────────────────────────────────────────
-  if(!userName) return(
-    <div style={{position:"fixed",inset:0,background:"linear-gradient(135deg,#1a3a5c 0%,#2d7dd2 100%)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:32}}>
-      <div style={{fontSize:52,marginBottom:8}}>🌴</div>
-      <div style={{color:"white",fontWeight:900,fontSize:26,marginBottom:4,textAlign:"center"}}>East Coast Trip 2026</div>
-      <div style={{color:"rgba(255,255,255,0.7)",fontSize:15,marginBottom:40,textAlign:"center"}}>Who's opening the app?</div>
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,width:"100%",maxWidth:320,animation:"fadeIn 0.4s ease"}}>
-        {[["👨","Chris"],["👩","McKenna"],["😎","Sawyer"],["😄","Pierce"],["🧒","Bennett"]].map(([emoji,name])=>(
-          <button key={name} onClick={()=>{
-            localStorage.setItem("trip2026_user",name);
-            setUserName(name);
-            // Show location modal on first login (not if they've used app before)
-            const hasSeenLocPrompt=localStorage.getItem("trip2026_loc_asked");
-            if(!hasSeenLocPrompt) setShowLocModal(true);
-          }}
-            style={{background:"rgba(255,255,255,0.15)",border:"2px solid rgba(255,255,255,0.3)",borderRadius:16,padding:"20px 12px",color:"white",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
-            <span style={{fontSize:32}}>{emoji}</span>{name}
-          </button>
-        ))}
-      </div>
-      <div style={{color:"rgba(255,255,255,0.4)",fontSize:12,marginTop:36,textAlign:"center"}}>Changes sync to everyone in the family</div>
-    </div>
-  );
+  const tabs=[
+    {id:"today",label:phase==="pretrip"?"Pre-Trip":"Today"},
+    {id:"trip",label:"Trip"},
+    {id:"pack",label:"🎒"},
+    {id:"search",label:"🔍"},
+    {id:"nearby",label:"📍"},
+  ];
 
-  const userEmoji=userName==="Chris"?"👨":userName==="McKenna"?"👩":userName==="Sawyer"?"😎":userName==="Pierce"?"😄":"🧒";
-
-  // ── RENDER ────────────────────────────────────────────────────────────────
   return(
     <div style={{fontFamily:"-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif",background:"#f0f4f8",minHeight:"100vh",maxWidth:480,margin:"0 auto"}}>
 
       {showCalendar&&<MiniCalendar markedDates={markedDates} selectedDate={taskDate} onSelect={d=>{setTaskDate(d);setShowCalendar(false);}} onClose={()=>setShowCalendar(false)}/>}
 
-      {/* ── LOCATION PERMISSION MODAL ── */}
-      {showLocModal&&(
-        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:24,animation:"fadeIn 0.25s ease"}}>
-          <div style={{background:"white",borderRadius:24,padding:"28px 24px",width:"100%",maxWidth:340,textAlign:"center",boxShadow:"0 24px 60px rgba(0,0,0,0.3)"}}>
-            <div style={{fontSize:52,marginBottom:12}}>📍</div>
-            <div style={{fontWeight:800,fontSize:20,color:"#1a3a5c",marginBottom:8}}>Share Your Location?</div>
-            <div style={{fontSize:14,color:"#555",lineHeight:1.6,marginBottom:24}}>
-              This lets the app show where you are on the trip — helpful for navigation, finding nearby spots, and letting the AI assistant know your current city.
-            </div>
-            <div style={{background:"#f0f4f8",borderRadius:14,padding:"12px 16px",marginBottom:24,textAlign:"left"}}>
-              <div style={{fontSize:12,color:"#888",fontWeight:600,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.06em"}}>What it does</div>
-              <div style={{fontSize:13,color:"#444",display:"flex",flexDirection:"column",gap:6}}>
-                <div>🗺️ Shows your city in the app header</div>
-                <div>🔗 Tap "Open Maps →" to navigate from your spot</div>
-              </div>
-            </div>
-            <button
-              onClick={()=>{
-                localStorage.setItem("trip2026_loc_asked","yes");
-                setShowLocModal(false);
-                // This triggers the native iOS/Android browser permission popup immediately
-                requestLocation();
-              }}
-              style={{width:"100%",padding:"15px",background:"linear-gradient(135deg,#1a3a5c,#2d7dd2)",color:"white",border:"none",borderRadius:14,fontSize:16,fontWeight:700,cursor:"pointer",marginBottom:12,boxShadow:"0 4px 16px rgba(45,122,210,0.4)"}}>
-              ✅ Yes, share my location
-            </button>
-            <button
-              onClick={()=>{
-                localStorage.setItem("trip2026_loc_asked","no");
-                setLocAsked(true);
-                setShowLocModal(false);
-              }}
-              style={{width:"100%",padding:"13px",background:"transparent",color:"#888",border:"1px solid #e5e7eb",borderRadius:14,fontSize:15,cursor:"pointer"}}>
-              Not now
-            </button>
-            <div style={{fontSize:11,color:"#bbb",marginTop:14,lineHeight:1.5}}>
-              Location is only used while the app is open. You can change this any time in your phone's Settings.
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ── HEADER ── */}
-      <div style={{background:"linear-gradient(135deg,#1a3a5c 0%,#2d6a9f 100%)",padding:"env(safe-area-inset-top,18px) 16px 0",color:"white"}}>
+      <div style={{background:"linear-gradient(135deg,#1a3a5c 0%,#2464a0 100%)",padding:"env(safe-area-inset-top,18px) 16px 0",color:"white",boxShadow:"0 4px 24px rgba(26,58,92,0.3)"}}>
         <div style={{paddingTop:"max(18px, env(safe-area-inset-top))"}}>
-          {/* Top row */}
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
             <div>
-              <div style={{fontSize:10,fontWeight:600,letterSpacing:"0.12em",opacity:0.65,textTransform:"uppercase"}}>East Coast Family Trip</div>
-              <div style={{fontSize:20,fontWeight:800,marginTop:2}}>Jul 9 – 24, 2026</div>
+              <div style={{fontSize:10,fontWeight:700,letterSpacing:"0.14em",opacity:0.6,textTransform:"uppercase"}}>East Coast Family Trip</div>
+              <div style={{fontSize:21,fontWeight:900,marginTop:2,letterSpacing:"-0.3px"}}>Jul 9 – 24, 2026</div>
             </div>
             <div style={{display:"flex",gap:6,alignItems:"center"}}>
-              {/* Sync dot + refresh */}
-              <button onClick={pullSync} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"white",fontSize:13,padding:"4px 8px",cursor:"pointer",display:"flex",alignItems:"center",gap:4}}>
+              <button onClick={pullSync} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:10,color:"white",fontSize:13,padding:"6px 10px",cursor:"pointer",display:"flex",alignItems:"center",gap:5}}>
                 <span style={{width:7,height:7,borderRadius:"50%",background:syncStatus==="ok"?"#22c55e":syncStatus==="local"?"#fbbf24":"#93c5fd",display:"inline-block",flexShrink:0}}/>
-                <span style={{fontSize:11,opacity:0.8}}>↻</span>
-              </button>
-              {/* User switcher */}
-              <button onClick={()=>{localStorage.removeItem("trip2026_user");setUserName(null);}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:8,color:"white",fontSize:13,padding:"4px 10px",cursor:"pointer",fontWeight:600}}>
-                {userEmoji} {userName}
+                <span style={{fontSize:12,opacity:0.85}}>↻</span>
               </button>
             </div>
           </div>
 
-          {/* Sync label & last updated by */}
-          <div style={{fontSize:11,opacity:0.6,marginBottom:6,display:"flex",gap:8}}>
+          <div style={{fontSize:11,opacity:0.55,marginBottom:7,display:"flex",gap:8}}>
             <span>{syncLabel}</span>
             {lastBy&&<span>· {lastBy} just updated ✨</span>}
           </div>
 
           {/* Location bar */}
-          <div style={{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.1)",borderRadius:8,padding:"6px 10px",marginBottom:10,fontSize:13,minHeight:34}}>
+          <div style={{display:"flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.11)",borderRadius:10,padding:"7px 11px",marginBottom:10,fontSize:13,minHeight:36}}>
             {!locAsked&&!locLabel&&!locLoading&&(
-              <button onClick={requestLocation} style={{background:"none",border:"none",color:"white",fontSize:13,cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:6,opacity:0.85,width:"100%"}}>
-                <span>📍</span><span>Tap to enable location</span>
-              </button>
+              <div style={{display:"flex",alignItems:"center",width:"100%",gap:6}}>
+                <button onClick={requestLocation} style={{background:"none",border:"none",color:"white",fontSize:13,cursor:"pointer",padding:0,display:"flex",alignItems:"center",gap:6,opacity:0.8,flex:1}}>
+                  <span>📍</span><span>Tap to enable location</span>
+                </button>
+                <button onClick={()=>setLocAsked(true)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.4)",fontSize:18,cursor:"pointer",padding:0,lineHeight:1}}>×</button>
+              </div>
             )}
             {locLoading&&<><span>📍</span><span style={{opacity:0.7}}>Finding your location…</span></>}
             {locLabel&&!locError&&(
-              <><span>📍</span><span style={{fontWeight:500,flex:1}}>{locLabel}</span>
-              <button onClick={requestLocation} style={{background:"none",border:"none",color:"rgba(255,255,255,0.6)",fontSize:12,cursor:"pointer",padding:0}}>🔄</button>
-              <a href={`https://maps.google.com/?q=${location?.lat},${location?.lng}`} target="_blank" rel="noreferrer" style={{color:"rgba(255,255,255,0.8)",fontSize:12,textDecoration:"none",marginLeft:4}}>Map →</a></>
+              <><span>📍</span><span style={{fontWeight:600,flex:1}}>{locLabel}</span>
+              <button onClick={requestLocation} style={{background:"none",border:"none",color:"rgba(255,255,255,0.55)",fontSize:12,cursor:"pointer",padding:0}}>🔄</button>
+              <a href={`https://maps.google.com/?q=${location?.lat},${location?.lng}`} target="_blank" rel="noreferrer" style={{color:"rgba(255,255,255,0.75)",fontSize:12,textDecoration:"none",marginLeft:4,fontWeight:600}}>Map →</a></>
             )}
             {locError&&(
-              <><span>📍</span><span style={{opacity:0.8,fontSize:12,flex:1}}>{locError}</span>
-              <button onClick={requestLocation} style={{background:"rgba(255,255,255,0.2)",border:"none",borderRadius:6,color:"white",fontSize:12,padding:"2px 8px",cursor:"pointer",flexShrink:0}}>Retry</button></>
+              <><span>📍</span><span style={{opacity:0.75,fontSize:12,flex:1}}>{locError}</span>
+              <button onClick={requestLocation} style={{background:"rgba(255,255,255,0.18)",border:"none",borderRadius:7,color:"white",fontSize:12,padding:"3px 9px",cursor:"pointer",flexShrink:0}}>Retry</button></>
             )}
           </div>
 
-          {/* Tabs */}
+          {/* Tab bar */}
           <div style={{display:"flex",gap:2}}>
-            {[{id:"today",label:phase==="pretrip"?"Pre-Trip":"Today"},{id:"trip",label:"Trip"},{id:"pack",label:"🎒"}].map(t=>(
-              <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"9px 4px",border:"none",cursor:"pointer",background:tab===t.id?"white":"transparent",color:tab===t.id?"#1a3a5c":"rgba(255,255,255,0.75)",fontWeight:tab===t.id?700:500,fontSize:13,borderRadius:"8px 8px 0 0",transition:"all 0.15s"}}>{t.label}</button>
+            {tabs.map(t=>(
+              <button key={t.id} onClick={()=>setTab(t.id)}
+                style={{flex:1,padding:"9px 4px",border:"none",cursor:"pointer",
+                  background:tab===t.id?"white":"transparent",
+                  color:tab===t.id?"#1a3a5c":"rgba(255,255,255,0.7)",
+                  fontWeight:tab===t.id?700:500,fontSize:13,
+                  borderRadius:"9px 9px 0 0",transition:"all 0.18s",
+                  boxShadow:tab===t.id?"0 -2px 8px rgba(0,0,0,0.08)":"none"}}>
+                {t.label}
+              </button>
             ))}
           </div>
         </div>
       </div>
 
       {/* ── CONTENT ── */}
-      <div style={{padding:"14px",paddingBottom:40}}>
+      <div style={{padding:"14px",paddingBottom:44}} key={tab}>
 
-        {/* PRE-TRIP / TODAY */}
+        {/* PRE-TRIP / TODAY TAB */}
         {tab==="today"&&(
-          <div>
+          <div style={{animation:"fadeIn 0.2s ease"}}>
             {phase==="pretrip"&&(()=>{
               const{def,cust}=tasksForDate(preTripDate);
               const hasTasks=def.length+cust.length>0;
               return(
                 <div>
-                  {/* Date nav */}
                   <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
                     <button onClick={()=>{const d=new Date(preTripDate+"T12:00:00");d.setDate(d.getDate()-1);const s=d.toISOString().split("T")[0];if(s>=today)setPreTripDate(s);}}
-                      disabled={preTripDate<=today} style={{width:36,height:36,borderRadius:10,border:"1px solid #ddd",background:"white",cursor:"pointer",fontSize:18,opacity:preTripDate<=today?0.4:1}}>‹</button>
+                      disabled={preTripDate<=today} style={{width:38,height:38,borderRadius:11,border:"1px solid #ddd",background:"white",cursor:"pointer",fontSize:18,opacity:preTripDate<=today?0.35:1,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>‹</button>
                     <div style={{flex:1,textAlign:"center"}}>
                       <div style={{fontWeight:700,fontSize:15,color:"#1a3a5c"}}>{preTripDate===today?"📋 Today's To-Dos":`📋 ${fmtDate(preTripDate)}`}</div>
                       {preTripDate!==today&&<div style={{fontSize:11,color:"#888",marginTop:1}}>{getDaysBetween(preTripDate)>0?`in ${getDaysBetween(preTripDate)} days`:`${Math.abs(getDaysBetween(preTripDate))} days ago`}</div>}
                     </div>
                     <button onClick={()=>{const d=new Date(preTripDate+"T12:00:00");d.setDate(d.getDate()+1);const s=d.toISOString().split("T")[0];if(s<TRIP_START)setPreTripDate(s);}}
                       disabled={preTripDate>=new Date(new Date(TRIP_START+"T12:00:00").getTime()-86400000).toISOString().split("T")[0]}
-                      style={{width:36,height:36,borderRadius:10,border:"1px solid #ddd",background:"white",cursor:"pointer",fontSize:18}}>›</button>
+                      style={{width:38,height:38,borderRadius:11,border:"1px solid #ddd",background:"white",cursor:"pointer",fontSize:18,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>›</button>
                   </div>
 
                   {preTripDate===today&&<CountdownCard/>}
@@ -676,17 +861,17 @@ function App(){
                     if(!rollover.length)return null;
                     return(
                       <div style={{marginBottom:14}}>
-                        <div style={{fontWeight:600,fontSize:12,color:"#e07b39",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>⚠️ Overdue — Rolled Forward</div>
+                        <div style={{fontWeight:700,fontSize:11,color:"#e07b39",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>⚠️ Overdue — Rolled Forward</div>
                         {rollover.map((item,idx)=>{
                           const colors=TYPE_COLORS[item.type]||TYPE_COLORS.tip;
                           return(
-                            <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:10,background:colors.bg,border:`1px solid ${colors.border}`,borderRadius:10,padding:"11px 12px",marginBottom:8}}>
-                              <div onClick={()=>toggleCheck(item._checkKey)} style={{width:24,height:24,borderRadius:6,border:`2px solid ${colors.border}`,background:"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,cursor:"pointer"}}/>
+                            <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:10,background:colors.bg,border:`1px solid ${colors.border}`,borderRadius:12,padding:"12px 13px",marginBottom:8}}>
+                              <div onClick={()=>toggleCheck(item._checkKey)} style={{width:24,height:24,borderRadius:7,border:`2px solid ${colors.border}`,background:"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,cursor:"pointer"}}/>
                               <div style={{flex:1,cursor:"pointer"}} onClick={()=>toggleCheck(item._checkKey)}>
                                 <div style={{fontSize:15,color:colors.text,lineHeight:1.4}}><span style={{marginRight:5}}>{TYPE_ICONS[item.type]||"•"}</span>{item.text}</div>
-                                <div style={{fontSize:11,color:"#aaa",marginTop:2}}>{item._dateLabel}</div>
+                                <div style={{fontSize:11,color:"#bbb",marginTop:3}}>{item._dateLabel}</div>
                               </div>
-                              <span onClick={()=>deleteItem(item._delKey)} style={{color:"#d1d5db",fontSize:22,cursor:"pointer",lineHeight:1,flexShrink:0}}>×</span>
+                              <span onClick={()=>deleteItem(item._delKey)} style={{color:"#d1d5db",fontSize:22,cursor:"pointer",lineHeight:1,flexShrink:0,padding:"0 2px"}}>×</span>
                             </div>
                           );
                         })}
@@ -696,41 +881,41 @@ function App(){
 
                   {hasTasks?(
                     <>
-                      <div style={{fontWeight:600,fontSize:12,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>{preTripDate===today?"Due Today":"Tasks for this date"}</div>
+                      <div style={{fontWeight:700,fontSize:11,color:"#888",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>{preTripDate===today?"Due Today":"Tasks for this date"}</div>
                       {def.map((t,i)=>deletedItems[`pretrip-def-${preTripDate}-${i}`]?null:<TaskItem key={`d${i}`} task={t} checkKey={`${preTripDate}-def-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`pretrip-def-${preTripDate}-${i}`)}/>)}
                       {cust.map((t,i)=><TaskItem key={`c${i}`} task={t} checkKey={`${preTripDate}-cust-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(preTripDate,i)} onEdit={u=>editTask(preTripDate,i,u)}/>)}
                     </>
                   ):(
-                    <div style={{background:"white",borderRadius:14,padding:"22px 16px",textAlign:"center",marginBottom:12,boxShadow:"0 1px 4px rgba(0,0,0,0.07)"}}>
-                      <div style={{fontSize:30,marginBottom:8}}>{preTripDate===today?"🌴":"📭"}</div>
-                      <div style={{fontWeight:600,fontSize:15,color:"#333"}}>{preTripDate===today?"Nothing due today!":"No tasks on this date"}</div>
-                      <div style={{fontSize:13,color:"#888",marginTop:4}}>{preTripDate===today?"Enjoy the calm before the adventure.":"Add one below, or browse with ‹ ›"}</div>
+                    <div style={{background:"white",borderRadius:16,padding:"24px 18px",textAlign:"center",marginBottom:12,boxShadow:"0 2px 12px rgba(0,0,0,0.07)"}}>
+                      <div style={{fontSize:32,marginBottom:10}}>{preTripDate===today?"🌴":"📭"}</div>
+                      <div style={{fontWeight:700,fontSize:15,color:"#333"}}>{preTripDate===today?"Nothing due today!":"No tasks on this date"}</div>
+                      <div style={{fontSize:13,color:"#aaa",marginTop:5}}>{preTripDate===today?"Enjoy the calm before the adventure.":"Add one below, or browse with ‹ ›"}</div>
                     </div>
                   )}
 
                   {addingTo===preTripDate?(
                     <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} taskDate={taskDate} today={today} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
                   ):(
-                    <button onClick={()=>openAddForm(preTripDate)} style={{width:"100%",padding:"11px",background:"white",color:"#1a3a5c",border:"2px dashed #b8ccdf",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12}}>+ Add a task</button>
+                    <button onClick={()=>openAddForm(preTripDate)} style={{width:"100%",padding:"12px",background:"white",color:"#1a3a5c",border:"2px dashed #b8ccdf",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12,boxShadow:"0 1px 4px rgba(0,0,0,0.04)"}}>+ Add a task</button>
                   )}
 
                   {preTripDate===today&&(()=>{
                     const up=allPreDates().filter(d=>d>today).slice(0,2);
                     if(!up.length)return null;
                     return(
-                      <div style={{background:"white",borderRadius:12,padding:"14px 16px",boxShadow:"0 1px 4px rgba(0,0,0,0.07)",marginTop:4}}>
-                        <div style={{fontWeight:700,fontSize:12,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:10}}>Coming Up</div>
+                      <div style={{background:"white",borderRadius:16,padding:"14px 16px",boxShadow:"0 2px 12px rgba(0,0,0,0.07)",marginTop:4}}>
+                        <div style={{fontWeight:700,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>Coming Up</div>
                         {up.map(d=>{
                           const{def:df,cust:ct}=tasksForDate(d);
                           const tot=df.length+ct.length;
                           return(
-                            <div key={d} onClick={()=>setPreTripDate(d)} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:"1px solid #f3f4f6",cursor:"pointer"}}>
-                              <div style={{width:44,textAlign:"center",background:"#f0f4f8",borderRadius:8,padding:"4px 0"}}>
+                            <div key={d} onClick={()=>setPreTripDate(d)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid #f3f4f6",cursor:"pointer"}}>
+                              <div style={{width:46,textAlign:"center",background:"#f0f4f8",borderRadius:10,padding:"5px 0"}}>
                                 <div style={{fontSize:11,fontWeight:600,color:"#888"}}>{fmtDate(d).split(",")[0]}</div>
                                 <div style={{fontSize:11,color:"#2d7dd2",fontWeight:700}}>in {getDaysBetween(d)}d</div>
                               </div>
-                              <div style={{flex:1}}><div style={{fontSize:14,color:"#333",fontWeight:600}}>{tot} task{tot!==1?"s":""} due</div><div style={{fontSize:12,color:"#aaa"}}>{(df[0]||ct[0])?.text?.slice(0,44)}…</div></div>
-                              <div style={{color:"#ccc"}}>›</div>
+                              <div style={{flex:1}}><div style={{fontSize:14,color:"#333",fontWeight:600}}>{tot} task{tot!==1?"s":""} due</div><div style={{fontSize:12,color:"#aaa",marginTop:1}}>{(df[0]||ct[0])?.text?.slice(0,44)}…</div></div>
+                              <div style={{color:"#ccc",fontSize:18}}>›</div>
                             </div>
                           );
                         })}
@@ -738,7 +923,7 @@ function App(){
                     );
                   })()}
 
-                  {preTripDate!==today&&<button onClick={()=>setPreTripDate(today)} style={{width:"100%",marginTop:8,padding:"11px",background:"#1a3a5c",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer"}}>Back to Today</button>}
+                  {preTripDate!==today&&<button onClick={()=>setPreTripDate(today)} style={{width:"100%",marginTop:8,padding:"12px",background:"#1a3a5c",color:"white",border:"none",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer"}}>Back to Today</button>}
                 </div>
               );
             })()}
@@ -746,26 +931,26 @@ function App(){
             {phase==="trip"&&(
               <div>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-                  <button onClick={()=>setDayIdx(Math.max(0,dayIdx-1))} disabled={dayIdx===0} style={{width:36,height:36,borderRadius:10,border:"1px solid #ddd",background:"white",cursor:"pointer",fontSize:18,opacity:dayIdx===0?0.4:1}}>‹</button>
+                  <button onClick={()=>setDayIdx(Math.max(0,dayIdx-1))} disabled={dayIdx===0} style={{width:38,height:38,borderRadius:11,border:"1px solid #ddd",background:"white",cursor:"pointer",fontSize:18,opacity:dayIdx===0?0.35:1,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>‹</button>
                   <div style={{flex:1,textAlign:"center"}}>
                     <div style={{fontWeight:700,fontSize:15,color:"#1a3a5c"}}>{ITINERARY[dayIdx].emoji} {ITINERARY[dayIdx].label} — {ITINERARY[dayIdx].city}</div>
                     <div style={{fontSize:11,color:getDaysBetween(ITINERARY[dayIdx].date)===0?"#2d7dd2":"#888",marginTop:1}}>{getDaysBetween(ITINERARY[dayIdx].date)===0?"Today!":getDaysBetween(ITINERARY[dayIdx].date)>0?`in ${getDaysBetween(ITINERARY[dayIdx].date)} days`:`${Math.abs(getDaysBetween(ITINERARY[dayIdx].date))} days ago`}</div>
                   </div>
-                  <button onClick={()=>setDayIdx(Math.min(ITINERARY.length-1,dayIdx+1))} disabled={dayIdx===ITINERARY.length-1} style={{width:36,height:36,borderRadius:10,border:"1px solid #ddd",background:"white",cursor:"pointer",fontSize:18,opacity:dayIdx===ITINERARY.length-1?0.4:1}}>›</button>
+                  <button onClick={()=>setDayIdx(Math.min(ITINERARY.length-1,dayIdx+1))} disabled={dayIdx===ITINERARY.length-1} style={{width:38,height:38,borderRadius:11,border:"1px solid #ddd",background:"white",cursor:"pointer",fontSize:18,opacity:dayIdx===ITINERARY.length-1?0.35:1,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>›</button>
                 </div>
-                <div style={{background:"white",borderRadius:14,padding:"14px 16px",marginBottom:10,boxShadow:"0 1px 4px rgba(0,0,0,0.08)"}}>
-                  <div style={{fontWeight:700,fontSize:18,color:"#1a3a5c"}}>{ITINERARY[dayIdx].title}</div>
-                  <div style={{fontSize:13,color:"#666",marginTop:2}}>{ITINERARY[dayIdx].summary}</div>
-                  {ITINERARY[dayIdx].lodging&&<div style={{marginTop:8,fontSize:12,color:"#888",background:"#f8f9fa",borderRadius:6,padding:"6px 10px"}}>🏨 {ITINERARY[dayIdx].lodging}</div>}
-                  {ITINERARY[dayIdx].transit&&<div style={{marginTop:6,fontSize:12,color:"#888",background:"#f8f9fa",borderRadius:6,padding:"6px 10px"}}>🚌 {ITINERARY[dayIdx].transit}</div>}
+                <div style={{background:"white",borderRadius:16,padding:"15px 17px",marginBottom:10,boxShadow:"0 2px 12px rgba(0,0,0,0.08)"}}>
+                  <div style={{fontWeight:800,fontSize:19,color:"#1a3a5c"}}>{ITINERARY[dayIdx].title}</div>
+                  <div style={{fontSize:13,color:"#666",marginTop:3,lineHeight:1.4}}>{ITINERARY[dayIdx].summary}</div>
+                  {ITINERARY[dayIdx].lodging&&<div style={{marginTop:9,fontSize:12,color:"#888",background:"#f8f9fa",borderRadius:8,padding:"7px 11px"}}>🏨 {ITINERARY[dayIdx].lodging}</div>}
+                  {ITINERARY[dayIdx].transit&&<div style={{marginTop:6,fontSize:12,color:"#888",background:"#f8f9fa",borderRadius:8,padding:"7px 11px"}}>🚌 {ITINERARY[dayIdx].transit}</div>}
                 </div>
                 {ITINERARY[dayIdx].confirmations?.map((c,i)=>(
-                  <div key={i} style={{background:"#e8f4fd",borderRadius:10,padding:"10px 14px",marginBottom:8,border:"1px solid #b3d9f5"}}>
+                  <div key={i} style={{background:"#e8f4fd",borderRadius:12,padding:"11px 15px",marginBottom:8,border:"1px solid #b3d9f5"}}>
                     <div style={{fontWeight:600,fontSize:13,color:"#1a3a5c"}}>✅ {c.label}</div>
                     <div style={{fontSize:12,color:"#555",marginTop:2}}>{c.detail}</div>
                   </div>
                 ))}
-                <div style={{fontWeight:600,fontSize:12,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Plan for the day</div>
+                <div style={{fontWeight:700,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:8}}>Plan for the day</div>
                 {ITINERARY[dayIdx].items.map((it,i)=>deletedItems[`itinerary-${ITINERARY[dayIdx].date}-${i}`]?null:<TaskItem key={i} task={it} checkKey={`trip-${ITINERARY[dayIdx].date}-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`itinerary-${ITINERARY[dayIdx].date}-${i}`)}/>)}
                 {(customTasks[ITINERARY[dayIdx].date]||[]).map((t,i)=>(
                   <TaskItem key={`c${i}`} task={t} checkKey={`trip-${ITINERARY[dayIdx].date}-c${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(ITINERARY[dayIdx].date,i)} onEdit={u=>editTask(ITINERARY[dayIdx].date,i,u)}/>
@@ -773,16 +958,16 @@ function App(){
                 {addingTo===ITINERARY[dayIdx].date?(
                   <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} taskDate={taskDate} today={today} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
                 ):(
-                  <button onClick={()=>openAddForm(ITINERARY[dayIdx].date)} style={{width:"100%",padding:"11px",background:"white",color:"#1a3a5c",border:"2px dashed #b8ccdf",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12}}>+ Add a task</button>
+                  <button onClick={()=>openAddForm(ITINERARY[dayIdx].date)} style={{width:"100%",padding:"12px",background:"white",color:"#1a3a5c",border:"2px dashed #b8ccdf",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12}}>+ Add a task</button>
                 )}
-                {dayIdx!==tripDayIdx&&<button onClick={()=>setDayIdx(tripDayIdx)} style={{width:"100%",marginTop:4,padding:"11px",background:"#1a3a5c",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer"}}>Jump to Today</button>}
+                {dayIdx!==tripDayIdx&&<button onClick={()=>setDayIdx(tripDayIdx)} style={{width:"100%",marginTop:4,padding:"12px",background:"#1a3a5c",color:"white",border:"none",borderRadius:12,fontSize:14,fontWeight:600,cursor:"pointer"}}>Jump to Today</button>}
               </div>
             )}
 
             {phase==="posttrip"&&(
-              <div style={{textAlign:"center",padding:"48px 20px"}}>
-                <div style={{fontSize:52,marginBottom:12}}>🏠</div>
-                <div style={{fontWeight:700,fontSize:20,color:"#1a3a5c"}}>Trip Complete!</div>
+              <div style={{textAlign:"center",padding:"52px 20px"}}>
+                <div style={{fontSize:56,marginBottom:14}}>🏠</div>
+                <div style={{fontWeight:800,fontSize:22,color:"#1a3a5c"}}>Trip Complete!</div>
                 <div style={{fontSize:14,color:"#888",marginTop:8}}>Hope it was amazing. 🌊🗽🍫</div>
               </div>
             )}
@@ -791,9 +976,9 @@ function App(){
 
         {/* TRIP TAB */}
         {tab==="trip"&&(
-          <div>
-            <div style={{fontWeight:700,fontSize:13,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",margin:"8px 0 8px"}}>Full Trip Plan</div>
-            <div style={{fontSize:12,color:"#aaa",marginBottom:12}}>Tap any day to expand · add or edit tasks</div>
+          <div style={{animation:"fadeIn 0.2s ease"}}>
+            <div style={{fontWeight:700,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.1em",margin:"8px 0 5px"}}>Full Trip Plan</div>
+            <div style={{fontSize:12,color:"#bbb",marginBottom:12}}>Tap any day to expand · add or edit tasks</div>
             {ITINERARY.map((day,i)=>{
               const diff=getDaysBetween(day.date);
               const isPast=diff<0,isToday=diff===0,isOpen=expandedDay===i;
@@ -801,44 +986,44 @@ function App(){
               const total=day.items.length+cust.length;
               const done=[...day.items.map((_,j)=>checked[`trip-${day.date}-${j}`]),...cust.map((_,j)=>checked[`trip-${day.date}-c${j}`])].filter(Boolean).length;
               return(
-                <div key={i} style={{background:"white",borderRadius:12,marginBottom:8,overflow:"hidden",border:isToday?"2px solid #2d6a9f":"1px solid #eee",boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+                <div key={i} style={{background:"white",borderRadius:14,marginBottom:8,overflow:"hidden",border:isToday?"2px solid #2d6a9f":"1px solid #edeef0",boxShadow:"0 2px 10px rgba(0,0,0,0.07)"}}>
                   <div onClick={()=>setExpandedDay(isOpen?null:i)} style={{display:"flex",alignItems:"center",gap:10,padding:"13px 14px",cursor:"pointer",background:isToday?"#e8f4fd":isPast?"#fafafa":"white"}}>
                     <div style={{fontSize:22,flexShrink:0}}>{day.emoji}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
-                        <div style={{fontWeight:700,fontSize:14,color:isPast?"#aaa":"#1a3a5c"}}>{day.label}</div>
-                        {isToday&&<span style={{fontSize:10,fontWeight:700,color:"white",background:"#2d6a9f",borderRadius:5,padding:"1px 6px"}}>TODAY</span>}
-                        {!isPast&&!isToday&&diff<=5&&<span style={{fontSize:10,fontWeight:600,color:"#e07b39",background:"#fef0e6",borderRadius:5,padding:"1px 6px"}}>in {diff}d</span>}
+                        <div style={{fontWeight:700,fontSize:14,color:isPast?"#bbb":"#1a3a5c"}}>{day.label}</div>
+                        {isToday&&<span style={{fontSize:10,fontWeight:700,color:"white",background:"#2d6a9f",borderRadius:6,padding:"2px 7px"}}>TODAY</span>}
+                        {!isPast&&!isToday&&diff<=5&&<span style={{fontSize:10,fontWeight:700,color:"#e07b39",background:"#fef0e6",borderRadius:6,padding:"2px 7px"}}>in {diff}d</span>}
                       </div>
-                      <div style={{fontSize:12,color:isPast?"#bbb":"#555",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{day.title}</div>
+                      <div style={{fontSize:12,color:isPast?"#ccc":"#555",marginTop:1,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{day.title}</div>
                     </div>
                     <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                      {done>0&&<div style={{fontSize:11,color:"#22c55e",fontWeight:600}}>{done}/{total}</div>}
-                      <div style={{color:"#ccc",fontSize:18,transition:"transform 0.2s",transform:isOpen?"rotate(90deg)":"none"}}>›</div>
+                      {done>0&&<div style={{fontSize:11,color:"#22c55e",fontWeight:700}}>{done}/{total}</div>}
+                      <div style={{color:"#d1d5db",fontSize:18,transition:"transform 0.2s",transform:isOpen?"rotate(90deg)":"none"}}>›</div>
                     </div>
                   </div>
                   {isOpen&&(
                     <div style={{padding:"0 14px 14px",borderTop:"1px solid #f3f4f6"}}>
                       <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10,marginBottom:10}}>
-                        {day.lodging&&<div style={{fontSize:11,background:"#eff6ff",color:"#1e40af",borderRadius:6,padding:"3px 8px"}}>🏨 {day.lodging}</div>}
-                        {day.transit&&<div style={{fontSize:11,background:"#f0fdf4",color:"#166634",borderRadius:6,padding:"3px 8px"}}>🚌 {day.transit}</div>}
+                        {day.lodging&&<div style={{fontSize:11,background:"#eff6ff",color:"#1e40af",borderRadius:7,padding:"4px 9px"}}>🏨 {day.lodging}</div>}
+                        {day.transit&&<div style={{fontSize:11,background:"#f0fdf4",color:"#166634",borderRadius:7,padding:"4px 9px"}}>🚌 {day.transit}</div>}
                       </div>
                       {day.confirmations?.map((c,ci)=>(
-                        <div key={ci} style={{background:"#e8f4fd",borderRadius:8,padding:"8px 12px",marginBottom:8,border:"1px solid #b3d9f5"}}>
+                        <div key={ci} style={{background:"#e8f4fd",borderRadius:10,padding:"9px 13px",marginBottom:8,border:"1px solid #b3d9f5"}}>
                           <div style={{fontWeight:600,fontSize:12,color:"#1a3a5c"}}>✅ {c.label}</div>
                           <div style={{fontSize:11,color:"#555",marginTop:1}}>{c.detail}</div>
                         </div>
                       ))}
-                      <div style={{fontWeight:600,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Activities</div>
+                      <div style={{fontWeight:700,fontSize:11,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Activities</div>
                       {day.items.map((it,j)=>deletedItems[`itinerary-${day.date}-${j}`]?null:<TaskItem key={j} task={it} checkKey={`trip-${day.date}-${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`itinerary-${day.date}-${j}`)}/>)}
-                      {cust.length>0&&<div style={{fontWeight:600,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",margin:"8px 0 6px"}}>Added by family</div>}
+                      {cust.length>0&&<div style={{fontWeight:700,fontSize:11,color:"#bbb",textTransform:"uppercase",letterSpacing:"0.08em",margin:"10px 0 6px"}}>Added by family</div>}
                       {cust.map((t,j)=>(
                         <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)}/>
                       ))}
                       {addingTo===day.date?(
                         <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} taskDate={taskDate} today={today} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
                       ):(
-                        <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:8,padding:"9px",background:"#f8fafc",color:"#2d6a9f",border:"2px dashed #b8ccdf",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Add task to this day</button>
+                        <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:8,padding:"10px",background:"#f8fafc",color:"#2d6a9f",border:"2px dashed #b8ccdf",borderRadius:10,fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Add task to this day</button>
                       )}
                     </div>
                   )}
@@ -850,7 +1035,23 @@ function App(){
 
         {/* PACKING TAB */}
         {tab==="pack"&&(
-          <PackingTab packChecked={packChecked} onTogglePack={togglePack} customPackItems={customPackItems} setCustomPackItems={updatePackItems} packPerson={packPerson} setPackPerson={setPackPerson} deletedItems={deletedItems} onDeleteItem={deleteItem}/>
+          <div style={{animation:"fadeIn 0.2s ease"}}>
+            <PackingTab packChecked={packChecked} onTogglePack={togglePack} customPackItems={customPackItems} setCustomPackItems={updatePackItems} packPerson={packPerson} setPackPerson={setPackPerson} deletedItems={deletedItems} onDeleteItem={deleteItem}/>
+          </div>
+        )}
+
+        {/* SEARCH TAB */}
+        {tab==="search"&&(
+          <div style={{animation:"fadeIn 0.2s ease"}}>
+            <SearchTab setTab={setTab} setDayIdx={setDayIdx} setPackPerson={setPackPerson}/>
+          </div>
+        )}
+
+        {/* NEARBY TAB */}
+        {tab==="nearby"&&(
+          <div style={{animation:"fadeIn 0.2s ease"}}>
+            <NearbyTab tripDayIdx={tripDayIdx}/>
+          </div>
         )}
 
       </div>
