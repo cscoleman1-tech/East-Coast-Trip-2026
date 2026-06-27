@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="East Coast Trip" />
+    <meta http-equiv="Permissions-Policy" content="geolocation=*" />
+    <title>East Coast Trip 2026</title>
+    <style>
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Inter', system-ui, sans-serif; background: #f0f4f8; overscroll-behavior: none; }
+      input, button { font-family: inherit; }
+      @keyframes bounce0 { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-7px) } }
+      @keyframes bounce1 { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+      @keyframes bounce2 { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: translateY(0) } }
+      ::-webkit-scrollbar { display: none; }
+      input:focus { outline: none; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
