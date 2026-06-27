@@ -53,7 +53,7 @@ const TRIP_START="2026-07-09",TRIP_END="2026-07-24";
 // JSONBin.io — free shared JSON store. Each family gets their own bin ID.
 // This one is pre-created for Chris's family:
 const BIN_ID="6850fa418561e97a50fb3889";
-const BIN_KEY="$2a$10$placeholder_replace_with_real_key";
+const BIN_KEY="$2a$10$i/QIdpHty2WPEnD1NnplYubnVVWsYJOMVwYHT/gIeyrn0xL38tbqW";
 
 const TYPE_ICONS={booking:"🎟️",confirm:"📞",pack:"🎒",priority:"⭐",transport:"🚌",activity:"🎯",food:"🍽️",optional:"💡",tip:"💡"};
 const TYPE_COLORS={
@@ -68,11 +68,6 @@ const TYPE_COLORS={
   tip:{bg:"#fefce8",border:"#fde047",text:"#854d0e"},
 };
 
-const TRIP_CONTEXT=`You are a friendly trip assistant for Chris's family East Coast trip July 2026.
-Family: Chris, McKenna (wife), sons Sawyer (14), Pierce (11), Bennett (10). They have a dog.
-CONFIRMED: Flights IN Jul 9 SLC→LGA 11pm SW 3750+4120 via MDW. Flights OUT Jul 24 ORF→SLC 3:30pm SW 3187+2660 via MDW arrives 12:35am Jul 25. Amtrak 667 Jul 11 NYC→Philly 3:13pm→4:38pm conf 594764. Amtrak 649 Jul 13 Philly→Harrisburg 4:40pm→6:39pm conf 594C90. Enterprise Chrysler Pacifica pickup Jul 17 11am Harrisburg drop Jul 24 11am Norfolk ORF. OBX JMJ Seascape South Nags Head milepost 19 Jul 18-24 ~13 people. NYC Brooklyn VRBO Herkimer St & Nostrand Ave. Philly Lynn's house 512 Court Circle West Chester PA. Harrisburg Ramada by Wyndham. Williamsburg Woodlands Hotel.
-STILL TO BOOK: Statue Cruises, 9/11 Museum timed entry, Independence Hall timed entry, OBX beach gear rentals, Williamsburg dog weight limit.
-Respond helpfully and concisely. Brief for simple questions, organized for planning. No walls of text.`;
 
 const MASTER_PACKING={
   "👕 Clothes & Personal Care":["T-shirts (2 per day)","Shorts","Pants/jeans (2-3 pairs)","Underwear & socks","Pajamas","Swimsuits (2 each)","Light jacket or hoodie","Rain jacket","Walking shoes / sneakers","Sandals / flip flops","Dress clothes (1 outfit)","Sunglasses","Hat / baseball cap","Toothbrush & toothpaste","Shampoo & conditioner","Body wash / soap","Deodorant","Sunscreen (SPF 50+)","After-sun lotion / aloe vera","Razor & shaving supplies","Hair products","Feminine hygiene products","Nail clippers","First aid kit","Prescription medications","Pain relievers (Tylenol/Advil)","Allergy medicine","Motion sickness meds","Hand sanitizer","Face masks"],
@@ -271,41 +266,20 @@ function CountdownCard(){
   );
 }
 
-function StillNeeded({bookingChecked,onToggle}){
-  const rem=STILL_NEEDED_ITEMS.filter((_,i)=>!bookingChecked[i]);
-  if(rem.length===0)return(
-    <div style={{background:"#f0fdf4",borderRadius:12,padding:"14px 16px",border:"1px solid #86efac",textAlign:"center",marginTop:12}}>
-      <div style={{fontSize:22,marginBottom:4}}>🎉</div>
-      <div style={{fontWeight:700,fontSize:14,color:"#166534"}}>All bookings done!</div>
-    </div>
-  );
-  return(
-    <div style={{background:"#fff8e6",borderRadius:12,padding:"14px 16px",border:"1px solid #ffd87a",marginTop:12}}>
-      <div style={{fontWeight:700,fontSize:13,color:"#a05e00",marginBottom:10}}>⚠️ Still Need to Book ({rem.length} left)</div>
-      {STILL_NEEDED_ITEMS.map((item,i)=>{
-        const done=!!bookingChecked[i];
-        return(
-          <div key={i} onClick={()=>onToggle(i)}
-            style={{display:"flex",alignItems:"center",gap:10,padding:"7px 0",borderBottom:i<STILL_NEEDED_ITEMS.length-1?"1px solid #fdedb0":"none",cursor:"pointer",opacity:done?0.4:1}}>
-            <div style={{width:20,height:20,borderRadius:5,border:done?"none":"2px solid #f59e0b",background:done?"#22c55e":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-              {done&&<span style={{color:"white",fontSize:12,fontWeight:800}}>✓</span>}
-            </div>
-            <div style={{fontSize:14,color:done?"#aaa":"#7a4500",textDecoration:done?"line-through":"none",flex:1}}>{item}</div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
-function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems,packPerson,setPackPerson}){
+function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems,packPerson,setPackPerson,deletedItems,onDeleteItem}){
   const [addingCat,setAddingCat]=useState(null);
   const [newItem,setNewItem]=useState("");
   const persons=["Master","Chris","McKenna","Sawyer","Pierce","Bennett"];
   const packData=packPerson==="Master"?MASTER_PACKING:{[`👤 ${packPerson}`]:INDIVIDUAL_PACKING[packPerson]||[]};
   const custom=customPackItems[packPerson]||{};
-  const total=Object.entries(packData).reduce((a,[c,it])=>a+it.length+((custom[c]||[]).length),0);
-  const done=Object.keys(packChecked).filter(k=>k.startsWith(`pack-${packPerson}-`)&&packChecked[k]).length;
+  const isBaseDeleted=(cat,i)=>!!deletedItems[`pack-base-${packPerson}-${cat}-${i}`];
+  const total=Object.entries(packData).reduce((a,[c,it])=>a+it.filter((_,i)=>!isBaseDeleted(c,i)).length+((custom[c]||[]).length),0);
+  const done=Object.entries(packData).reduce((a,[c,it])=>{
+    const cust2=custom[c]||[];
+    const all=[...it,...cust2];
+    return a+all.filter((_,i)=>{const isBase=i<it.length;return(!isBase||!isBaseDeleted(c,i))&&packChecked[`pack-${packPerson}-${c}-${i}`];}).length;
+  },0);
   const pct=total>0?Math.round((done/total)*100):0;
   const addIt=(cat)=>{if(!newItem.trim())return;setCustomPackItems(p=>({...p,[packPerson]:{...(p[packPerson]||{}),[cat]:[...((p[packPerson]||{})[cat]||[]),newItem.trim()]}}));setNewItem("");setAddingCat(null);};
   const removeIt=(cat,idx,bl)=>{const ci=idx-bl;setCustomPackItems(p=>({...p,[packPerson]:{...(p[packPerson]||{}),[cat]:((p[packPerson]||{})[cat]||[]).filter((_,i)=>i!==ci)}}));};
@@ -331,24 +305,32 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
       {Object.entries(packData).map(([cat,base])=>{
         const cust=(custom[cat]||[]);
         const all=[...base,...cust];
-        const cd=all.filter((_,i)=>packChecked[`pack-${packPerson}-${cat}-${i}`]).length;
+        const activeAll=all.filter((_,i)=>!(i<base.length&&isBaseDeleted(cat,i)));
+        const cd=activeAll.filter((_,i2)=>{const origI=all.indexOf(activeAll[i2]);return packChecked[`pack-${packPerson}-${cat}-${origI}`];}).length;
         return(
           <div key={cat} style={{background:"white",borderRadius:12,marginBottom:10,overflow:"hidden",boxShadow:"0 1px 4px rgba(0,0,0,0.07)"}}>
             <div style={{background:"#f8f9fa",padding:"10px 14px",borderBottom:"1px solid #f0f0f0",display:"flex",justifyContent:"space-between"}}>
               <div style={{fontWeight:700,fontSize:14,color:"#1a3a5c"}}>{cat}</div>
-              <div style={{fontSize:13,color:"#888"}}>{cd}/{all.length}</div>
+              <div style={{fontSize:13,color:"#888"}}>{cd}/{activeAll.length}</div>
             </div>
             <div style={{padding:"8px 14px"}}>
               {all.map((item,i)=>{
+                const isBase=i<base.length;
+                if(isBase&&isBaseDeleted(cat,i))return null;
                 const key=`pack-${packPerson}-${cat}-${i}`;
                 const dk=!!packChecked[key];
+                const visibleAll=all.filter((_,j)=>!(j<base.length&&isBaseDeleted(cat,j)));
+                const visIdx=visibleAll.indexOf(item);
                 return(
-                  <div key={i} onClick={()=>onTogglePack(key)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:i<all.length-1?"1px solid #f9fafb":"none",cursor:"pointer"}}>
+                  <div key={i} onClick={()=>onTogglePack(key)} style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:visIdx<visibleAll.length-1?"1px solid #f9fafb":"none",cursor:"pointer"}}>
                     <div style={{width:22,height:22,borderRadius:6,border:dk?"none":"2px solid #d1d5db",background:dk?"#22c55e":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                       {dk&&<span style={{color:"white",fontSize:13,fontWeight:800}}>✓</span>}
                     </div>
                     <div style={{fontSize:14,color:dk?"#9ca3af":"#333",textDecoration:dk?"line-through":"none",flex:1}}>{item}</div>
-                    {i>=base.length&&<span onClick={e=>{e.stopPropagation();removeIt(cat,i,base.length);}} style={{color:"#e5e7eb",fontSize:20,cursor:"pointer"}}>×</span>}
+                    {isBase
+                      ?<span onClick={e=>{e.stopPropagation();onDeleteItem(`pack-base-${packPerson}-${cat}-${i}`);}} style={{color:"#e5e7eb",fontSize:20,cursor:"pointer",flexShrink:0}}>×</span>
+                      :<span onClick={e=>{e.stopPropagation();removeIt(cat,i,base.length);}} style={{color:"#e5e7eb",fontSize:20,cursor:"pointer",flexShrink:0}}>×</span>
+                    }
                   </div>
                 );
               })}
@@ -387,7 +369,7 @@ function App(){
   const [checked,setChecked]=useState({});
   const [packChecked,setPackChecked]=useState({});
   const [customPackItems,setCustomPackItems]=useState({Master:{},Chris:{},McKenna:{},Sawyer:{},Pierce:{},Bennett:{}});
-  const [bookingChecked,setBookingChecked]=useState({});
+  const [deletedItems,setDeletedItems]=useState({});
 
   // UI state
   const [packPerson,setPackPerson]=useState("Master");
@@ -410,13 +392,6 @@ function App(){
   const [syncLabel,setSyncLabel]=useState("Tap ↻ to sync");
   const [lastBy,setLastBy]=useState(null);
 
-  // Chat
-  const [chatMessages,setChatMessages]=useState([{role:"assistant",text:"Hey! 👋 Ask me anything about the trip — directions, what's booked, activities, food, transit — whatever you need."}]);
-  const [chatInput,setChatInput]=useState("");
-  const [chatLoading,setChatLoading]=useState(false);
-  const chatEndRef=useRef(null);
-
-  useEffect(()=>{if(tab==="chat")chatEndRef.current?.scrollIntoView({behavior:"smooth"});},[chatMessages,tab]);
 
   // ── Location ──────────────────────────────────────────────────────────────
   const reverseGeocode=async(lat,lng)=>{
@@ -449,7 +424,7 @@ function App(){
   };
 
   // ── Cloud Sync ────────────────────────────────────────────────────────────
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,bookingChecked});
+  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems});
 
   const applyRemoteData=(data)=>{
     if(!data)return;
@@ -457,7 +432,7 @@ function App(){
     if(data.checked)setChecked(data.checked);
     if(data.packChecked)setPackChecked(data.packChecked);
     if(data.customPackItems)setCustomPackItems(data.customPackItems);
-    if(data.bookingChecked)setBookingChecked(data.bookingChecked);
+    if(data.deletedItems)setDeletedItems(data.deletedItems);
     if(data._by&&data._by!==(userName||"")){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
 
@@ -498,7 +473,7 @@ function App(){
   // ── State mutators (all sync) ─────────────────────────────────────────────
   const toggleCheck=key=>{setChecked(p=>{const n={...p,[key]:!p[key]};syncNow({...getState(),checked:n});return n;});};
   const togglePack=key=>{setPackChecked(p=>{const n={...p,[key]:!p[key]};syncNow({...getState(),packChecked:n});return n;});};
-  const toggleBooking=i=>{setBookingChecked(p=>{const n={...p,[i]:!p[i]};syncNow({...getState(),bookingChecked:n});return n;});};
+  const deleteItem=key=>{if(!window.confirm("Delete this item permanently?"))return;setDeletedItems(p=>{const n={...p,[key]:true};syncNow({...getState(),deletedItems:n});return n;});};
   const handleAddTask=()=>{
     if(!taskText.trim())return;
     const target=taskDate||today;
@@ -521,23 +496,6 @@ function App(){
   const allPreDates=()=>[...new Set([...Object.keys(DEFAULT_PRETRIP),...Object.keys(customTasks)])].sort();
   const tasksForDate=d=>({def:DEFAULT_PRETRIP[d]||[],cust:customTasks[d]||[]});
 
-  // ── Chat ──────────────────────────────────────────────────────────────────
-  const sendChat=async()=>{
-    if(!chatInput.trim()||chatLoading)return;
-    const msg=chatInput.trim();setChatInput("");
-    setChatMessages(p=>[...p,{role:"user",text:msg}]);
-    setChatLoading(true);
-    try{
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:1000,
-          system:TRIP_CONTEXT+`\n\nToday is ${today}.`+(locLabel?`\nUser current location: ${locLabel}.`:""),
-          messages:[...chatMessages.filter((_,i)=>i>0).map(m=>({role:m.role,content:m.text})),{role:"user",content:msg}]})});
-      const data=await r.json();
-      const reply=data.content?.find(b=>b.type==="text")?.text||"Couldn't get a response.";
-      setChatMessages(p=>[...p,{role:"assistant",text:reply}]);
-    }catch{setChatMessages(p=>[...p,{role:"assistant",text:"Connection error — try again."}]);}
-    setChatLoading(false);
-  };
 
   const markedDates=allPreDates();
 
@@ -586,7 +544,6 @@ function App(){
               <div style={{fontSize:12,color:"#888",fontWeight:600,marginBottom:6,textTransform:"uppercase",letterSpacing:"0.06em"}}>What it does</div>
               <div style={{fontSize:13,color:"#444",display:"flex",flexDirection:"column",gap:6}}>
                 <div>🗺️ Shows your city in the app header</div>
-                <div>🤖 Helps the AI give location-aware answers</div>
                 <div>🔗 Tap "Open Maps →" to navigate from your spot</div>
               </div>
             </div>
@@ -665,7 +622,7 @@ function App(){
 
           {/* Tabs */}
           <div style={{display:"flex",gap:2}}>
-            {[{id:"today",label:phase==="pretrip"?"Pre-Trip":"Today"},{id:"trip",label:"Trip"},{id:"pack",label:"🎒"},{id:"chat",label:"Ask AI"}].map(t=>(
+            {[{id:"today",label:phase==="pretrip"?"Pre-Trip":"Today"},{id:"trip",label:"Trip"},{id:"pack",label:"🎒"}].map(t=>(
               <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"9px 4px",border:"none",cursor:"pointer",background:tab===t.id?"white":"transparent",color:tab===t.id?"#1a3a5c":"rgba(255,255,255,0.75)",fontWeight:tab===t.id?700:500,fontSize:13,borderRadius:"8px 8px 0 0",transition:"all 0.15s"}}>{t.label}</button>
             ))}
           </div>
@@ -698,10 +655,49 @@ function App(){
 
                   {preTripDate===today&&<CountdownCard/>}
 
+                  {preTripDate===today&&(()=>{
+                    const rollover=[];
+                    Object.entries(DEFAULT_PRETRIP).forEach(([date,tasks])=>{
+                      if(date<today)tasks.forEach((t,i)=>{
+                        if(!checked[`${date}-def-${i}`]&&!deletedItems[`pretrip-def-${date}-${i}`])
+                          rollover.push({...t,_checkKey:`${date}-def-${i}`,_delKey:`pretrip-def-${date}-${i}`,_dateLabel:fmtDate(date)});
+                      });
+                    });
+                    Object.entries(customTasks).forEach(([date,tasks])=>{
+                      if(date<today)tasks.forEach((t,i)=>{
+                        if(!checked[`${date}-cust-${i}`]&&!deletedItems[`pretrip-cust-${date}-${i}`])
+                          rollover.push({...t,_checkKey:`${date}-cust-${i}`,_delKey:`pretrip-cust-${date}-${i}`,_dateLabel:fmtDate(date)});
+                      });
+                    });
+                    STILL_NEEDED_ITEMS.forEach((text,i)=>{
+                      if(!checked[`booking-${i}`]&&!deletedItems[`stillneeded-${i}`])
+                        rollover.push({text,type:"booking",_checkKey:`booking-${i}`,_delKey:`stillneeded-${i}`,_dateLabel:"Still needed"});
+                    });
+                    if(!rollover.length)return null;
+                    return(
+                      <div style={{marginBottom:14}}>
+                        <div style={{fontWeight:600,fontSize:12,color:"#e07b39",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>⚠️ Overdue — Rolled Forward</div>
+                        {rollover.map((item,idx)=>{
+                          const colors=TYPE_COLORS[item.type]||TYPE_COLORS.tip;
+                          return(
+                            <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:10,background:colors.bg,border:`1px solid ${colors.border}`,borderRadius:10,padding:"11px 12px",marginBottom:8}}>
+                              <div onClick={()=>toggleCheck(item._checkKey)} style={{width:24,height:24,borderRadius:6,border:`2px solid ${colors.border}`,background:"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,cursor:"pointer"}}/>
+                              <div style={{flex:1,cursor:"pointer"}} onClick={()=>toggleCheck(item._checkKey)}>
+                                <div style={{fontSize:15,color:colors.text,lineHeight:1.4}}><span style={{marginRight:5}}>{TYPE_ICONS[item.type]||"•"}</span>{item.text}</div>
+                                <div style={{fontSize:11,color:"#aaa",marginTop:2}}>{item._dateLabel}</div>
+                              </div>
+                              <span onClick={()=>deleteItem(item._delKey)} style={{color:"#d1d5db",fontSize:22,cursor:"pointer",lineHeight:1,flexShrink:0}}>×</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+
                   {hasTasks?(
                     <>
                       <div style={{fontWeight:600,fontSize:12,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>{preTripDate===today?"Due Today":"Tasks for this date"}</div>
-                      {def.map((t,i)=><TaskItem key={`d${i}`} task={t} checkKey={`${preTripDate}-def-${i}`} checked={checked} onToggle={toggleCheck}/>)}
+                      {def.map((t,i)=>deletedItems[`pretrip-def-${preTripDate}-${i}`]?null:<TaskItem key={`d${i}`} task={t} checkKey={`${preTripDate}-def-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`pretrip-def-${preTripDate}-${i}`)}/>)}
                       {cust.map((t,i)=><TaskItem key={`c${i}`} task={t} checkKey={`${preTripDate}-cust-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(preTripDate,i)} onEdit={u=>editTask(preTripDate,i,u)}/>)}
                     </>
                   ):(
@@ -770,7 +766,7 @@ function App(){
                   </div>
                 ))}
                 <div style={{fontWeight:600,fontSize:12,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Plan for the day</div>
-                {ITINERARY[dayIdx].items.map((it,i)=><TaskItem key={i} task={it} checkKey={`trip-${ITINERARY[dayIdx].date}-${i}`} checked={checked} onToggle={toggleCheck}/>)}
+                {ITINERARY[dayIdx].items.map((it,i)=>deletedItems[`itinerary-${ITINERARY[dayIdx].date}-${i}`]?null:<TaskItem key={i} task={it} checkKey={`trip-${ITINERARY[dayIdx].date}-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`itinerary-${ITINERARY[dayIdx].date}-${i}`)}/>)}
                 {(customTasks[ITINERARY[dayIdx].date]||[]).map((t,i)=>(
                   <TaskItem key={`c${i}`} task={t} checkKey={`trip-${ITINERARY[dayIdx].date}-c${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(ITINERARY[dayIdx].date,i)} onEdit={u=>editTask(ITINERARY[dayIdx].date,i,u)}/>
                 ))}
@@ -796,8 +792,7 @@ function App(){
         {/* TRIP TAB */}
         {tab==="trip"&&(
           <div>
-            <StillNeeded bookingChecked={bookingChecked} onToggle={toggleBooking}/>
-            <div style={{fontWeight:700,fontSize:13,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",margin:"16px 0 8px"}}>Full Trip Plan</div>
+            <div style={{fontWeight:700,fontSize:13,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",margin:"8px 0 8px"}}>Full Trip Plan</div>
             <div style={{fontSize:12,color:"#aaa",marginBottom:12}}>Tap any day to expand · add or edit tasks</div>
             {ITINERARY.map((day,i)=>{
               const diff=getDaysBetween(day.date);
@@ -835,7 +830,7 @@ function App(){
                         </div>
                       ))}
                       <div style={{fontWeight:600,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Activities</div>
-                      {day.items.map((it,j)=><TaskItem key={j} task={it} checkKey={`trip-${day.date}-${j}`} checked={checked} onToggle={toggleCheck}/>)}
+                      {day.items.map((it,j)=>deletedItems[`itinerary-${day.date}-${j}`]?null:<TaskItem key={j} task={it} checkKey={`trip-${day.date}-${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`itinerary-${day.date}-${j}`)}/>)}
                       {cust.length>0&&<div style={{fontWeight:600,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",margin:"8px 0 6px"}}>Added by family</div>}
                       {cust.map((t,j)=>(
                         <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)}/>
@@ -855,33 +850,9 @@ function App(){
 
         {/* PACKING TAB */}
         {tab==="pack"&&(
-          <PackingTab packChecked={packChecked} onTogglePack={togglePack} customPackItems={customPackItems} setCustomPackItems={updatePackItems} packPerson={packPerson} setPackPerson={setPackPerson}/>
+          <PackingTab packChecked={packChecked} onTogglePack={togglePack} customPackItems={customPackItems} setCustomPackItems={updatePackItems} packPerson={packPerson} setPackPerson={setPackPerson} deletedItems={deletedItems} onDeleteItem={deleteItem}/>
         )}
 
-        {/* CHAT TAB */}
-        {tab==="chat"&&(
-          <div style={{display:"flex",flexDirection:"column",height:"calc(100dvh - 220px)",minHeight:380}}>
-            <div style={{flex:1,overflowY:"auto",paddingBottom:8}}>
-              {chatMessages.map((m,i)=>(
-                <div key={i} style={{marginBottom:12,display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
-                  <div style={{maxWidth:"85%",padding:"11px 14px",borderRadius:m.role==="user"?"18px 18px 4px 18px":"18px 18px 18px 4px",background:m.role==="user"?"#1a3a5c":"white",color:m.role==="user"?"white":"#222",fontSize:14,lineHeight:1.5,boxShadow:"0 1px 3px rgba(0,0,0,0.08)",whiteSpace:"pre-wrap"}}>{m.text}</div>
-                </div>
-              ))}
-              {chatLoading&&<div style={{display:"flex",marginBottom:12}}><div style={{background:"white",borderRadius:"18px 18px 18px 4px",padding:"11px 16px",boxShadow:"0 1px 3px rgba(0,0,0,0.08)",fontSize:18}}>···</div></div>}
-              <div ref={chatEndRef}/>
-            </div>
-            <div style={{display:"flex",gap:6,overflowX:"auto",paddingBottom:8,flexShrink:0}}>
-              {["What's still not booked?","Subway to Penn Station?","Hershey Park tips?","Best cheesesteak in Philly?","OBX activities for kids?"].map((q,i)=>(
-                <button key={i} onClick={()=>setChatInput(q)} style={{whiteSpace:"nowrap",padding:"7px 13px",borderRadius:20,border:"1px solid #ddd",background:"white",fontSize:13,cursor:"pointer",color:"#333",flexShrink:0}}>{q}</button>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:8,flexShrink:0}}>
-              <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&sendChat()}
-                placeholder="Ask anything about the trip..." style={{flex:1,padding:"13px 14px",borderRadius:12,border:"1px solid #ddd",fontSize:15,background:"white"}}/>
-              <button onClick={sendChat} disabled={chatLoading||!chatInput.trim()} style={{padding:"13px 18px",borderRadius:12,border:"none",background:chatLoading||!chatInput.trim()?"#ccc":"#1a3a5c",color:"white",fontWeight:700,fontSize:15,cursor:chatLoading||!chatInput.trim()?"not-allowed":"pointer"}}>→</button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
