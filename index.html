@@ -530,7 +530,7 @@ function App(){
     try{
       const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},
         body:JSON.stringify({model:"claude-haiku-4-5-20251001",max_tokens:1000,
-          system:TRIP_CONTEXT+`\n\nToday is ${today}.`+(locLabel?`\nUser current location: ${locLabel}.:"")`),
+          system:TRIP_CONTEXT+`\n\nToday is ${today}.`+(locLabel?`\nUser current location: ${locLabel}.`:""),
           messages:[...chatMessages.filter((_,i)=>i>0).map(m=>({role:m.role,content:m.text})),{role:"user",content:msg}]})});
       const data=await r.json();
       const reply=data.content?.find(b=>b.type==="text")?.text||"Couldn't get a response.";
