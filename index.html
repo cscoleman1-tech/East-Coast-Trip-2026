@@ -545,12 +545,19 @@ function NearbyTab({tripDayIdx}){
 
 // ── PLAN MY DAY ───────────────────────────────────────────────────────────────
 function PlanMyDaySection({day,dayPlans,dayPlanStatus,dayPlanError,planDay,customTasks}){
+  const [suggestion,setSuggestion]=useState("");
   const prominent=day.city==="NYC"||day.city==="Philly";
   const transitNote=day.city==="NYC"?"+ subway directions":day.city==="Philly"?"+ driving/walking":null;
   const status=dayPlanStatus[day.date];
   const plan=dayPlans[day.date];
   const totalItems=[...day.items,...(customTasks[day.date]||[])].length;
   if(totalItems<2)return null;
+  const submitSuggestion=()=>{
+    const s=suggestion.trim();
+    if(!s)return;
+    setSuggestion("");
+    planDay(day,s);
+  };
   return(
     <div style={{marginTop:4,marginBottom:14}}>
       {status!=="loading"&&(
@@ -596,6 +603,34 @@ function PlanMyDaySection({day,dayPlans,dayPlanStatus,dayPlanError,planDay,custo
             </div>
           </div>
           <div style={{fontSize:13,color:"#1e1b4b",lineHeight:1.85,whiteSpace:"pre-wrap"}}>{plan.plan}</div>
+          <div style={{marginTop:14,paddingTop:12,borderTop:"1px solid #e0e7ff"}}>
+            <div style={{fontSize:11,fontWeight:700,color:"#6366f1",marginBottom:7}}>💬 Suggest a change</div>
+            <div style={{display:"flex",gap:8,alignItems:"stretch"}}>
+              <input
+                value={suggestion}
+                onChange={e=>setSuggestion(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&submitSuggestion()}
+                placeholder={`e.g. "Do the ferry earlier so we can see the Statue of Liberty in daylight"`}
+                style={{
+                  flex:1,fontSize:13,padding:"9px 12px",borderRadius:10,
+                  border:"1.5px solid #c7d2fe",background:"white",color:"#1e1b4b",
+                  minWidth:0,
+                }}
+              />
+              <button
+                onClick={submitSuggestion}
+                disabled={!suggestion.trim()}
+                style={{
+                  padding:"9px 14px",borderRadius:10,border:"none",flexShrink:0,
+                  background:suggestion.trim()?"linear-gradient(135deg,#6366f1,#8b5cf6)":"#e2e8f0",
+                  color:suggestion.trim()?"white":"#94a3b8",
+                  fontSize:13,fontWeight:700,
+                  cursor:suggestion.trim()?"pointer":"default",
+                  opacity:suggestion.trim()?1:0.7,
+                }}
+              >Apply</button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -687,7 +722,7 @@ function App(){
   const tasksForDate=d=>({def:DEFAULT_PRETRIP[d]||[],cust:customTasks[d]||[]});
   const markedDates=allPreDates();
 
-  const planDay=async(day)=>{
+  const planDay=async(day,suggestion=null)=>{
     const allItems=[
       ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]).map(it=>it.text),
       ...(customTasks[day.date]||[]).map(t=>t.text),
@@ -699,10 +734,11 @@ function App(){
         setDayPlanStatus(p=>({...p,[day.date]:"config"}));
         return;
       }
+      const currentPlan=suggestion?dayPlans[day.date]?.plan:null;
       const resp=await fetch(WORKER_URL,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({city:day.city,date:day.label,activities:allItems}),
+        body:JSON.stringify({city:day.city,date:day.label,activities:allItems,...(suggestion&&currentPlan?{suggestion,currentPlan}:{})}),
         signal:AbortSignal.timeout(30000),
       });
       if(!resp.ok){

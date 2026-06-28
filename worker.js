@@ -30,9 +30,9 @@ export default {
       });
     }
 
-    const { city = "unknown city", date = "", activities = [] } = body;
+    const { city = "unknown city", date = "", activities = [], suggestion = null, currentPlan = null } = body;
 
-    if (!activities.length) {
+    if (!activities.length && !suggestion) {
       return new Response(JSON.stringify({ error: "No activities provided" }), {
         status: 400, headers: { ...CORS, "Content-Type": "application/json" },
       });
@@ -51,7 +51,21 @@ export default {
         "The family has a car or is using rideshare. Include driving directions, approximate drive times between stops, and any parking or access tips.";
     }
 
-    const prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.
+    let prompt;
+    if (suggestion && currentPlan) {
+      prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.
+
+Here is the current day itinerary:
+
+${currentPlan}
+
+The family wants to make this change: "${suggestion}"
+
+Revise the itinerary to incorporate their suggestion. Keep it efficient — minimize backtracking and transit time. ${transitGuide}
+
+Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise.`;
+    } else {
+      prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.
 
 Their activities for the day:
 ${activities.map((a, i) => `${i + 1}. ${a}`).join("\n")}
@@ -64,6 +78,7 @@ Create an optimized day plan that:
 5. Notes any practical family tips (best time to arrive, what to skip if short on time, etc.)
 
 Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise.`;
+    }
 
     try {
       // Resolve secret: handles plain string (env var) and Secrets Store binding (object with .get())
