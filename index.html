@@ -699,9 +699,20 @@ function App(){
   };
   const pullSync=async()=>{
     setSyncStatus("loading");setSyncLabel("Syncing…");
+    const local=loadLocal();
     const remote=await cloudLoad();
-    if(remote){const local=loadLocal();if(!local._at||(remote._at&&remote._at>local._at)){applyRemoteData(remote);saveLocal(remote);}setSyncStatus("ok");setSyncLabel("Synced ✓");}
-    else{const local=loadLocal();if(local)applyRemoteData(local);setSyncStatus("local");setSyncLabel("Offline — local data");}
+    if(remote){
+      // Only prefer local if it has a timestamp AND is strictly newer than remote
+      // (means cloudSave failed last session). Otherwise always apply remote — this
+      // fixes the bug where equal timestamps caused data loss on every refresh.
+      const localNewer=local._at&&(!remote._at||local._at>remote._at);
+      if(localNewer){applyRemoteData(local);cloudSave(local);}
+      else{applyRemoteData(remote);saveLocal(remote);}
+      setSyncStatus("ok");setSyncLabel("Synced ✓");
+    } else {
+      if(local)applyRemoteData(local);
+      setSyncStatus("local");setSyncLabel("Offline — local data");
+    }
   };
   useEffect(()=>{pullSync();},[]);
   useEffect(()=>{const id=setInterval(pullSync,20000);return()=>clearInterval(id);},[]);
