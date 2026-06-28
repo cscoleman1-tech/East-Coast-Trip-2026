@@ -346,8 +346,10 @@ function PackCommandBar({customPackItems,setCustomPackItems,deletedItems,silentD
       for(const a of actions){
         const people=a.person==="everyone"?ALL:[a.person];
         if(a.type==="add"){
-          const cat=CATS.includes(a.category)?a.category:CATS[0];
-          for(const p of people){addBatch[p]=addBatch[p]||{};addBatch[p][cat]=[...(addBatch[p][cat]||[]),a.item];newAdded.push({person:p,item:a.item,cat});}
+          for(const p of people){
+            const cat=p==="General"?(CATS.includes(a.category)?a.category:CATS[0]):`👤 ${p}`;
+            addBatch[p]=addBatch[p]||{};addBatch[p][cat]=[...(addBatch[p][cat]||[]),a.item];newAdded.push({person:p,item:a.item,cat});
+          }
         } else if(a.type==="remove"){
           for(const p of people){
             const match=findMatch(a.item,p);
