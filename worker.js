@@ -64,18 +64,28 @@ export default {
         const { command = "" } = body;
         if (!command.trim()) return json({ error: "No command provided" }, 400);
 
-        const prompt = `Parse this packing list command for the Coleman family trip (members: Chris, McKenna, Sawyer, Pierce, Bennett).
+        const prompt = `Parse this packing list command for the Coleman family trip.
+
+People: Chris, McKenna, Sawyer, Pierce, Bennett, General (shared family list).
 
 Command: "${command}"
 
-Return ONLY valid JSON — no markdown, no explanation, no code fences. Exactly this structure:
-{"actions":[{"type":"add","person":"Chris|McKenna|Sawyer|Pierce|Bennett|everyone","item":"item text","category":"👕 Clothes & Personal Care|🔌 Electronics & Chargers|🏖️ Beach & Outdoor Gear|👦 Kids' Stuff|📄 Documents & Travel Info"},{"type":"remove","person":"Chris|McKenna|Sawyer|Pierce|Bennett|everyone","item":"item text"}]}
+Return ONLY valid JSON, no markdown, no code fences:
+{"actions":[{"type":"add","person":"NAME","item":"item text","category":"CATEGORY"},{"type":"remove","person":"NAME","item":"item text"}]}
+
+Valid person values:
+- "Chris", "McKenna", "Sawyer", "Pierce", "Bennett" — that person's individual list
+- "General" — the shared family packing list (sunscreen, chargers, beach gear, documents, first aid, medications, etc.)
+- "everyone" — all 5 individuals ONLY (never General)
+
+Valid categories (for add only): "👕 Clothes & Personal Care" | "🔌 Electronics & Chargers" | "🏖️ Beach & Outdoor Gear" | "👦 Kids' Stuff" | "📄 Documents & Travel Info"
 
 Rules:
-- "everyone" adds/removes from all 5 individuals (never the General/shared list)
-- Choose the most fitting category for each added item
-- Keep item text natural and concise
-- For removes, keep item text close to what the user said`;
+- Return ONLY the actions the user asked for — do not add extra actions
+- For remove actions, omit the category field entirely
+- Use "General" when the item is shared/family-wide (sunscreen, meds, documents, chargers, beach gear)
+- Use a person's name when the item is personal to them
+- Keep item text natural and concise; for removes, keep it close to what the user said`;
 
         const text = await callAnthropic(apiKey, prompt, 512);
         const match = text.match(/\{[\s\S]*\}/);
