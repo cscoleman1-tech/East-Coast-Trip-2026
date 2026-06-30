@@ -952,6 +952,93 @@ function PlanMyDaySection({day,dayPlans,dayPlanStatus,dayPlanError,planDay,custo
   );
 }
 
+// ── GUIDED TOUR ───────────────────────────────────────────────────────────────
+const TOUR_KEY="trip2026_tour_seen";
+const TOUR_STEPS=[
+  {target:"header",    title:"Welcome to the Trip App! 🌊",   body:"Your family's complete East Coast adventure companion — tasks, itinerary, packing, and more, all synced across every device."},
+  {target:"tab-today", title:"Pre-Trip Tasks 📋",              body:"To-dos before the trip, sorted by due date. Check them off as you go — completed tasks stay visible, crossed out, at the bottom."},
+  {target:"tab-trip",  title:"Day-by-Day Itinerary 🗺️",      body:"Browse every travel day. Star activities as Core, edit any item, and tap \"Plan My Day\" to get an AI-optimized route."},
+  {target:"tab-pack",  title:"Packing Lists 🎒",               body:"Individual and shared packing lists for all five of you. Use the Smart Pack bar to bulk-add or remove items with plain language."},
+  {target:"tab-nearby",title:"Nearby Search 📍",               body:"Location-aware quick searches tied to your trip day — find food, gas, and attractions near wherever you are."},
+  {target:"tab-search",title:"Search Everything 🔍",           body:"Search across all tasks, packing items, and activities at once. Tap any result to jump straight to it."},
+];
+
+function GuidedTour({onClose}){
+  const [step,setStep]=useState(0);
+  const [rect,setRect]=useState(null);
+  const cur=TOUR_STEPS[step];
+  const isLast=step===TOUR_STEPS.length-1;
+
+  useEffect(()=>{
+    const measure=()=>{
+      const el=document.querySelector(`[data-tour="${cur.target}"]`);
+      if(el){const r=el.getBoundingClientRect();setRect({left:r.left,top:r.top,width:r.width,height:r.height});}
+      else setRect(null);
+    };
+    requestAnimationFrame(measure);
+    window.addEventListener("resize",measure);
+    return()=>window.removeEventListener("resize",measure);
+  },[step]);
+
+  const finish=()=>{try{localStorage.setItem(TOUR_KEY,"1");}catch{}onClose();};
+  const next=()=>{if(isLast)finish();else setStep(s=>s+1);};
+
+  const PAD=6,vw=window.innerWidth,vh=window.innerHeight;
+  const sr=rect?{
+    l:Math.max(0,rect.left-PAD),
+    t:Math.max(0,rect.top-PAD),
+    r:Math.min(vw,rect.left+rect.width+PAD),
+    b:Math.min(vh,rect.top+rect.height+PAD),
+  }:null;
+  const srW=sr?sr.r-sr.l:0,srH=sr?sr.b-sr.t:0;
+
+  let ttTop,ttBottom,ttTransform="translateX(-50%)",arrowDir=null;
+  if(sr){
+    if(sr.b+220<vh){ttTop=sr.b+14;arrowDir="up";}
+    else{ttBottom=vh-sr.t+14;arrowDir="down";}
+  }else{ttTop="50%";ttTransform="translate(-50%,-50%)";}
+
+  const panel={position:"fixed",background:"rgba(0,0,0,0.65)",zIndex:910};
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:909}}>
+      {sr?(
+        <>
+          <div onClick={finish} style={{...panel,top:0,left:0,right:0,height:sr.t}}/>
+          <div onClick={finish} style={{...panel,top:sr.b,left:0,right:0,bottom:0}}/>
+          <div onClick={finish} style={{...panel,top:sr.t,left:0,width:sr.l,height:srH}}/>
+          <div onClick={finish} style={{...panel,top:sr.t,left:sr.r,right:0,height:srH}}/>
+          <div style={{position:"fixed",top:sr.t,left:sr.l,width:srW,height:srH,borderRadius:14,border:"2px solid rgba(255,255,255,0.4)",zIndex:911,pointerEvents:"none"}}/>
+        </>
+      ):(
+        <div onClick={finish} style={{...panel,inset:0}}/>
+      )}
+      <div style={{position:"fixed",left:"50%",transform:ttTransform,top:ttTop,bottom:ttBottom,width:"min(340px,calc(100vw - 36px))",zIndex:912}}>
+        <div style={{background:"white",borderRadius:20,padding:"20px 20px 16px",boxShadow:"0 20px 60px rgba(0,0,0,0.45)",position:"relative"}}>
+          {arrowDir&&<div style={{position:"absolute",[arrowDir==="up"?"top":"bottom"]:-10,left:"50%",transform:"translateX(-50%)",width:0,height:0,borderLeft:"10px solid transparent",borderRight:"10px solid transparent",[arrowDir==="up"?"borderBottom":"borderTop"]:"10px solid white"}}/>}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{display:"flex",gap:5}}>
+              {TOUR_STEPS.map((_,i)=>(
+                <div key={i} style={{width:i===step?22:7,height:7,borderRadius:99,background:i===step?"#0f2444":i<step?"#94a3b8":"#e2e8f0",transition:"all 0.25s"}}/>
+              ))}
+            </div>
+            <span style={{fontSize:11,fontWeight:600,color:"#94a3b8"}}>{step+1} of {TOUR_STEPS.length}</span>
+          </div>
+          <div style={{fontSize:16,fontWeight:800,color:"#0f2444",marginBottom:8,lineHeight:1.3}}>{cur.title}</div>
+          <div style={{fontSize:14,color:"#475569",lineHeight:1.6,marginBottom:18}}>{cur.body}</div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={next} style={{flex:1,padding:"13px",background:"#0f2444",color:"white",border:"none",borderRadius:13,fontSize:14,fontWeight:700}}>
+              {isLast?"Let's go! 🚀":"Next →"}
+            </button>
+            <button onClick={finish} style={{padding:"13px 16px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:13,fontSize:14,fontWeight:600}}>
+              Skip
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function App(){
   const phase=getPhase();
@@ -989,6 +1076,7 @@ function App(){
   const [fitWarnings,setFitWarnings]=useState({});
   const [fitStatus,setFitStatus]=useState({});
   const [editedItems,setEditedItems]=useState({});
+  const [showTour,setShowTour]=useState(false);
   const syncTimer=useRef(null);
   const latestPatch=useRef(null);
   const isSaving=useRef(false);
@@ -1046,6 +1134,7 @@ function App(){
   };
   useEffect(()=>{pullSync();},[]);
   useEffect(()=>{const id=setInterval(pullSync,10000);return()=>clearInterval(id);},[]);
+  useEffect(()=>{try{if(!localStorage.getItem(TOUR_KEY))setTimeout(()=>setShowTour(true),900);}catch{}},[]);
 
   const toggleCheck=key=>{setChecked(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),checked:n});return n;});};
   const togglePack=key=>{setPackChecked(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),packChecked:n});return n;});};
@@ -1157,7 +1246,7 @@ function App(){
     <div style={{fontFamily:"-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif",background:"#eef1f7",minHeight:"100vh",maxWidth:480,margin:"0 auto",position:"relative"}}>
 
       {/* ── HEADER ── */}
-      <div style={{background:"linear-gradient(155deg,#091d38 0%,#0f2c52 45%,#1a4b88 100%)",padding:"0 18px",color:"white",boxShadow:"0 4px 32px rgba(9,29,56,0.45)",position:"sticky",top:0,zIndex:100}}>
+      <div data-tour="header" style={{background:"linear-gradient(155deg,#091d38 0%,#0f2c52 45%,#1a4b88 100%)",padding:"0 18px",color:"white",boxShadow:"0 4px 32px rgba(9,29,56,0.45)",position:"sticky",top:0,zIndex:100}}>
         <div style={{paddingTop:"max(16px, env(safe-area-inset-top))"}}>
 
           {/* Title row */}
@@ -1166,10 +1255,13 @@ function App(){
               <div style={{fontSize:10,fontWeight:800,letterSpacing:"0.16em",opacity:0.55,textTransform:"uppercase",marginBottom:3}}>East Coast Family Trip</div>
               <div style={{fontSize:22,fontWeight:900,letterSpacing:"-0.5px",lineHeight:1}}>Jul 9 – 24, 2026</div>
             </div>
-            <button onClick={pullSync} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:12,color:"white",padding:"8px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,backdropFilter:"blur(8px)"}}>
-              <span style={{width:8,height:8,borderRadius:"50%",background:syncDot,display:"inline-block",flexShrink:0,boxShadow:`0 0 6px ${syncDot}`}}/>
-              <span style={{fontSize:12,fontWeight:600,opacity:0.85}}>↻ {syncLabel}</span>
-            </button>
+            <div style={{display:"flex",gap:7,alignItems:"center"}}>
+              <button onClick={()=>setShowTour(true)} title="App tour" style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:11,color:"white",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,cursor:"pointer",flexShrink:0,backdropFilter:"blur(8px)"}}>?</button>
+              <button onClick={pullSync} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:12,color:"white",padding:"8px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,backdropFilter:"blur(8px)"}}>
+                <span style={{width:8,height:8,borderRadius:"50%",background:syncDot,display:"inline-block",flexShrink:0,boxShadow:`0 0 6px ${syncDot}`}}/>
+                <span style={{fontSize:12,fontWeight:600,opacity:0.85}}>↻ {syncLabel}</span>
+              </button>
+            </div>
           </div>
 
           {lastBy&&<div style={{fontSize:11,opacity:0.55,marginBottom:6}}>✨ {lastBy} just updated</div>}
@@ -1201,7 +1293,7 @@ function App(){
             {TABS.map(t=>{
               const isActive=tab===t.id;
               return(
-                <button key={t.id} onClick={()=>setTab(t.id)} style={{
+                <button key={t.id} data-tour={`tab-${t.id}`} onClick={()=>setTab(t.id)} style={{
                   flex:1,padding:"8px 4px",border:"none",cursor:"pointer",
                   background:isActive?"rgba(255,255,255,0.16)":"transparent",
                   borderRadius:13,display:"flex",flexDirection:"column",alignItems:"center",gap:3,
@@ -1401,6 +1493,8 @@ function App(){
         )}
 
       </div>
+
+      {showTour&&<GuidedTour onClose={()=>setShowTour(false)}/>}
 
     </div>
   );
