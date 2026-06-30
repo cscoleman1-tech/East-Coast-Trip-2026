@@ -146,13 +146,14 @@ const S={
 };
 
 // ── TASK ITEM ─────────────────────────────────────────────────────────────────
-function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggleCore,fitWarning}){
+function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggleCore,fitWarning,showDueDateEdit}){
   const [editing,setEditing]=useState(false);
   const [editText,setEditText]=useState(task.text);
   const [editType,setEditType]=useState(task.type);
+  const [editDueDate,setEditDueDate]=useState(task.dueDate||"");
   const done=!!checked[checkKey];
   const bColor=isCore?"#f59e0b":(TYPE_BORDER[task.type]||"#94a3b8");
-  const save=()=>{if(editText.trim())onEdit&&onEdit({text:editText.trim(),type:editType});setEditing(false);};
+  const save=()=>{if(editText.trim()){const upd={text:editText.trim(),type:editType};if(showDueDateEdit)upd.dueDate=editDueDate||null;onEdit&&onEdit(upd);}setEditing(false);};
 
   if(editing) return(
     <div style={{...S.cardSm,padding:"14px 15px",marginBottom:8,borderLeft:`4px solid ${S.accent}`}}>
@@ -163,6 +164,16 @@ function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggl
           <button key={v} onClick={()=>setEditType(v)} style={{padding:"5px 11px",borderRadius:20,border:`1.5px solid ${editType===v?S.navy:"#e2e8f0"}`,fontSize:12,fontWeight:editType===v?700:400,background:editType===v?S.navy:"white",color:editType===v?"white":"#64748b"}}>{ic} {v}</button>
         ))}
       </div>
+      {showDueDateEdit&&(
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Due date (optional)</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <input type="date" value={editDueDate} onChange={e=>setEditDueDate(e.target.value)}
+              style={{flex:1,padding:"9px 13px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:14,boxSizing:"border-box",background:"#f8fafc"}}/>
+            {editDueDate&&<button onClick={()=>setEditDueDate("")} style={{padding:"9px 12px",background:"#f1f5f9",color:"#94a3b8",border:"none",borderRadius:10,fontSize:12,fontWeight:600,flexShrink:0}}>Clear</button>}
+          </div>
+        </div>
+      )}
       <div style={{display:"flex",gap:8}}>
         <button onClick={save} style={{flex:1,padding:"10px",background:S.navy,color:"white",border:"none",borderRadius:11,fontSize:14,fontWeight:700}}>Save</button>
         <button onClick={()=>setEditing(false)} style={{padding:"10px 16px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:11,fontSize:14,fontWeight:600}}>Cancel</button>
@@ -179,10 +190,11 @@ function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggl
         <div style={{flex:1,fontSize:15,color:done?"#94a3b8":"#1e293b",lineHeight:1.45,textDecoration:done?"line-through":"none",textDecorationColor:"#cbd5e1",cursor:"pointer"}} onClick={()=>onToggle(checkKey)}>
           <span style={{marginRight:6}}>{TYPE_ICONS[task.type]||"•"}</span>{task.text}
           {isCore&&!done&&<span style={{marginLeft:6,fontSize:10,fontWeight:800,color:"#d97706",background:"#fef3c7",borderRadius:5,padding:"1px 6px",verticalAlign:"middle"}}>CORE</span>}
+          {showDueDateEdit&&task.dueDate&&!done&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>📅 {fmtDate(task.dueDate)}</div>}
         </div>
         <div style={{display:"flex",gap:5,flexShrink:0,alignItems:"center",marginTop:1}}>
           {onToggleCore&&<span onClick={e=>{e.stopPropagation();onToggleCore(checkKey);}} style={{fontSize:14,cursor:"pointer",opacity:isCore?1:0.22,lineHeight:1}}>⭐</span>}
-          {onEdit&&!done&&<span onClick={()=>{setEditText(task.text);setEditType(task.type);setEditing(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.3,lineHeight:1}}>✏️</span>}
+          {onEdit&&!done&&<span onClick={()=>{setEditText(task.text);setEditType(task.type);if(showDueDateEdit)setEditDueDate(task.dueDate||"");setEditing(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.3,lineHeight:1}}>✏️</span>}
           {onRemove&&<span onClick={onRemove} style={{color:"#cbd5e1",fontSize:22,cursor:"pointer",lineHeight:1,padding:"0 2px",fontWeight:300}}>×</span>}
         </div>
       </div>
@@ -204,6 +216,37 @@ function AddTaskForm({taskText,setTaskText,taskType,setTaskType,onAdd,onCancel})
       </div>
       <div style={{display:"flex",gap:9}}>
         <button onClick={onAdd} style={{flex:1,padding:"12px",background:S.navy,color:"white",border:"none",borderRadius:12,fontSize:14,fontWeight:700}}>Add Task</button>
+        <button onClick={onCancel} style={{padding:"12px 18px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:12,fontSize:14,fontWeight:600}}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+// ── PRE-TRIP ADD FORM ─────────────────────────────────────────────────────────
+function PreTripAddForm({onAdd,onCancel}){
+  const [text,setText]=useState("");
+  const [type,setType]=useState("confirm");
+  const [dueDate,setDueDate]=useState("");
+  const add=()=>{if(!text.trim())return;onAdd(text.trim(),type,dueDate||null);setText("");setDueDate("");};
+  return(
+    <div style={{...S.cardSm,padding:15,border:"2px dashed #cbd5e1",background:"#f8fafc",marginBottom:8,boxShadow:"none"}}>
+      <input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()} placeholder="What needs to get done?" autoFocus
+        style={{width:"100%",padding:"11px 14px",borderRadius:11,border:"1.5px solid #e2e8f0",fontSize:15,marginBottom:10,boxSizing:"border-box",background:"white"}}/>
+      <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+        {[["booking","🎟️ Book"],["confirm","📞 Confirm"],["pack","🎒 Pack"],["activity","🎯 Do"],["food","🍽️ Food"]].map(([v,l])=>(
+          <button key={v} onClick={()=>setType(v)} style={{padding:"6px 12px",borderRadius:20,border:`1.5px solid ${type===v?S.navy:"#e2e8f0"}`,fontSize:12,fontWeight:type===v?700:500,background:type===v?S.navy:"white",color:type===v?"white":"#64748b"}}>{l}</button>
+        ))}
+      </div>
+      <div style={{marginBottom:11}}>
+        <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Due date (optional)</div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}
+            style={{flex:1,padding:"9px 13px",borderRadius:11,border:"1.5px solid #e2e8f0",fontSize:14,boxSizing:"border-box",background:"white"}}/>
+          {dueDate&&<button onClick={()=>setDueDate("")} style={{padding:"9px 12px",background:"#f1f5f9",color:"#94a3b8",border:"none",borderRadius:11,fontSize:12,fontWeight:600,flexShrink:0}}>Clear</button>}
+        </div>
+      </div>
+      <div style={{display:"flex",gap:9}}>
+        <button onClick={add} style={{flex:1,padding:"12px",background:S.navy,color:"white",border:"none",borderRadius:12,fontSize:14,fontWeight:700}}>Add Task</button>
         <button onClick={onCancel} style={{padding:"12px 18px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:12,fontSize:14,fontWeight:600}}>Cancel</button>
       </div>
     </div>
@@ -917,7 +960,6 @@ function App(){
 
   const [tab,setTab]=useState("today");
   const [dayIdx,setDayIdx]=useState(tripDayIdx);
-  const [preTripDate,setPreTripDate]=useState(today);
   const [customTasks,setCustomTasks]=useState({});
   const [checked,setChecked]=useState({});
   const [packChecked,setPackChecked]=useState({});
@@ -928,8 +970,9 @@ function App(){
   const [taskText,setTaskText]=useState("");
   const [taskType,setTaskType]=useState("confirm");
   const [taskDate,setTaskDate]=useState(today);
-  const [showCalendar,setShowCalendar]=useState(false);
   const [expandedDay,setExpandedDay]=useState(null);
+  const [preTripCustom,setPreTripCustom]=useState([]);
+  const [preTripEdits,setPreTripEdits]=useState({});
   const [locLabel,setLocLabel]=useState(null);
   const [locError,setLocError]=useState(null);
   const [locLoading,setLocLoading]=useState(false);
@@ -961,7 +1004,7 @@ function App(){
     navigator.geolocation.getCurrentPosition(async pos=>{const{latitude:lat,longitude:lng}=pos.coords;setLocation({lat,lng});setLocLoading(false);setLocLabel(await reverseGeocode(lat,lng));},err=>{setLocLoading(false);if(err.code===1)setLocError("Location denied — check Settings");else setLocError("Location unavailable — tap Retry");},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
   };
 
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems});
+  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits});
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks)setCustomTasks(data.customTasks);
@@ -972,6 +1015,8 @@ function App(){
     if(data.dayPlans)setDayPlans(data.dayPlans);
     if(data.coreTasks)setCoreTasks(data.coreTasks);
     if(data.editedItems)setEditedItems(data.editedItems);
+    if(data.preTripCustom)setPreTripCustom(data.preTripCustom);
+    if(data.preTripEdits)setPreTripEdits(data.preTripEdits);
     if(data._by){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
   const syncNow=async(patch)=>{
@@ -1017,6 +1062,11 @@ function App(){
   const openAddForm=dateKey=>{setAddingTo(dateKey);setTaskDate(dateKey);setTaskText("");setTaskType("confirm");};
   const toggleCore=key=>{setCoreTasks(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),coreTasks:n});return n;});};
   const editBuiltinItem=(key,upd)=>{setEditedItems(p=>{const n={...p,[key]:{...(p[key]||{}),...upd}};syncNow({...getState(),editedItems:n});return n;});};
+  const addPreTripTask=(text,type,dueDate)=>{const id=`ptc-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;setPreTripCustom(p=>{const n=[...p,{id,text,type,dueDate:dueDate||null}];syncNow({...getState(),preTripCustom:n});return n;});};
+  const editPreTripCustom=(id,upd)=>{setPreTripCustom(p=>{const n=p.map(t=>t.id===id?{...t,...upd}:t);syncNow({...getState(),preTripCustom:n});return n;});};
+  const removePreTripCustom=(id)=>{if(!window.confirm("Remove this task?"))return;setPreTripCustom(p=>{const n=p.filter(t=>t.id!==id);syncNow({...getState(),preTripCustom:n});return n;});};
+  const editBuiltinPreTrip=(date,i,upd)=>{const key=`${date}-${i}`;setPreTripEdits(p=>{const n={...p,[key]:{...(p[key]||{}),...upd}};syncNow({...getState(),preTripEdits:n});return n;});};
+  const deleteBuiltinPreTrip=(date,i)=>{const delKey=`pretrip-def-${date}-${i}`;if(!window.confirm("Remove this task?"))return;setDeletedItems(p=>{const n={...p,[delKey]:true};syncNow({...getState(),deletedItems:n});return n;});};
   const runCheckFit=async(day)=>{
     const date=day.date;
     setFitStatus(p=>({...p,[date]:"loading"}));
@@ -1038,10 +1088,6 @@ function App(){
       setFitStatus(p=>({...p,[date]:"error"}));
     }
   };
-  const allPreDates=()=>[...new Set([...Object.keys(DEFAULT_PRETRIP),...Object.keys(customTasks)])].sort();
-  const tasksForDate=d=>({def:DEFAULT_PRETRIP[d]||[],cust:customTasks[d]||[]});
-  const markedDates=allPreDates();
-
   const planDay=async(day,suggestion=null)=>{
     const allItems=[
       ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]).map((it,j)=>(editedItems[`itinerary-${day.date}-${j}`]?.text)||it.text),
@@ -1109,8 +1155,6 @@ function App(){
 
   return(
     <div style={{fontFamily:"-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif",background:"#eef1f7",minHeight:"100vh",maxWidth:480,margin:"0 auto",position:"relative"}}>
-
-      {showCalendar&&<MiniCalendar markedDates={markedDates} selectedDate={taskDate} onSelect={d=>{setTaskDate(d);setShowCalendar(false);}} onClose={()=>setShowCalendar(false)}/>}
 
       {/* ── HEADER ── */}
       <div style={{background:"linear-gradient(155deg,#091d38 0%,#0f2c52 45%,#1a4b88 100%)",padding:"0 18px",color:"white",boxShadow:"0 4px 32px rgba(9,29,56,0.45)",position:"sticky",top:0,zIndex:100}}>
@@ -1181,96 +1225,46 @@ function App(){
         {tab==="today"&&(
           <div style={{animation:"fadeUp 0.22s ease"}}>
             {phase==="pretrip"&&(()=>{
-              const{def,cust}=tasksForDate(preTripDate);
-              const hasTasks=def.length+cust.length>0;
+              const ptTasks=[];
+              Object.entries(DEFAULT_PRETRIP).forEach(([date,tasks])=>{
+                tasks.forEach((t,i)=>{
+                  const delKey=`pretrip-def-${date}-${i}`;
+                  if(deletedItems[delKey])return;
+                  const checkKey=`${date}-def-${i}`;
+                  const edit=preTripEdits[`${date}-${i}`]||{};
+                  const dueDate=edit.dueDate!==undefined?edit.dueDate:date;
+                  ptTasks.push({task:{...t,...edit,dueDate},checkKey,isBuiltin:true,_date:date,_idx:i,dueDate});
+                });
+              });
+              preTripCustom.forEach(item=>{
+                ptTasks.push({task:{text:item.text,type:item.type,dueDate:item.dueDate},checkKey:item.id,isBuiltin:false,id:item.id,dueDate:item.dueDate});
+              });
+              const incomplete=ptTasks.filter(t=>!checked[t.checkKey]);
+              const complete=ptTasks.filter(t=>!!checked[t.checkKey]);
+              const dated=incomplete.filter(t=>t.dueDate).sort((a,b)=>a.dueDate<b.dueDate?-1:a.dueDate>b.dueDate?1:0);
+              const undated=incomplete.filter(t=>!t.dueDate).sort((a,b)=>a.task.text.localeCompare(b.task.text));
+              const sorted=[...dated,...undated,...complete];
               return(
                 <div>
-                  {/* Date nav */}
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-                    <button onClick={()=>{const d=new Date(preTripDate+"T12:00:00");d.setDate(d.getDate()-1);const s=d.toISOString().split("T")[0];if(s>=today)setPreTripDate(s);}}
-                      disabled={preTripDate<=today} style={{width:40,height:40,borderRadius:13,...S.cardSm,border:"none",fontSize:18,color:"#64748b",opacity:preTripDate<=today?0.3:1,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-                    <div style={{flex:1,textAlign:"center"}}>
-                      <div style={{fontWeight:800,fontSize:15,color:S.navy}}>{preTripDate===today?"📋 Today's To-Dos":`📋 ${fmtDate(preTripDate)}`}</div>
-                      {preTripDate!==today&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{getDaysBetween(preTripDate)>0?`in ${getDaysBetween(preTripDate)} days`:`${Math.abs(getDaysBetween(preTripDate))} days ago`}</div>}
-                    </div>
-                    <button onClick={()=>{const d=new Date(preTripDate+"T12:00:00");d.setDate(d.getDate()+1);const s=d.toISOString().split("T")[0];if(s<TRIP_START)setPreTripDate(s);}}
-                      disabled={preTripDate>=new Date(new Date(TRIP_START+"T12:00:00").getTime()-86400000).toISOString().split("T")[0]}
-                      style={{width:40,height:40,borderRadius:13,...S.cardSm,border:"none",fontSize:18,color:"#64748b",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
-                  </div>
-
-                  {preTripDate===today&&<CountdownCard/>}
-
-                  {/* Overdue rollover */}
-                  {preTripDate===today&&(()=>{
-                    const rollover=[];
-                    Object.entries(DEFAULT_PRETRIP).forEach(([date,tasks])=>{if(date<today)tasks.forEach((t,i)=>{if(!checked[`${date}-def-${i}`]&&!deletedItems[`pretrip-def-${date}-${i}`])rollover.push({...t,_checkKey:`${date}-def-${i}`,_delKey:`pretrip-def-${date}-${i}`,_dateLabel:fmtDate(date)});});});
-                    Object.entries(customTasks).forEach(([date,tasks])=>{if(date<today)tasks.forEach((t,i)=>{if(!checked[`${date}-cust-${i}`]&&!deletedItems[`pretrip-cust-${date}-${i}`])rollover.push({...t,_checkKey:`${date}-cust-${i}`,_delKey:`pretrip-cust-${date}-${i}`,_dateLabel:fmtDate(date)});});});
-                    STILL_NEEDED_ITEMS.forEach((text,i)=>{if(!checked[`booking-${i}`]&&!deletedItems[`stillneeded-${i}`])rollover.push({text,type:"booking",_checkKey:`booking-${i}`,_delKey:`stillneeded-${i}`,_dateLabel:"Still needed"});});
-                    if(!rollover.length)return null;
-                    return(
-                      <div style={{marginBottom:16}}>
-                        <div style={{fontSize:11,fontWeight:800,color:"#f97316",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:9}}>⚠️ Overdue — Rolled Forward</div>
-                        {rollover.map((item,idx)=>(
-                          <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:12,...S.cardSm,padding:"13px 14px 13px 15px",marginBottom:8,borderLeft:"4px solid #f97316",background:"#fffbf7"}}>
-                            <div onClick={()=>toggleCheck(item._checkKey)} style={{width:24,height:24,borderRadius:7,border:"2px solid #fed7aa",background:"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,cursor:"pointer"}}/>
-                            <div style={{flex:1,cursor:"pointer"}} onClick={()=>toggleCheck(item._checkKey)}>
-                              <div style={{fontSize:15,color:"#7c2d12",lineHeight:1.4}}><span style={{marginRight:6}}>{TYPE_ICONS[item.type]||"•"}</span>{item.text}</div>
-                              <div style={{fontSize:11,color:"#d97706",marginTop:3,fontWeight:600}}>{item._dateLabel}</div>
-                            </div>
-                            <span onClick={()=>deleteItem(item._delKey)} style={{color:"#e2e8f0",fontSize:22,cursor:"pointer",lineHeight:1,padding:"0 2px"}}>×</span>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-
-                  {hasTasks?(
-                    <>
-                      <div style={{...S.label,marginBottom:9}}>{preTripDate===today?"Due Today":"Tasks for this date"}</div>
-                      {def.map((t,i)=>deletedItems[`pretrip-def-${preTripDate}-${i}`]?null:<TaskItem key={`d${i}`} task={t} checkKey={`${preTripDate}-def-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`pretrip-def-${preTripDate}-${i}`)}/>)}
-                      {cust.map((t,i)=><TaskItem key={`c${i}`} task={t} checkKey={`${preTripDate}-cust-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(preTripDate,i)} onEdit={u=>editTask(preTripDate,i,u)}/>)}
-                    </>
-                  ):(
+                  <CountdownCard/>
+                  {sorted.length===0&&(
                     <div style={{...S.card,padding:"26px 18px",textAlign:"center",marginBottom:12}}>
-                      <div style={{fontSize:36,marginBottom:10}}>{preTripDate===today?"🌴":"📭"}</div>
-                      <div style={{fontWeight:800,fontSize:15,color:"#1e293b"}}>{preTripDate===today?"Nothing due today!":"No tasks on this date"}</div>
-                      <div style={{fontSize:13,color:"#94a3b8",marginTop:5}}>{preTripDate===today?"Enjoy the calm before the adventure.":"Add one below, or browse with ‹ ›"}</div>
+                      <div style={{fontSize:36,marginBottom:10}}>🌴</div>
+                      <div style={{fontWeight:800,fontSize:15,color:"#1e293b"}}>All tasks complete!</div>
+                      <div style={{fontSize:13,color:"#94a3b8",marginTop:5}}>Add more tasks below.</div>
                     </div>
                   )}
-
-                  {addingTo===preTripDate?(
-                    <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
+                  {sorted.map(entry=>(
+                    <TaskItem key={entry.checkKey} task={entry.task} checkKey={entry.checkKey} checked={checked} onToggle={toggleCheck} showDueDateEdit={true}
+                      onEdit={entry.isBuiltin?upd=>editBuiltinPreTrip(entry._date,entry._idx,upd):upd=>editPreTripCustom(entry.id,upd)}
+                      onRemove={entry.isBuiltin?()=>deleteBuiltinPreTrip(entry._date,entry._idx):()=>removePreTripCustom(entry.id)}
+                    />
+                  ))}
+                  {addingTo==="pretrip"?(
+                    <PreTripAddForm onAdd={(text,type,dueDate)=>{addPreTripTask(text,type,dueDate);setAddingTo(null);}} onCancel={()=>setAddingTo(null)}/>
                   ):(
-                    <button onClick={()=>openAddForm(preTripDate)} style={{width:"100%",padding:"13px",...S.cardSm,background:"white",color:S.navy,border:"2px dashed #cbd5e1",fontSize:14,fontWeight:700,marginBottom:14,boxShadow:"none"}}>+ Add a task</button>
+                    <button onClick={()=>setAddingTo("pretrip")} style={{width:"100%",padding:"13px",...S.cardSm,background:"white",color:S.navy,border:"2px dashed #cbd5e1",fontSize:14,fontWeight:700,marginBottom:14,boxShadow:"none"}}>+ Add a task</button>
                   )}
-
-                  {preTripDate===today&&(()=>{
-                    const up=allPreDates().filter(d=>d>today).slice(0,2);
-                    if(!up.length)return null;
-                    return(
-                      <div style={{...S.card,padding:"15px 17px"}}>
-                        <div style={{...S.label,marginBottom:11}}>Coming Up</div>
-                        {up.map(d=>{
-                          const{def:df,cust:ct}=tasksForDate(d);const tot=df.length+ct.length;
-                          return(
-                            <div key={d} onClick={()=>setPreTripDate(d)} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #f8fafc",cursor:"pointer"}}>
-                              <div style={{width:46,textAlign:"center",background:"#eff6ff",borderRadius:12,padding:"5px 0"}}>
-                                <div style={{fontSize:11,fontWeight:700,color:"#64748b"}}>{fmtDate(d).split(",")[0]}</div>
-                                <div style={{fontSize:11,color:S.accent,fontWeight:800}}>in {getDaysBetween(d)}d</div>
-                              </div>
-                              <div style={{flex:1}}>
-                                <div style={{fontSize:14,color:"#1e293b",fontWeight:700}}>{tot} task{tot!==1?"s":""} due</div>
-                                <div style={{fontSize:12,color:"#94a3b8",marginTop:1}}>{(df[0]||ct[0])?.text?.slice(0,44)}…</div>
-                              </div>
-                              <div style={{color:"#d1d5db",fontSize:18}}>›</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-
-                  {preTripDate!==today&&<button onClick={()=>setPreTripDate(today)} style={{width:"100%",marginTop:10,padding:"13px",background:S.navy,color:"white",border:"none",borderRadius:14,fontSize:14,fontWeight:700,boxShadow:"0 4px 14px rgba(15,36,68,0.3)"}}>Back to Today</button>}
                 </div>
               );
             })()}
