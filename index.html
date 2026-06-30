@@ -821,6 +821,8 @@ function App(){
   const [dayPlanSuggestion,setDayPlanSuggestion]=useState({});
   const syncTimer=useRef(null);
   const latestPatch=useRef(null);
+  const isSaving=useRef(false);
+  const lastSavedAt=useRef(0);
 
   const reverseGeocode=async(lat,lng)=>{
     const fb=`${lat.toFixed(4)}, ${lng.toFixed(4)}`;
@@ -845,8 +847,12 @@ function App(){
   };
   const syncNow=async(patch)=>{
     setSyncStatus("saving");setSyncLabel("Saving…");
-    const data={...patch,_at:Date.now()};
+    isSaving.current=true;
+    const ts=Date.now();
+    lastSavedAt.current=ts;
+    const data={...patch,_at:ts};
     const ok=await cloudSave(data);
+    isSaving.current=false;
     if(ok){saveLocal(data);setSyncStatus("ok");setSyncLabel("Synced ✓");}
     else{setSyncStatus("error");setSyncLabel("⚠️ Sync failed — tap to retry");}
   };
@@ -856,10 +862,13 @@ function App(){
     syncTimer.current=setTimeout(()=>syncNow(latestPatch.current),500);
   };
   const pullSync=async()=>{
+    if(isSaving.current)return;
     setSyncStatus("loading");setSyncLabel("Syncing…");
     const remote=await cloudLoad();
-    if(remote){applyRemoteData(remote);saveLocal(remote);setSyncStatus("ok");setSyncLabel("Synced ✓");}
-    else{const local=loadLocal();if(local)applyRemoteData(local);setSyncStatus("local");setSyncLabel("Offline — cached data");}
+    if(remote){
+      if(!remote._at||remote._at>=lastSavedAt.current){applyRemoteData(remote);saveLocal(remote);}
+      setSyncStatus("ok");setSyncLabel("Synced ✓");
+    }else{const local=loadLocal();if(local)applyRemoteData(local);setSyncStatus("local");setSyncLabel("Offline — cached data");}
   };
   useEffect(()=>{pullSync();},[]);
   useEffect(()=>{const id=setInterval(pullSync,10000);return()=>clearInterval(id);},[]);
