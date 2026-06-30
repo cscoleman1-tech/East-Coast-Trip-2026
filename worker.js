@@ -93,6 +93,42 @@ Rules:
         return json(JSON.parse(match[0]));
       }
 
+      // ── CHECK FIT ───────────────────────────────────────────────────────────
+      if (body.action === "checkFit") {
+        const { city = "unknown", date = "", tasks = [] } = body;
+        if (!tasks.length) return json({ error: "No tasks provided" }, 400);
+
+        const coreItems = tasks.filter(t => t.isCore);
+        const nonCoreItems = tasks.filter(t => !t.isCore);
+
+        if (!nonCoreItems.length) return json({ warnings: [] });
+
+        const coreList = coreItems.length
+          ? coreItems.map(t => `• ${t.text}`).join("\n")
+          : "(none flagged as Core — evaluate all items against each other)";
+        const nonCoreList = nonCoreItems.map(t => `• [${t.key}] ${t.text}`).join("\n");
+
+        const prompt = `You are a practical family trip logistics evaluator for the Coleman family (2 adults, 3 kids ages 10-16) in ${city} on ${date}.
+
+Core activities (non-negotiable anchors for the day):
+${coreList}
+
+Other activities to evaluate for fit:
+${nonCoreList}
+
+For each "other" activity, decide if it creates a MEANINGFUL logistical problem relative to the core items and city layout: significant detour (30+ extra minutes), major backtracking across the city, or a real time conflict. If it fits fine alongside the core items, do NOT flag it.
+
+Return ONLY valid JSON, no markdown, no explanation:
+{"warnings":[{"key":"EXACT_KEY_FROM_INPUT","reason":"concise reason, under 12 words"}]}
+
+Use the exact key string from the brackets in the input (e.g. trip-2026-07-10-3). Empty warnings array if everything fits.`;
+
+        const text = await callAnthropic(apiKey, prompt, 400);
+        const match = text.match(/\{[\s\S]*\}/);
+        if (!match) return json({ error: "AI returned no JSON", raw: text }, 502);
+        return json(JSON.parse(match[0]));
+      }
+
       // ── DAY PLANNER ─────────────────────────────────────────────────────────
       const { city = "unknown city", date = "", activities = [], suggestion = null, currentPlan = null } = body;
 
