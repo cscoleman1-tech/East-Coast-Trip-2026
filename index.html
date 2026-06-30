@@ -183,7 +183,6 @@ function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggl
         <div style={{display:"flex",gap:5,flexShrink:0,alignItems:"center",marginTop:1}}>
           {onToggleCore&&<span onClick={e=>{e.stopPropagation();onToggleCore(checkKey);}} style={{fontSize:14,cursor:"pointer",opacity:isCore?1:0.22,lineHeight:1}}>⭐</span>}
           {onEdit&&!done&&<span onClick={()=>{setEditText(task.text);setEditType(task.type);setEditing(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.3,lineHeight:1}}>✏️</span>}
-          {!onEdit&&!onRemove&&<span style={{fontSize:11,opacity:0.12}}>🔒</span>}
           {onRemove&&<span onClick={onRemove} style={{color:"#cbd5e1",fontSize:22,cursor:"pointer",lineHeight:1,padding:"0 2px",fontWeight:300}}>×</span>}
         </div>
       </div>
@@ -946,6 +945,7 @@ function App(){
   const [coreTasks,setCoreTasks]=useState({});
   const [fitWarnings,setFitWarnings]=useState({});
   const [fitStatus,setFitStatus]=useState({});
+  const [editedItems,setEditedItems]=useState({});
   const syncTimer=useRef(null);
   const latestPatch=useRef(null);
   const isSaving=useRef(false);
@@ -961,7 +961,7 @@ function App(){
     navigator.geolocation.getCurrentPosition(async pos=>{const{latitude:lat,longitude:lng}=pos.coords;setLocation({lat,lng});setLocLoading(false);setLocLabel(await reverseGeocode(lat,lng));},err=>{setLocLoading(false);if(err.code===1)setLocError("Location denied — check Settings");else setLocError("Location unavailable — tap Retry");},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
   };
 
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks});
+  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems});
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks)setCustomTasks(data.customTasks);
@@ -971,6 +971,7 @@ function App(){
     if(data.deletedItems)setDeletedItems(data.deletedItems);
     if(data.dayPlans)setDayPlans(data.dayPlans);
     if(data.coreTasks)setCoreTasks(data.coreTasks);
+    if(data.editedItems)setEditedItems(data.editedItems);
     if(data._by){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
   const syncNow=async(patch)=>{
@@ -1003,7 +1004,7 @@ function App(){
 
   const toggleCheck=key=>{setChecked(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),checked:n});return n;});};
   const togglePack=key=>{setPackChecked(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),packChecked:n});return n;});};
-  const deleteItem=key=>{if(!window.confirm("Delete this item permanently?"))return;setDeletedItems(p=>{const n={...p,[key]:true};syncNow({...getState(),deletedItems:n});return n;});};
+  const deleteItem=key=>{if(!window.confirm("Remove this task?"))return;setDeletedItems(p=>{const n={...p,[key]:true};syncNow({...getState(),deletedItems:n});return n;});};
   const silentDeleteItem=key=>{setDeletedItems(p=>{const n={...p,[key]:true};syncNow({...getState(),deletedItems:n});return n;});};
   const handleAddTask=()=>{
     if(!taskText.trim())return;const target=taskDate||today;
@@ -1015,13 +1016,14 @@ function App(){
   const updatePackItems=fn=>{setCustomPackItems(p=>{const n=typeof fn==="function"?fn(p):fn;syncNow({...getState(),customPackItems:n});return n;});};
   const openAddForm=dateKey=>{setAddingTo(dateKey);setTaskDate(dateKey);setTaskText("");setTaskType("confirm");};
   const toggleCore=key=>{setCoreTasks(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),coreTasks:n});return n;});};
+  const editBuiltinItem=(key,upd)=>{setEditedItems(p=>{const n={...p,[key]:{...(p[key]||{}),...upd}};syncNow({...getState(),editedItems:n});return n;});};
   const runCheckFit=async(day)=>{
     const date=day.date;
     setFitStatus(p=>({...p,[date]:"loading"}));
     setFitWarnings(p=>({...p,[date]:{}}));
     try{
       const tasks=[
-        ...day.items.filter((_,j)=>!deletedItems[`itinerary-${date}-${j}`]).map((it,j)=>({key:`trip-${date}-${j}`,text:it.text,isCore:!!coreTasks[`trip-${date}-${j}`]})),
+        ...day.items.filter((_,j)=>!deletedItems[`itinerary-${date}-${j}`]).map((it,j)=>({key:`trip-${date}-${j}`,text:(editedItems[`itinerary-${date}-${j}`]?.text)||it.text,isCore:!!coreTasks[`trip-${date}-${j}`]})),
         ...(customTasks[date]||[]).map((t,j)=>({key:`trip-${date}-c${j}`,text:t.text,isCore:!!coreTasks[`trip-${date}-c${j}`]})),
       ];
       const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"checkFit",city:day.city,date:day.label,tasks}),signal:AbortSignal.timeout(20000)});
@@ -1042,7 +1044,7 @@ function App(){
 
   const planDay=async(day,suggestion=null)=>{
     const allItems=[
-      ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]).map(it=>it.text),
+      ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]).map((it,j)=>(editedItems[`itinerary-${day.date}-${j}`]?.text)||it.text),
       ...(customTasks[day.date]||[]).map(t=>t.text),
     ];
     if(allItems.length<2)return;
@@ -1296,7 +1298,7 @@ function App(){
                   </div>
                 ))}
                 <div style={{...S.label,marginBottom:9}}>Activities</div>
-                {ITINERARY[dayIdx].items.map((it,i)=>deletedItems[`itinerary-${ITINERARY[dayIdx].date}-${i}`]?null:<TaskItem key={i} task={it} checkKey={`trip-${ITINERARY[dayIdx].date}-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`itinerary-${ITINERARY[dayIdx].date}-${i}`)} isCore={!!coreTasks[`trip-${ITINERARY[dayIdx].date}-${i}`]} onToggleCore={toggleCore}/>)}
+                {ITINERARY[dayIdx].items.map((it,i)=>{const key=`itinerary-${ITINERARY[dayIdx].date}-${i}`;const ck=`trip-${ITINERARY[dayIdx].date}-${i}`;if(deletedItems[key])return null;return(<TaskItem key={i} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore}/>);})}
                 {(customTasks[ITINERARY[dayIdx].date]||[]).map((t,i)=>(
                   <TaskItem key={`c${i}`} task={t} checkKey={`trip-${ITINERARY[dayIdx].date}-c${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(ITINERARY[dayIdx].date,i)} onEdit={u=>editTask(ITINERARY[dayIdx].date,i,u)} isCore={!!coreTasks[`trip-${ITINERARY[dayIdx].date}-c${i}`]} onToggleCore={toggleCore}/>
                 ))}
@@ -1361,7 +1363,7 @@ function App(){
                         </div>
                       ))}
                       <div style={{...S.label,marginBottom:8}}>Activities</div>
-                      {day.items.map((it,j)=>deletedItems[`itinerary-${day.date}-${j}`]?null:<TaskItem key={j} task={it} checkKey={`trip-${day.date}-${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`itinerary-${day.date}-${j}`)} isCore={!!coreTasks[`trip-${day.date}-${j}`]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[`trip-${day.date}-${j}`]}/>)}
+                      {day.items.map((it,j)=>{const key=`itinerary-${day.date}-${j}`;const ck=`trip-${day.date}-${j}`;if(deletedItems[key])return null;return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);})}
                       {cust.map((t,j)=>(
                         <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)} isCore={!!coreTasks[`trip-${day.date}-c${j}`]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[`trip-${day.date}-c${j}`]}/>
                       ))}
