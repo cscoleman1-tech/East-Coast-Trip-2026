@@ -98,73 +98,37 @@ const ITINERARY=[
   {date:"2026-07-24",label:"Fri Jul 24",city:"Fly Home",emoji:"✈️",title:"Fly Home to SLC",summary:"Drop car 11am · Depart ORF 3:30pm",lodging:"",transit:"",confirmations:[],items:[{text:"Check out JMJ Seascape",type:"transport"},{text:"Drop Enterprise at ORF by 11am — 2200 Norview Ave, Norfolk",type:"transport"},{text:"SW 3187 departs ORF 3:30pm",type:"transport"},{text:"Connect MDW → SW 2660",type:"transport"},{text:"Arrive SLC 12:35am (July 25) 🏠",type:"transport"}]},
 ];
 
-const TRAVEL_INFO={
-  "2026-07-09":{summary:"✈️ SW 3750 · Departs 2:05pm SLC",items:[
-    {icon:"✈️",label:"SW 3750 · SLC → MDW",sublabel:"Departs SLC 2:05pm",actions:[{label:"Check In →",url:"https://www.southwest.com/air/check-in/"},{label:"Flight Status →",url:"https://www.southwest.com/air/flight-status/"}]},
-    {icon:"✈️",label:"SW 4120 · MDW → LGA",sublabel:"Connecting · Arrives LGA ~11pm",actions:[{label:"Southwest App →",url:"https://www.southwest.com/air/manage-reservation/index.html"}]},
-    {icon:"🏠",label:"Brooklyn VRBO — Check In",sublabel:"Herkimer St & Nostrand Ave, Brooklyn NY",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Herkimer+Street+Nostrand+Avenue+Brooklyn+NY"},{label:"VRBO Trips →",url:"https://www.vrbo.com/trips"}]},
-  ]},
-  "2026-07-10":{summary:"🏠 Brooklyn VRBO · OMNY subway transit",items:[
-    {icon:"🏠",label:"Brooklyn VRBO",sublabel:"Herkimer St & Nostrand Ave, Brooklyn NY",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Herkimer+Street+Nostrand+Avenue+Brooklyn+NY"}]},
-    {icon:"🚇",label:"OMNY Tap-to-Pay Subway",sublabel:"No MetroCard needed — tap any contactless card or phone at turnstile",actions:[{label:"Subway Map →",url:"https://new.mta.info/maps/subway-map"},{label:"OMNY Info →",url:"https://omny.info/"}]},
-  ]},
-  "2026-07-11":{summary:"🚂 Amtrak #594764 · Keystone 667 · Departs 3:13pm",items:[
-    {icon:"🚂",label:"Amtrak Keystone 667 · Conf #594764",sublabel:"NYC Penn Station (Moynihan Hall) → Philadelphia 30th St · Departs 3:13pm · 5 Coach seats",actions:[{label:"View Ticket →",url:"https://www.amtrak.com/my-trips"},{label:"Penn Station →",url:"https://maps.google.com/?q=Moynihan+Train+Hall+Penn+Station+New+York+NY"}]},
-    {icon:"🏠",label:"Lynn's House — Check In",sublabel:"512 Court Circle, West Chester PA 19382",actions:[{label:"Directions →",url:"https://maps.google.com/?q=512+Court+Circle+West+Chester+PA+19382"}]},
-  ]},
-  "2026-07-12":{summary:"🚗 Lynn's car · Philly sightseeing day",items:[
-    {icon:"🚗",label:"Lynn's Car (borrowed)",sublabel:"Use for Liberty Bell, cheesesteak run, and Scoops DeVille",actions:[{label:"Liberty Bell →",url:"https://maps.google.com/?q=Liberty+Bell+Center+Philadelphia+PA"},{label:"Pat's Steaks →",url:"https://maps.google.com/?q=Pat's+King+of+Steaks+Philadelphia+PA"}]},
-    {icon:"🏠",label:"Lynn's House",sublabel:"512 Court Circle, West Chester PA 19382",actions:[{label:"Directions →",url:"https://maps.google.com/?q=512+Court+Circle+West+Chester+PA+19382"}]},
-  ]},
-  "2026-07-13":{summary:"🚂 Amtrak #594C90 · Keystone 649 · Departs 4:40pm",items:[
-    {icon:"🚂",label:"Amtrak Keystone 649 · Conf #594C90",sublabel:"Philadelphia 30th St → Harrisburg · Departs 4:40pm · 5 Unreserved Coach",actions:[{label:"View Ticket →",url:"https://www.amtrak.com/my-trips"},{label:"30th St Station →",url:"https://maps.google.com/?q=30th+Street+Station+Philadelphia+PA"}]},
-    {icon:"🏨",label:"Ramada by Wyndham — Check In",sublabel:"Harrisburg/Hershey area",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Ramada+by+Wyndham+Harrisburg+Hershey+PA"},{label:"View Booking →",url:"https://www.wyndhamhotels.com/ramada/"}]},
-  ]},
-  "2026-07-14":{summary:"🏨 Ramada Harrisburg · Hersheypark all day!",items:[
-    {icon:"🚗",label:"Borrow Parents' Car",sublabel:"Drive to Hersheypark — about 15 min from hotel",actions:[{label:"Hersheypark →",url:"https://maps.google.com/?q=Hersheypark+100+W+Hersheypark+Dr+Hershey+PA"},{label:"Chocolate World →",url:"https://maps.google.com/?q=Hershey's+Chocolate+World+Hershey+PA"}]},
-    {icon:"🏨",label:"Ramada by Wyndham · Harrisburg/Hershey",sublabel:"Returning tonight",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Ramada+by+Wyndham+Harrisburg+Hershey+PA"}]},
-  ]},
-  "2026-07-15":{summary:"🏨 Ramada Harrisburg · Amish country & cousins",items:[
-    {icon:"🚗",label:"Borrow Parents' Car",sublabel:"Amish country, cousin Allie, teaberry ice cream",actions:[{label:"Intercourse PA →",url:"https://maps.google.com/?q=Intercourse+Pennsylvania+Lancaster+County"},{label:"3 B's Dairy →",url:"https://maps.google.com/?q=3+B+Dairy+Harrisburg+PA"}]},
-    {icon:"🏨",label:"Ramada by Wyndham · Harrisburg/Hershey",sublabel:"Returning tonight",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Ramada+by+Wyndham+Harrisburg+Hershey+PA"}]},
-  ]},
-  "2026-07-16":{summary:"🏨 Ramada Harrisburg · Last night here",items:[
-    {icon:"🚗",label:"Borrow Parents' Car",sublabel:"Broad Street Market, City Island, visit Jeana",actions:[{label:"Broad Street Market →",url:"https://maps.google.com/?q=Broad+Street+Market+Harrisburg+PA"},{label:"City Island →",url:"https://maps.google.com/?q=City+Island+Harrisburg+PA"}]},
-    {icon:"🏨",label:"Ramada by Wyndham · Harrisburg/Hershey",sublabel:"Last night here — check out tomorrow morning",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Ramada+by+Wyndham+Harrisburg+Hershey+PA"}]},
-  ]},
-  "2026-07-17":{summary:"🚗 Enterprise pickup 11am · 112 N Mountain Rd, Harrisburg",items:[
-    {icon:"🚗",label:"Enterprise · Chrysler Pacifica — Pickup 11am",sublabel:"112 N Mountain Rd, Harrisburg PA · 7 passengers · Unlimited miles",actions:[{label:"Pickup Location →",url:"https://maps.google.com/?q=112+N+Mountain+Rd+Harrisburg+PA"},{label:"View Reservation →",url:"https://www.enterprise.com/en/car-rental/extras/reservation-lookup.html"}]},
-    {icon:"🏨",label:"Williamsburg Woodlands Hotel & Suites — Check In",sublabel:"105 Visitor Center Dr, Williamsburg VA · Confirm dog weight limit on arrival",actions:[{label:"Hotel Location →",url:"https://maps.google.com/?q=Williamsburg+Woodlands+Hotel+Suites+105+Visitor+Center+Dr+Williamsburg+VA"},{label:"View Booking →",url:"https://www.colonialwilliamsburg.com/stay/williamsburg-woodlands/"}]},
-  ]},
-  "2026-07-18":{summary:"🏖️ Check in JMJ Seascape · Milepost 19, South Nags Head",items:[
-    {icon:"🛒",label:"Costco Newport News — Stock Up!",sublabel:"Last big grocery run before OBX — bring the coolers!",actions:[{label:"Costco →",url:"https://maps.google.com/?q=Costco+Wholesale+12300+Jefferson+Ave+Newport+News+VA"}]},
-    {icon:"🏖️",label:"JMJ Seascape · South Nags Head — Check In",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"},{label:"VRBO Trips →",url:"https://www.vrbo.com/trips"}]},
-  ]},
-  "2026-07-19":{summary:"🏖️ JMJ Seascape · Mom's Birthday! 🎂",items:[
-    {icon:"⛪",label:"LDS Church — 10am",sublabel:"3342 W Windjammer Rd, Nags Head NC",actions:[{label:"Directions →",url:"https://maps.google.com/?q=3342+W+Windjammer+Rd+Nags+Head+NC"}]},
-    {icon:"🏖️",label:"JMJ Seascape · South Nags Head",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
-  ]},
-  "2026-07-20":{summary:"🏖️ JMJ Seascape · Wright Brothers & Jockey's Ridge",items:[
-    {icon:"🏖️",label:"JMJ Seascape · South Nags Head",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
-    {icon:"✈️",label:"Wright Brothers Memorial",sublabel:"Kill Devil Hills, NC — free admission",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Wright+Brothers+National+Memorial+Kill+Devil+Hills+NC"}]},
-  ]},
-  "2026-07-21":{summary:"🏖️ JMJ Seascape · Roanoke Island & Markets",items:[
-    {icon:"🏖️",label:"JMJ Seascape · South Nags Head",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
-    {icon:"⛵",label:"Roanoke Island Festival Park",sublabel:"Manteo NC · $11 adults / $8 kids",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Roanoke+Island+Festival+Park+Manteo+NC"}]},
-  ]},
-  "2026-07-22":{summary:"🏖️ JMJ Seascape · Cape Hatteras & Ocracoke",items:[
-    {icon:"🏖️",label:"JMJ Seascape · South Nags Head",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
-    {icon:"⛴️",label:"Ocracoke Ferry (Cape Hatteras)",sublabel:"Free ferry · departs from Cape Hatteras, NC",actions:[{label:"Cape Hatteras →",url:"https://maps.google.com/?q=Cape+Hatteras+Lighthouse+NC"},{label:"Ferry Info →",url:"https://www.ncdot.gov/travel-maps/ferry/Pages/default.aspx"}]},
-  ]},
-  "2026-07-23":{summary:"🏖️ JMJ Seascape · Last night! Pack up tonight",items:[
-    {icon:"🏖️",label:"JMJ Seascape · South Nags Head — Last Night",sublabel:"~Milepost 19, South Nags Head NC · Start packing up the house!",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
-  ]},
-  "2026-07-24":{summary:"✈️ SW 3187 · Departs ORF 3:30pm · Fly home!",items:[
-    {icon:"🚗",label:"Drop Enterprise at Norfolk Airport (ORF)",sublabel:"2200 Norview Ave, Norfolk VA · Return by 11am",actions:[{label:"Return Location →",url:"https://maps.google.com/?q=Enterprise+Rent-A-Car+2200+Norview+Ave+Norfolk+VA"},{label:"View Reservation →",url:"https://www.enterprise.com/en/car-rental/extras/reservation-lookup.html"}]},
-    {icon:"✈️",label:"SW 3187 · ORF → MDW",sublabel:"Departs ORF 3:30pm",actions:[{label:"Check In →",url:"https://www.southwest.com/air/check-in/"},{label:"Flight Status →",url:"https://www.southwest.com/air/flight-status/"}]},
-    {icon:"✈️",label:"SW 2660 · MDW → SLC",sublabel:"Connecting · Arrives SLC 12:35am (Jul 25) 🏠",actions:[{label:"Southwest App →",url:"https://www.southwest.com/air/manage-reservation/index.html"}]},
-  ]},
-};
+const TRAVEL_TYPES=[
+  {key:"flight",icon:"✈️",label:"Flight"},
+  {key:"train", icon:"🚂",label:"Train"},
+  {key:"car",   icon:"🚗",label:"Car Rental"},
+  {key:"hotel", icon:"🏨",label:"Hotel"},
+  {key:"house", icon:"🏠",label:"House/VRBO"},
+  {key:"ferry", icon:"⛴️",label:"Ferry"},
+  {key:"subway",icon:"🚇",label:"Subway"},
+  {key:"event", icon:"⛪",label:"Event"},
+  {key:"errand",icon:"🛒",label:"Errand"},
+  {key:"other", icon:"📌",label:"Other"},
+];
+
+const TRAVEL_SEED=[
+  {id:"ts01",iconType:"flight",icon:"✈️",startDate:"2026-07-09",endDate:"",label:"SW 3750 · SLC → MDW",confirmNum:"",time:"Departs 2:05pm",location:"Salt Lake City International Airport, Salt Lake City, UT",notes:"Check in 24hrs before via Southwest app"},
+  {id:"ts02",iconType:"flight",icon:"✈️",startDate:"2026-07-09",endDate:"",label:"SW 4120 · MDW → LGA",confirmNum:"",time:"Arrives ~11pm",location:"LaGuardia Airport, Queens, NY",notes:"Connecting at Chicago Midway"},
+  {id:"ts03",iconType:"house",icon:"🏠",startDate:"2026-07-09",endDate:"2026-07-10",label:"Brooklyn VRBO",confirmNum:"",time:"",location:"Herkimer Street & Nostrand Avenue, Brooklyn, NY",notes:"Check in tonight"},
+  {id:"ts04",iconType:"subway",icon:"🚇",startDate:"2026-07-10",endDate:"",label:"OMNY Tap-to-Pay Subway",confirmNum:"",time:"",location:"NYC MTA Subway",notes:"No MetroCard — tap any contactless card/phone. A/C/E → Penn Station."},
+  {id:"ts05",iconType:"train",icon:"🚂",startDate:"2026-07-11",endDate:"",label:"Amtrak Keystone 667",confirmNum:"594764",time:"Departs 3:13pm",location:"Moynihan Train Hall, Penn Station, New York, NY",notes:"5 Coach seats · Arrives Philadelphia 30th St 4:38pm"},
+  {id:"ts06",iconType:"house",icon:"🏠",startDate:"2026-07-11",endDate:"2026-07-12",label:"Lynn's House · West Chester PA",confirmNum:"",time:"",location:"512 Court Circle, West Chester, PA 19382",notes:""},
+  {id:"ts07",iconType:"train",icon:"🚂",startDate:"2026-07-13",endDate:"",label:"Amtrak Keystone 649",confirmNum:"594C90",time:"Departs 4:40pm",location:"30th Street Station, Philadelphia, PA",notes:"5 Unreserved Coach seats · Arrives Harrisburg 6:39pm"},
+  {id:"ts08",iconType:"hotel",icon:"🏨",startDate:"2026-07-13",endDate:"2026-07-16",label:"Ramada by Wyndham · Harrisburg/Hershey",confirmNum:"",time:"",location:"Ramada by Wyndham Harrisburg Hershey, PA",notes:""},
+  {id:"ts09",iconType:"car",icon:"🚗",startDate:"2026-07-17",endDate:"2026-07-24",label:"Enterprise · Chrysler Pacifica",confirmNum:"",time:"Pickup 11am",location:"112 N Mountain Rd, Harrisburg, PA",notes:"7 passengers · Unlimited miles · Return at ORF (2200 Norview Ave, Norfolk VA) by 11am Jul 24"},
+  {id:"ts10",iconType:"hotel",icon:"🏨",startDate:"2026-07-17",endDate:"",label:"Williamsburg Woodlands Hotel & Suites",confirmNum:"",time:"",location:"105 Visitor Center Dr, Williamsburg, VA",notes:"Confirm dog weight limit on arrival"},
+  {id:"ts11",iconType:"errand",icon:"🛒",startDate:"2026-07-18",endDate:"",label:"Costco Newport News — Stock Up",confirmNum:"",time:"",location:"12300 Jefferson Ave, Newport News, VA",notes:"Last big grocery run before OBX — bring coolers!"},
+  {id:"ts12",iconType:"house",icon:"🏠",startDate:"2026-07-18",endDate:"2026-07-23",label:"JMJ Seascape · South Nags Head",confirmNum:"",time:"",location:"Milepost 19, South Nags Head, NC",notes:"Check in today"},
+  {id:"ts13",iconType:"event",icon:"⛪",startDate:"2026-07-19",endDate:"",label:"LDS Church · Nags Head",confirmNum:"",time:"10am",location:"3342 W Windjammer Rd, Nags Head, NC",notes:""},
+  {id:"ts14",iconType:"ferry",icon:"⛴️",startDate:"2026-07-22",endDate:"",label:"Ocracoke Island Ferry",confirmNum:"",time:"",location:"Cape Hatteras National Seashore Ferry Terminal, Hatteras, NC",notes:"Free ferry from Cape Hatteras · schedule varies"},
+  {id:"ts15",iconType:"flight",icon:"✈️",startDate:"2026-07-24",endDate:"",label:"SW 3187 · ORF → MDW",confirmNum:"",time:"Departs 3:30pm",location:"Norfolk International Airport, 2200 Norview Ave, Norfolk, VA",notes:"Check in 24hrs before · Enterprise drop-off at ORF by 11am"},
+  {id:"ts16",iconType:"flight",icon:"✈️",startDate:"2026-07-24",endDate:"",label:"SW 2660 · MDW → SLC",confirmNum:"",time:"Arrives SLC 12:35am (Jul 25)",location:"",notes:"Connecting at Chicago Midway"},
+];
 
 const STILL_NEEDED_ITEMS=["Statue Cruises (Statue of Liberty ferry) — book NOW","9/11 Museum timed entry — book NOW","Independence Hall timed entry — book NOW","OBX beach gear rentals (Farmdog / Beach EZ / Ocean Atlantic)","Williamsburg Woodlands — call to confirm dog weight limit","Decide: Colonial Williamsburg vs Jamestown (Jul 18 morning)"];
 
@@ -402,40 +366,125 @@ function CountdownCard(){
 }
 
 // ── TRAVEL CARD ───────────────────────────────────────────────────────────────
-function TravelCard({dayDate}){
+function TravelItemForm({item,dayDate,onSave,onCancel}){
+  const [iconType,setIconType]=useState(item?.iconType||"flight");
+  const [label,setLabel]=useState(item?.label||"");
+  const [confirmNum,setConfirmNum]=useState(item?.confirmNum||"");
+  const [time,setTime]=useState(item?.time||"");
+  const [startDate,setStartDate]=useState(item?.startDate||dayDate||"");
+  const [endDate,setEndDate]=useState(item?.endDate||"");
+  const [location,setLocation]=useState(item?.location||"");
+  const [notes,setNotes]=useState(item?.notes||"");
+  const save=()=>{
+    if(!label.trim())return;
+    const t=TRAVEL_TYPES.find(t=>t.key===iconType)||TRAVEL_TYPES[0];
+    onSave({iconType,icon:t.icon,label:label.trim(),confirmNum:confirmNum.trim(),time:time.trim(),startDate,endDate,location:location.trim(),notes:notes.trim()});
+  };
+  const inp={width:"100%",padding:"10px 12px",border:"1.5px solid #cbd5e1",borderRadius:10,fontSize:14,boxSizing:"border-box",marginBottom:8,fontFamily:"inherit"};
+  return(
+    <div style={{background:"#f0f9ff",borderRadius:14,padding:"14px",marginBottom:8,border:"1.5px solid #bfdbfe"}}>
+      <div style={{marginBottom:10}}>
+        <div style={{fontSize:10,fontWeight:800,color:"#1e40af",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Type</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+          {TRAVEL_TYPES.map(t=>(
+            <button key={t.key} onClick={()=>setIconType(t.key)} style={{padding:"5px 9px",borderRadius:8,fontSize:12,fontWeight:700,border:"1.5px solid",borderColor:iconType===t.key?"#3b82f6":"#cbd5e1",background:iconType===t.key?"#eff6ff":"white",color:iconType===t.key?"#1e40af":"#64748b",cursor:"pointer"}}>{t.icon} {t.label}</button>
+          ))}
+        </div>
+      </div>
+      <input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Name / description *" style={inp}/>
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        <input value={confirmNum} onChange={e=>setConfirmNum(e.target.value)} placeholder="Confirmation #" style={{...inp,flex:1,marginBottom:0}}/>
+        <input value={time} onChange={e=>setTime(e.target.value)} placeholder="Time" style={{...inp,flex:1,marginBottom:0}}/>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:11,color:"#64748b",marginBottom:3}}>Start date</div>
+          <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={{...inp,marginBottom:0}}/>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:11,color:"#64748b",marginBottom:3}}>End date (optional)</div>
+          <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} style={{...inp,marginBottom:0}}/>
+        </div>
+      </div>
+      <input value={location} onChange={e=>setLocation(e.target.value)} placeholder="Location / address (for Directions button)" style={inp}/>
+      <input value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Notes (optional)" style={{...inp,marginBottom:10}}/>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={save} style={{flex:1,padding:"11px",background:"#0f2444",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer"}}>Save</button>
+        <button onClick={onCancel} style={{padding:"11px 16px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer"}}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function TravelCard({dayDate,travelItems,onAdd,onEdit,onDelete}){
   const [open,setOpen]=useState(false);
-  const info=TRAVEL_INFO[dayDate];
-  if(!info||!info.items||!info.items.length)return null;
+  const [editId,setEditId]=useState(null);
+  const [adding,setAdding]=useState(false);
+  const dayItems=(travelItems||[]).filter(item=>{
+    const end=item.endDate||item.startDate;
+    return item.startDate<=dayDate&&dayDate<=end;
+  });
+  if(!dayItems.length&&!adding){
+    return(
+      <div style={{marginBottom:14}}>
+        <button onClick={()=>setAdding(true)} style={{width:"100%",padding:"11px",background:"transparent",color:"#93c5fd",border:"1.5px dashed #bfdbfe",borderRadius:14,fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Add travel & reservations</button>
+      </div>
+    );
+  }
+  if(!dayItems.length&&adding){
+    return(
+      <div style={{marginBottom:14}}>
+        <TravelItemForm dayDate={dayDate} onSave={data=>{onAdd(data);setAdding(false);}} onCancel={()=>setAdding(false)}/>
+      </div>
+    );
+  }
+  const first=dayItems[0];
+  const summaryText=`${first.icon} ${first.label}${first.time?" · "+first.time:""}${dayItems.length>1?" +"+(dayItems.length-1)+" more":""}`;
   return(
     <div style={{background:"linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%)",borderRadius:16,marginBottom:14,border:"1.5px solid #bfdbfe",overflow:"hidden"}}>
       <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",cursor:"pointer"}}>
         <div style={{width:32,height:32,borderRadius:10,background:"#dbeafe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🗂️</div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:10,fontWeight:800,color:"#1e40af",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:1}}>Travel & Reservations</div>
-          <div style={{fontSize:12,color:"#334155",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.summary}</div>
+          <div style={{fontSize:12,color:"#334155",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{summaryText}</div>
         </div>
         <div style={{color:"#93c5fd",fontSize:18,transition:"transform 0.2s",transform:open?"rotate(90deg)":"none",flexShrink:0}}>›</div>
       </div>
       {open&&(
         <div style={{borderTop:"1px solid #dbeafe",padding:"8px 14px 12px"}}>
-          {info.items.map((item,i)=>(
-            <div key={i} style={{display:"flex",alignItems:"flex-start",gap:11,paddingTop:10,paddingBottom:10,borderBottom:i<info.items.length-1?"1px solid #e0f2fe":"none"}}>
-              <div style={{width:36,height:36,borderRadius:11,background:"#dbeafe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,marginTop:1}}>{item.icon}</div>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:13,fontWeight:700,color:"#1e293b",lineHeight:1.3}}>{item.label}</div>
-                {item.sublabel&&<div style={{fontSize:11,color:"#64748b",marginTop:2,lineHeight:1.4}}>{item.sublabel}</div>}
-                {item.actions&&item.actions.length>0&&(
-                  <div style={{display:"flex",gap:6,marginTop:7,flexWrap:"wrap"}}>
-                    {item.actions.map((a,j)=>(
-                      <a key={j} href={a.url} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:700,color:"#1e40af",background:"white",borderRadius:20,padding:"5px 11px",textDecoration:"none",border:"1.5px solid #bfdbfe",whiteSpace:"nowrap",display:"inline-block"}}>
-                        {a.label}
-                      </a>
-                    ))}
+          {dayItems.map((item,i)=>(
+            <div key={item.id}>
+              {editId===item.id?(
+                <TravelItemForm item={item} dayDate={dayDate} onSave={data=>{onEdit(item.id,data);setEditId(null);}} onCancel={()=>setEditId(null)}/>
+              ):(
+                <div style={{display:"flex",alignItems:"flex-start",gap:10,paddingTop:10,paddingBottom:10,borderBottom:i<dayItems.length-1?"1px solid #e0f2fe":"none"}}>
+                  <div style={{width:36,height:36,borderRadius:11,background:"#dbeafe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,marginTop:1}}>{item.icon}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#1e293b",lineHeight:1.3}}>{item.label}</div>
+                    {item.confirmNum&&<div style={{fontSize:11,color:"#64748b",marginTop:2}}>Conf: <span style={{fontFamily:"monospace",fontWeight:700,color:"#1e40af"}}>{item.confirmNum}</span></div>}
+                    {item.time&&<div style={{fontSize:11,color:"#64748b",marginTop:2}}>{item.time}</div>}
+                    {item.location&&<div style={{fontSize:11,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.location}</div>}
+                    {item.endDate&&item.endDate!==item.startDate&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>Through {fmtDate(item.endDate)}</div>}
+                    {item.notes&&<div style={{fontSize:11,color:"#94a3b8",marginTop:3,lineHeight:1.4}}>{item.notes}</div>}
+                    {item.location&&(
+                      <div style={{marginTop:7}}>
+                        <a href={`https://maps.google.com/?q=${encodeURIComponent(item.location)}`} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:700,color:"#1e40af",background:"white",borderRadius:20,padding:"5px 11px",textDecoration:"none",border:"1.5px solid #bfdbfe",display:"inline-block"}}>Directions →</a>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                  <div style={{display:"flex",gap:5,flexShrink:0,marginTop:2}}>
+                    <span onClick={()=>{setEditId(item.id);setOpen(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.45,lineHeight:1}}>✏️</span>
+                    <span onClick={()=>onDelete(item.id)} style={{fontSize:20,cursor:"pointer",color:"#cbd5e1",lineHeight:1}}>×</span>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
+          {adding?(
+            <TravelItemForm dayDate={dayDate} onSave={data=>{onAdd(data);setAdding(false);}} onCancel={()=>setAdding(false)}/>
+          ):(
+            <button onClick={()=>setAdding(true)} style={{width:"100%",marginTop:8,padding:"10px",background:"transparent",color:"#60a5fa",border:"1.5px dashed #bfdbfe",borderRadius:12,fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Add to this day</button>
+          )}
         </div>
       )}
     </div>
@@ -1186,6 +1235,7 @@ function App(){
   const [fitStatus,setFitStatus]=useState({});
   const [editedItems,setEditedItems]=useState({});
   const [showTour,setShowTour]=useState(false);
+  const [travelItems,setTravelItems]=useState(TRAVEL_SEED);
   const syncTimer=useRef(null);
   const latestPatch=useRef(null);
   const isSaving=useRef(false);
@@ -1201,7 +1251,7 @@ function App(){
     navigator.geolocation.getCurrentPosition(async pos=>{const{latitude:lat,longitude:lng}=pos.coords;setLocation({lat,lng});setLocLoading(false);setLocLabel(await reverseGeocode(lat,lng));},err=>{setLocLoading(false);if(err.code===1)setLocError("Location denied — check Settings");else setLocError("Location unavailable — tap Retry");},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
   };
 
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits});
+  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems});
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks)setCustomTasks(data.customTasks);
@@ -1214,6 +1264,7 @@ function App(){
     if(data.editedItems)setEditedItems(data.editedItems);
     if(data.preTripCustom)setPreTripCustom(data.preTripCustom);
     if(data.preTripEdits)setPreTripEdits(data.preTripEdits);
+    if(data.travelItems)setTravelItems(data.travelItems);
     if(data._by){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
   const syncNow=async(patch)=>{
@@ -1265,6 +1316,9 @@ function App(){
   const removePreTripCustom=(id)=>{if(!window.confirm("Remove this task?"))return;setPreTripCustom(p=>{const n=p.filter(t=>t.id!==id);syncNow({...getState(),preTripCustom:n});return n;});};
   const editBuiltinPreTrip=(date,i,upd)=>{const key=`${date}-${i}`;setPreTripEdits(p=>{const n={...p,[key]:{...(p[key]||{}),...upd}};syncNow({...getState(),preTripEdits:n});return n;});};
   const deleteBuiltinPreTrip=(date,i)=>{const delKey=`pretrip-def-${date}-${i}`;if(!window.confirm("Remove this task?"))return;setDeletedItems(p=>{const n={...p,[delKey]:true};syncNow({...getState(),deletedItems:n});return n;});};
+  const addTravelItem=data=>{const id=`ti-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;setTravelItems(p=>{const n=[...p,{...data,id}];syncNow({...getState(),travelItems:n});return n;});};
+  const editTravelItem=(id,upd)=>{setTravelItems(p=>{const n=p.map(t=>t.id===id?{...t,...upd}:t);syncNow({...getState(),travelItems:n});return n;});};
+  const removeTravelItem=id=>{if(!window.confirm("Remove this item?"))return;setTravelItems(p=>{const n=p.filter(t=>t.id!==id);syncNow({...getState(),travelItems:n});return n;});};
   const runCheckFit=async(day)=>{
     const date=day.date;
     setFitStatus(p=>({...p,[date]:"loading"}));
@@ -1484,7 +1538,7 @@ function App(){
                   <div style={{fontWeight:900,fontSize:20,color:S.navy,letterSpacing:"-0.3px"}}>{ITINERARY[dayIdx].title}</div>
                   <div style={{fontSize:13,color:"#64748b",marginTop:4,lineHeight:1.5}}>{ITINERARY[dayIdx].summary}</div>
                 </div>
-                <TravelCard dayDate={ITINERARY[dayIdx].date}/>
+                <TravelCard dayDate={ITINERARY[dayIdx].date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
                 <div style={{...S.label,marginBottom:9}}>Activities</div>
                 {ITINERARY[dayIdx].items.map((it,i)=>{const key=`itinerary-${ITINERARY[dayIdx].date}-${i}`;const ck=`trip-${ITINERARY[dayIdx].date}-${i}`;if(deletedItems[key])return null;return(<TaskItem key={i} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore}/>);})}
                 {(customTasks[ITINERARY[dayIdx].date]||[]).map((t,i)=>(
@@ -1541,7 +1595,7 @@ function App(){
                   {isOpen&&(
                     <div style={{padding:"0 16px 16px",borderTop:"1px solid #f8fafc"}}>
                       <div style={{marginTop:12}}>
-                        <TravelCard dayDate={day.date}/>
+                        <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
                       </div>
                       <div style={{...S.label,marginBottom:8}}>Activities</div>
                       {day.items.map((it,j)=>{const key=`itinerary-${day.date}-${j}`;const ck=`trip-${day.date}-${j}`;if(deletedItems[key])return null;return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);})}
