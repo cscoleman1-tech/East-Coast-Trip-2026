@@ -98,6 +98,74 @@ const ITINERARY=[
   {date:"2026-07-24",label:"Fri Jul 24",city:"Fly Home",emoji:"✈️",title:"Fly Home to SLC",summary:"Drop car 11am · Depart ORF 3:30pm",lodging:"",transit:"",confirmations:[],items:[{text:"Check out JMJ Seascape",type:"transport"},{text:"Drop Enterprise at ORF by 11am — 2200 Norview Ave, Norfolk",type:"transport"},{text:"SW 3187 departs ORF 3:30pm",type:"transport"},{text:"Connect MDW → SW 2660",type:"transport"},{text:"Arrive SLC 12:35am (July 25) 🏠",type:"transport"}]},
 ];
 
+const TRAVEL_INFO={
+  "2026-07-09":{summary:"✈️ SW 3750 · Departs 2:05pm SLC",items:[
+    {icon:"✈️",label:"SW 3750 · SLC → MDW",sublabel:"Departs SLC 2:05pm",actions:[{label:"Check In →",url:"https://www.southwest.com/air/check-in/"},{label:"Flight Status →",url:"https://www.southwest.com/air/flight-status/"}]},
+    {icon:"✈️",label:"SW 4120 · MDW → LGA",sublabel:"Connecting · Arrives LGA ~11pm",actions:[{label:"Southwest App →",url:"https://www.southwest.com/air/manage-reservation/index.html"}]},
+    {icon:"🏠",label:"Brooklyn VRBO — Check In",sublabel:"Herkimer St & Nostrand Ave, Brooklyn NY",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Herkimer+Street+Nostrand+Avenue+Brooklyn+NY"},{label:"VRBO Trips →",url:"https://www.vrbo.com/trips"}]},
+  ]},
+  "2026-07-10":{summary:"🏠 Brooklyn VRBO · OMNY subway transit",items:[
+    {icon:"🏠",label:"Brooklyn VRBO",sublabel:"Herkimer St & Nostrand Ave, Brooklyn NY",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Herkimer+Street+Nostrand+Avenue+Brooklyn+NY"}]},
+    {icon:"🚇",label:"OMNY Tap-to-Pay Subway",sublabel:"No MetroCard needed — tap any contactless card or phone at turnstile",actions:[{label:"Subway Map →",url:"https://new.mta.info/maps/subway-map"},{label:"OMNY Info →",url:"https://omny.info/"}]},
+  ]},
+  "2026-07-11":{summary:"🚂 Amtrak #594764 · Keystone 667 · Departs 3:13pm",items:[
+    {icon:"🚂",label:"Amtrak Keystone 667 · Conf #594764",sublabel:"NYC Penn Station (Moynihan Hall) → Philadelphia 30th St · Departs 3:13pm · 5 Coach seats",actions:[{label:"View Ticket →",url:"https://www.amtrak.com/my-trips"},{label:"Penn Station →",url:"https://maps.google.com/?q=Moynihan+Train+Hall+Penn+Station+New+York+NY"}]},
+    {icon:"🏠",label:"Lynn's House — Check In",sublabel:"512 Court Circle, West Chester PA 19382",actions:[{label:"Directions →",url:"https://maps.google.com/?q=512+Court+Circle+West+Chester+PA+19382"}]},
+  ]},
+  "2026-07-12":{summary:"🚗 Lynn's car · Philly sightseeing day",items:[
+    {icon:"🚗",label:"Lynn's Car (borrowed)",sublabel:"Use for Liberty Bell, cheesesteak run, and Scoops DeVille",actions:[{label:"Liberty Bell →",url:"https://maps.google.com/?q=Liberty+Bell+Center+Philadelphia+PA"},{label:"Pat's Steaks →",url:"https://maps.google.com/?q=Pat's+King+of+Steaks+Philadelphia+PA"}]},
+    {icon:"🏠",label:"Lynn's House",sublabel:"512 Court Circle, West Chester PA 19382",actions:[{label:"Directions →",url:"https://maps.google.com/?q=512+Court+Circle+West+Chester+PA+19382"}]},
+  ]},
+  "2026-07-13":{summary:"🚂 Amtrak #594C90 · Keystone 649 · Departs 4:40pm",items:[
+    {icon:"🚂",label:"Amtrak Keystone 649 · Conf #594C90",sublabel:"Philadelphia 30th St → Harrisburg · Departs 4:40pm · 5 Unreserved Coach",actions:[{label:"View Ticket →",url:"https://www.amtrak.com/my-trips"},{label:"30th St Station →",url:"https://maps.google.com/?q=30th+Street+Station+Philadelphia+PA"}]},
+    {icon:"🏨",label:"Ramada by Wyndham — Check In",sublabel:"Harrisburg/Hershey area",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Ramada+by+Wyndham+Harrisburg+Hershey+PA"},{label:"View Booking →",url:"https://www.wyndhamhotels.com/ramada/"}]},
+  ]},
+  "2026-07-14":{summary:"🏨 Ramada Harrisburg · Hersheypark all day!",items:[
+    {icon:"🚗",label:"Borrow Parents' Car",sublabel:"Drive to Hersheypark — about 15 min from hotel",actions:[{label:"Hersheypark →",url:"https://maps.google.com/?q=Hersheypark+100+W+Hersheypark+Dr+Hershey+PA"},{label:"Chocolate World →",url:"https://maps.google.com/?q=Hershey's+Chocolate+World+Hershey+PA"}]},
+    {icon:"🏨",label:"Ramada by Wyndham · Harrisburg/Hershey",sublabel:"Returning tonight",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Ramada+by+Wyndham+Harrisburg+Hershey+PA"}]},
+  ]},
+  "2026-07-15":{summary:"🏨 Ramada Harrisburg · Amish country & cousins",items:[
+    {icon:"🚗",label:"Borrow Parents' Car",sublabel:"Amish country, cousin Allie, teaberry ice cream",actions:[{label:"Intercourse PA →",url:"https://maps.google.com/?q=Intercourse+Pennsylvania+Lancaster+County"},{label:"3 B's Dairy →",url:"https://maps.google.com/?q=3+B+Dairy+Harrisburg+PA"}]},
+    {icon:"🏨",label:"Ramada by Wyndham · Harrisburg/Hershey",sublabel:"Returning tonight",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Ramada+by+Wyndham+Harrisburg+Hershey+PA"}]},
+  ]},
+  "2026-07-16":{summary:"🏨 Ramada Harrisburg · Last night here",items:[
+    {icon:"🚗",label:"Borrow Parents' Car",sublabel:"Broad Street Market, City Island, visit Jeana",actions:[{label:"Broad Street Market →",url:"https://maps.google.com/?q=Broad+Street+Market+Harrisburg+PA"},{label:"City Island →",url:"https://maps.google.com/?q=City+Island+Harrisburg+PA"}]},
+    {icon:"🏨",label:"Ramada by Wyndham · Harrisburg/Hershey",sublabel:"Last night here — check out tomorrow morning",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Ramada+by+Wyndham+Harrisburg+Hershey+PA"}]},
+  ]},
+  "2026-07-17":{summary:"🚗 Enterprise pickup 11am · 112 N Mountain Rd, Harrisburg",items:[
+    {icon:"🚗",label:"Enterprise · Chrysler Pacifica — Pickup 11am",sublabel:"112 N Mountain Rd, Harrisburg PA · 7 passengers · Unlimited miles",actions:[{label:"Pickup Location →",url:"https://maps.google.com/?q=112+N+Mountain+Rd+Harrisburg+PA"},{label:"View Reservation →",url:"https://www.enterprise.com/en/car-rental/extras/reservation-lookup.html"}]},
+    {icon:"🏨",label:"Williamsburg Woodlands Hotel & Suites — Check In",sublabel:"105 Visitor Center Dr, Williamsburg VA · Confirm dog weight limit on arrival",actions:[{label:"Hotel Location →",url:"https://maps.google.com/?q=Williamsburg+Woodlands+Hotel+Suites+105+Visitor+Center+Dr+Williamsburg+VA"},{label:"View Booking →",url:"https://www.colonialwilliamsburg.com/stay/williamsburg-woodlands/"}]},
+  ]},
+  "2026-07-18":{summary:"🏖️ Check in JMJ Seascape · Milepost 19, South Nags Head",items:[
+    {icon:"🛒",label:"Costco Newport News — Stock Up!",sublabel:"Last big grocery run before OBX — bring the coolers!",actions:[{label:"Costco →",url:"https://maps.google.com/?q=Costco+Wholesale+12300+Jefferson+Ave+Newport+News+VA"}]},
+    {icon:"🏖️",label:"JMJ Seascape · South Nags Head — Check In",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"},{label:"VRBO Trips →",url:"https://www.vrbo.com/trips"}]},
+  ]},
+  "2026-07-19":{summary:"🏖️ JMJ Seascape · Mom's Birthday! 🎂",items:[
+    {icon:"⛪",label:"LDS Church — 10am",sublabel:"3342 W Windjammer Rd, Nags Head NC",actions:[{label:"Directions →",url:"https://maps.google.com/?q=3342+W+Windjammer+Rd+Nags+Head+NC"}]},
+    {icon:"🏖️",label:"JMJ Seascape · South Nags Head",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
+  ]},
+  "2026-07-20":{summary:"🏖️ JMJ Seascape · Wright Brothers & Jockey's Ridge",items:[
+    {icon:"🏖️",label:"JMJ Seascape · South Nags Head",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
+    {icon:"✈️",label:"Wright Brothers Memorial",sublabel:"Kill Devil Hills, NC — free admission",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Wright+Brothers+National+Memorial+Kill+Devil+Hills+NC"}]},
+  ]},
+  "2026-07-21":{summary:"🏖️ JMJ Seascape · Roanoke Island & Markets",items:[
+    {icon:"🏖️",label:"JMJ Seascape · South Nags Head",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
+    {icon:"⛵",label:"Roanoke Island Festival Park",sublabel:"Manteo NC · $11 adults / $8 kids",actions:[{label:"Directions →",url:"https://maps.google.com/?q=Roanoke+Island+Festival+Park+Manteo+NC"}]},
+  ]},
+  "2026-07-22":{summary:"🏖️ JMJ Seascape · Cape Hatteras & Ocracoke",items:[
+    {icon:"🏖️",label:"JMJ Seascape · South Nags Head",sublabel:"~Milepost 19, South Nags Head NC",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
+    {icon:"⛴️",label:"Ocracoke Ferry (Cape Hatteras)",sublabel:"Free ferry · departs from Cape Hatteras, NC",actions:[{label:"Cape Hatteras →",url:"https://maps.google.com/?q=Cape+Hatteras+Lighthouse+NC"},{label:"Ferry Info →",url:"https://www.ncdot.gov/travel-maps/ferry/Pages/default.aspx"}]},
+  ]},
+  "2026-07-23":{summary:"🏖️ JMJ Seascape · Last night! Pack up tonight",items:[
+    {icon:"🏖️",label:"JMJ Seascape · South Nags Head — Last Night",sublabel:"~Milepost 19, South Nags Head NC · Start packing up the house!",actions:[{label:"House Location →",url:"https://maps.google.com/?q=milepost+19+south+nags+head+NC"}]},
+  ]},
+  "2026-07-24":{summary:"✈️ SW 3187 · Departs ORF 3:30pm · Fly home!",items:[
+    {icon:"🚗",label:"Drop Enterprise at Norfolk Airport (ORF)",sublabel:"2200 Norview Ave, Norfolk VA · Return by 11am",actions:[{label:"Return Location →",url:"https://maps.google.com/?q=Enterprise+Rent-A-Car+2200+Norview+Ave+Norfolk+VA"},{label:"View Reservation →",url:"https://www.enterprise.com/en/car-rental/extras/reservation-lookup.html"}]},
+    {icon:"✈️",label:"SW 3187 · ORF → MDW",sublabel:"Departs ORF 3:30pm",actions:[{label:"Check In →",url:"https://www.southwest.com/air/check-in/"},{label:"Flight Status →",url:"https://www.southwest.com/air/flight-status/"}]},
+    {icon:"✈️",label:"SW 2660 · MDW → SLC",sublabel:"Connecting · Arrives SLC 12:35am (Jul 25) 🏠",actions:[{label:"Southwest App →",url:"https://www.southwest.com/air/manage-reservation/index.html"}]},
+  ]},
+};
+
 const STILL_NEEDED_ITEMS=["Statue Cruises (Statue of Liberty ferry) — book NOW","9/11 Museum timed entry — book NOW","Independence Hall timed entry — book NOW","OBX beach gear rentals (Farmdog / Beach EZ / Ocean Atlantic)","Williamsburg Woodlands — call to confirm dog weight limit","Decide: Colonial Williamsburg vs Jamestown (Jul 18 morning)"];
 
 const NEARBY_BY_DATE={
@@ -329,6 +397,47 @@ function CountdownCard(){
       <div style={{background:"rgba(255,255,255,0.12)",borderRadius:14,padding:"10px 16px",fontSize:13,textAlign:"center",fontWeight:500,backdropFilter:"blur(8px)"}}>
         ✈️ Departs SLC · Thu Jul 9, 2:05pm
       </div>
+    </div>
+  );
+}
+
+// ── TRAVEL CARD ───────────────────────────────────────────────────────────────
+function TravelCard({dayDate}){
+  const [open,setOpen]=useState(false);
+  const info=TRAVEL_INFO[dayDate];
+  if(!info||!info.items||!info.items.length)return null;
+  return(
+    <div style={{background:"linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%)",borderRadius:16,marginBottom:14,border:"1.5px solid #bfdbfe",overflow:"hidden"}}>
+      <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",cursor:"pointer"}}>
+        <div style={{width:32,height:32,borderRadius:10,background:"#dbeafe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🗂️</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:10,fontWeight:800,color:"#1e40af",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:1}}>Travel & Reservations</div>
+          <div style={{fontSize:12,color:"#334155",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{info.summary}</div>
+        </div>
+        <div style={{color:"#93c5fd",fontSize:18,transition:"transform 0.2s",transform:open?"rotate(90deg)":"none",flexShrink:0}}>›</div>
+      </div>
+      {open&&(
+        <div style={{borderTop:"1px solid #dbeafe",padding:"8px 14px 12px"}}>
+          {info.items.map((item,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"flex-start",gap:11,paddingTop:10,paddingBottom:10,borderBottom:i<info.items.length-1?"1px solid #e0f2fe":"none"}}>
+              <div style={{width:36,height:36,borderRadius:11,background:"#dbeafe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,marginTop:1}}>{item.icon}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:"#1e293b",lineHeight:1.3}}>{item.label}</div>
+                {item.sublabel&&<div style={{fontSize:11,color:"#64748b",marginTop:2,lineHeight:1.4}}>{item.sublabel}</div>}
+                {item.actions&&item.actions.length>0&&(
+                  <div style={{display:"flex",gap:6,marginTop:7,flexWrap:"wrap"}}>
+                    {item.actions.map((a,j)=>(
+                      <a key={j} href={a.url} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:700,color:"#1e40af",background:"white",borderRadius:20,padding:"5px 11px",textDecoration:"none",border:"1.5px solid #bfdbfe",whiteSpace:"nowrap",display:"inline-block"}}>
+                        {a.label}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -1374,15 +1483,8 @@ function App(){
                 <div style={{...S.card,padding:"16px 18px",marginBottom:12}}>
                   <div style={{fontWeight:900,fontSize:20,color:S.navy,letterSpacing:"-0.3px"}}>{ITINERARY[dayIdx].title}</div>
                   <div style={{fontSize:13,color:"#64748b",marginTop:4,lineHeight:1.5}}>{ITINERARY[dayIdx].summary}</div>
-                  {ITINERARY[dayIdx].lodging&&<div style={{marginTop:10,fontSize:12,color:"#475569",background:"#f8fafc",borderRadius:10,padding:"8px 12px",fontWeight:500}}>🏨 {ITINERARY[dayIdx].lodging}</div>}
-                  {ITINERARY[dayIdx].transit&&<div style={{marginTop:7,fontSize:12,color:"#475569",background:"#f8fafc",borderRadius:10,padding:"8px 12px",fontWeight:500}}>🚌 {ITINERARY[dayIdx].transit}</div>}
                 </div>
-                {ITINERARY[dayIdx].confirmations?.map((c,i)=>(
-                  <div key={i} style={{background:"#eff6ff",borderRadius:14,padding:"12px 16px",marginBottom:9,border:"1.5px solid #bfdbfe"}}>
-                    <div style={{fontWeight:700,fontSize:13,color:"#1e40af"}}>✅ {c.label}</div>
-                    <div style={{fontSize:12,color:"#3b5ba5",marginTop:3}}>{c.detail}</div>
-                  </div>
-                ))}
+                <TravelCard dayDate={ITINERARY[dayIdx].date}/>
                 <div style={{...S.label,marginBottom:9}}>Activities</div>
                 {ITINERARY[dayIdx].items.map((it,i)=>{const key=`itinerary-${ITINERARY[dayIdx].date}-${i}`;const ck=`trip-${ITINERARY[dayIdx].date}-${i}`;if(deletedItems[key])return null;return(<TaskItem key={i} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore}/>);})}
                 {(customTasks[ITINERARY[dayIdx].date]||[]).map((t,i)=>(
@@ -1438,16 +1540,9 @@ function App(){
                   </div>
                   {isOpen&&(
                     <div style={{padding:"0 16px 16px",borderTop:"1px solid #f8fafc"}}>
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap",margin:"12px 0 10px"}}>
-                        {day.lodging&&<div style={{fontSize:11,background:"#eff6ff",color:"#1e40af",borderRadius:8,padding:"4px 10px",fontWeight:600}}>🏨 {day.lodging}</div>}
-                        {day.transit&&<div style={{fontSize:11,background:"#f0fdf4",color:"#166534",borderRadius:8,padding:"4px 10px",fontWeight:600}}>🚌 {day.transit}</div>}
+                      <div style={{marginTop:12}}>
+                        <TravelCard dayDate={day.date}/>
                       </div>
-                      {day.confirmations?.map((c,ci)=>(
-                        <div key={ci} style={{background:"#eff6ff",borderRadius:11,padding:"10px 14px",marginBottom:9,border:"1px solid #bfdbfe"}}>
-                          <div style={{fontWeight:700,fontSize:12,color:"#1e40af"}}>✅ {c.label}</div>
-                          <div style={{fontSize:11,color:"#3b5ba5",marginTop:2}}>{c.detail}</div>
-                        </div>
-                      ))}
                       <div style={{...S.label,marginBottom:8}}>Activities</div>
                       {day.items.map((it,j)=>{const key=`itinerary-${day.date}-${j}`;const ck=`trip-${day.date}-${j}`;if(deletedItems[key])return null;return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);})}
                       {cust.map((t,j)=>(
