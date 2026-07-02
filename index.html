@@ -28,6 +28,7 @@ input,button,a{font-family:inherit;-webkit-tap-highlight-color:transparent;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 @keyframes popIn{0%{transform:scale(0.6)}75%{transform:scale(1.12)}100%{transform:scale(1)}}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(100%)}to{opacity:1;transform:translateY(0)}}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
 ::-webkit-scrollbar{display:none;}
 input:focus,textarea:focus{outline:none;}
@@ -491,131 +492,313 @@ function TravelCard({dayDate,travelItems,onAdd,onEdit,onDelete}){
   );
 }
 
-// ── PACK COMMAND BAR ──────────────────────────────────────────────────────────
-function PackCommandBar({customPackItems,setCustomPackItems,deletedItems,silentDeleteItem}){
+// ── UNIVERSAL COMMAND BAR ──────────────────────────────────────────────────────
+function UniversalCommandBar({
+  customTasks,checked,coreTasks,packChecked,customPackItems,deletedItems,editedItems,travelItems,preTripCustom,preTripEdits,
+  toggleCheck,toggleCore,silentDeleteItem,
+  addPreTripTask,editPreTripCustom,silentRemovePreTripCustom,
+  editBuiltinPreTrip,
+  editTask,addCustomTask,silentRemoveTask,
+  editBuiltinItem,updatePackItems,
+  addTravelItem,editTravelItem
+}){
+  const [open,setOpen]=useState(false);
   const [cmd,setCmd]=useState("");
-  const [status,setStatus]=useState("idle"); // idle|loading|done|error
-  const [addedList,setAddedList]=useState([]);
-  const [removedList,setRemovedList]=useState([]);
-  const [pending,setPending]=useState([]);
-  const ALL=["Chris","McKenna","Sawyer","Pierce","Bennett"];
-  const CATS=Object.keys(MASTER_PACKING);
+  const [status,setStatus]=useState("idle");
+  const [actions,setActions]=useState([]);
+  const [selected,setSelected]=useState({});
+  const [results,setResults]=useState([]);
+  const [errMsg,setErrMsg]=useState("");
 
-  const normalize=s=>s.toLowerCase().replace(/[^a-z0-9]/g," ").replace(/\s+/g," ").trim();
-
-  const findMatch=(query,person)=>{
-    const nq=normalize(query);
+  const norml=s=>s.toLowerCase().replace(/[^a-z0-9]/g," ").replace(/\s+/g," ").trim();
+  const fuzzyScore=(q,t)=>{
+    const nq=norml(q),nt=norml(t);
+    if(nt.includes(nq)||nq.includes(nt))return 1;
     const qw=nq.split(" ").filter(w=>w.length>2);
-    if(!qw.length)return null;
-    const cands=[];
-    if(person==="General"){
-      Object.entries(MASTER_PACKING).forEach(([cat,items])=>{
-        items.forEach((item,i)=>{if(!deletedItems[`pack-base-${person}-${cat}-${i}`])cands.push({item,cat,baseIdx:i,isBase:true});});
+    const tw=nt.split(" ").filter(w=>w.length>2);
+    if(!qw.length||!tw.length)return 0;
+    const ov=qw.filter(w=>tw.some(t2=>t2.includes(w)||w.includes(t2))).length;
+    return ov/Math.max(qw.length,tw.length,1);
+  };
+
+  const buildContext=()=>{
+    const preTripTasks=[];
+    Object.entries(DEFAULT_PRETRIP||{}).forEach(([date,tasks])=>{
+      tasks.forEach((t,i)=>{
+        if(deletedItems[`pretrip-def-${date}-${i}`])return;
+        const ed=preTripEdits[`${date}-${i}`]||{};
+        preTripTasks.push({key:`pretrip-${date}-${i}`,text:ed.text||t.text,date,done:!!checked[`pretrip-${date}-${i}`]});
       });
-    } else {
-      const indCat=`👤 ${person}`;
-      (INDIVIDUAL_PACKING[person]||[]).forEach((item,i)=>{if(!deletedItems[`pack-base-${person}-${indCat}-${i}`])cands.push({item,cat:indCat,baseIdx:i,isBase:true});});
-    }
-    Object.entries(customPackItems[person]||{}).forEach(([cat,items])=>{
-      (items||[]).forEach((item,ci)=>cands.push({item,cat,customIdx:ci,isBase:false}));
     });
-    let best=null,bestScore=0;
-    cands.forEach(c=>{
-      const ni=normalize(c.item);
-      if(ni.includes(nq)||nq.includes(ni)){if(bestScore<1){bestScore=1;best=c;}return;}
-      const iw=ni.split(" ").filter(w=>w.length>2);
-      const ov=qw.filter(w=>iw.some(iw2=>iw2.includes(w)||w.includes(iw2))).length;
-      const score=ov/Math.max(qw.length,iw.length,1);
-      if(score>bestScore){bestScore=score;best=c;}
+    preTripCustom.forEach(t=>{
+      preTripTasks.push({key:`ptc-${t.id}`,text:t.text,date:t.dueDate||"pretrip",done:!!checked[`ptc-${t.id}`]});
     });
-    return best&&bestScore>=0.25?{...best,score:bestScore}:null;
+    const tripTasks=[];
+    ITINERARY.forEach(day=>{
+      day.items.forEach((it,j)=>{
+        if(deletedItems[`itinerary-${day.date}-${j}`])return;
+        const ed=editedItems[`itinerary-${day.date}-${j}`]||{};
+        tripTasks.push({key:`trip-${day.date}-${j}`,text:ed.text||it.text,date:day.date,city:day.city,done:!!checked[`trip-${day.date}-${j}`],isCore:!!coreTasks[`trip-${day.date}-${j}`]});
+      });
+      (customTasks[day.date]||[]).forEach((t,j)=>{
+        tripTasks.push({key:`trip-${day.date}-c${j}`,text:t.text,date:day.date,city:day.city,done:!!checked[`trip-${day.date}-c${j}`],isCore:!!coreTasks[`trip-${day.date}-c${j}`]});
+      });
+    });
+    const packItems={};
+    ["General","Chris","McKenna","Sawyer","Pierce","Bennett"].forEach(person=>{
+      packItems[person]={};
+      if(person==="General"){
+        Object.entries(MASTER_PACKING).forEach(([cat,items])=>{
+          const arr=items.filter((_,i)=>!deletedItems[`pack-base-${person}-${cat}-${i}`]).map(item=>({text:item}));
+          const cust=((customPackItems[person]||{})[cat]||[]).map(item=>({text:item}));
+          if(arr.length||cust.length)packItems[person][cat]=[...arr,...cust];
+        });
+      } else {
+        const ic=`👤 ${person}`;
+        const base=INDIVIDUAL_PACKING[person]||[];
+        const arr=base.filter((_,i)=>!deletedItems[`pack-base-${person}-${ic}-${i}`]).map(item=>({text:item}));
+        const cust=((customPackItems[person]||{})[ic]||[]).map(item=>({text:item}));
+        if(arr.length||cust.length)packItems[person][ic]=[...arr,...cust];
+      }
+      Object.entries(customPackItems[person]||{}).forEach(([cat,items])=>{
+        if(!packItems[person][cat]&&items&&items.length)packItems[person][cat]=items.map(item=>({text:item}));
+      });
+    });
+    const reservations=travelItems.map(r=>({id:r.id,title:r.title,type:r.type,date:r.startDate||r.date||"",confirmNum:r.confirmNum||""}));
+    return {preTripTasks,tripTasks,packItems,reservations};
   };
 
-  const doDelete=(match,person)=>{
-    if(match.isBase){silentDeleteItem(`pack-base-${person}-${match.cat}-${match.baseIdx}`);}
-    else{setCustomPackItems(p=>{const n={...p,[person]:{...(p[person]||{})}};n[person][match.cat]=(n[person][match.cat]||[]).filter((_,i)=>i!==match.customIdx);return n;});}
+  const resolveAll=rawActions=>{
+    const ctx=buildContext();
+    return rawActions.map(a=>{
+      const r={...a};let warn=null;
+      if(["taskToggle","taskDelete","taskEdit","coreToggle"].includes(a.type)){
+        const all=[...ctx.preTripTasks,...ctx.tripTasks];
+        let found=all.find(t=>t.key===a.key);
+        if(!found&&a.label){
+          const sc=all.map(t=>({...t,s:fuzzyScore(a.label,t.text)})).filter(t=>t.s>0.25).sort((x,y)=>y.s-x.s);
+          found=sc[0];
+          if(found&&found.s<0.8)warn=`Matched "${found.text}" (fuzzy)`;
+        }
+        if(found){r.key=found.key;r._label=found.text;r._date=found.date;r._isPretrip=found.key.startsWith("pretrip")||found.key.startsWith("ptc");}
+        else{warn=a.label?`No match for "${a.label}"`:"No match found";r._notFound=true;}
+      }
+      if(a.type==="packRemove"){
+        const people=a.person==="everyone"?["General","Chris","McKenna","Sawyer","Pierce","Bennett"]:[a.person];
+        let best=null,bScore=0,bPerson=null;
+        people.forEach(p=>{Object.values(ctx.packItems[p]||{}).flat().forEach(item=>{const s=fuzzyScore(a.item,item.text);if(s>bScore){bScore=s;best=item.text;bPerson=p;}});});
+        if(best&&bScore>=0.25){r._matchedItem=best;r._matchedPerson=bPerson;if(bScore<0.8)warn=`Matched "${best}" in ${bPerson}'s list`;}
+        else{warn=`"${a.item}" not found in packing lists`;r._notFound=true;}
+      }
+      if(a.type==="reservationEdit"){
+        const all=ctx.reservations;
+        const found=all.find(res=>res.id===a.id)||(a.label?[...all].sort((x,y)=>fuzzyScore(a.label,y.title)-fuzzyScore(a.label,x.title))[0]:null);
+        if(found){r.id=found.id;r._label=found.title;}
+        else{warn="Reservation not found";r._notFound=true;}
+      }
+      r._warning=warn;return r;
+    });
   };
 
-  const runCmd=async()=>{
+  const runCommand=async()=>{
     const c=cmd.trim();
     if(!c||status==="loading")return;
-    setStatus("loading");setAddedList([]);setRemovedList([]);setPending([]);
+    setStatus("loading");setErrMsg("");
     try{
-      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"parsePackCommand",command:c}),signal:AbortSignal.timeout(20000)});
+      const context=buildContext();
+      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"universalCommand",command:c,context}),signal:AbortSignal.timeout(30000)});
       if(!resp.ok)throw new Error("Worker error "+resp.status);
       const data=await resp.json();
       if(data.error)throw new Error(data.error);
-      const actions=data.actions||[];
-      const addBatch={};
-      const newAdded=[],newRemoved=[],newPending=[];
-      for(const a of actions){
-        const people=a.person==="everyone"?ALL:[a.person];
-        if(a.type==="add"){
-          for(const p of people){
-            const cat=p==="General"?(CATS.includes(a.category)?a.category:CATS[0]):`👤 ${p}`;
-            addBatch[p]=addBatch[p]||{};addBatch[p][cat]=[...(addBatch[p][cat]||[]),a.item];newAdded.push({person:p,item:a.item,cat});
-          }
-        } else if(a.type==="remove"){
-          for(const p of people){
-            const match=findMatch(a.item,p);
-            if(!match){newPending.push({person:p,query:a.item,match:null});}
-            else if(match.score>=0.8){doDelete(match,p);newRemoved.push({person:p,item:match.item});}
-            else{newPending.push({person:p,query:a.item,match});}
-          }
-        }
-      }
-      if(Object.keys(addBatch).length){
-        setCustomPackItems(p=>{
-          const n={...p};
-          for(const[person,cats]of Object.entries(addBatch)){n[person]={...(n[person]||{})};for(const[cat,items]of Object.entries(cats)){n[person][cat]=[...(n[person][cat]||[]),...items];}}
-          return n;
-        });
-      }
-      setAddedList(newAdded);setRemovedList(newRemoved);setPending(newPending);
-      setCmd("");setStatus("done");
-    }catch(e){console.error("PackCmd:",e);setStatus("error");}
+      const raw=data.actions||[];
+      if(!raw.length){setStatus("error");setErrMsg("No actions found — try rephrasing.");return;}
+      const resolved=resolveAll(raw);
+      setActions(resolved);
+      const sel={};resolved.forEach((a,i)=>{sel[i]=!a._notFound;});
+      setSelected(sel);setStatus("preview");
+    }catch(e){console.error("UCB:",e);setStatus("error");setErrMsg(e.message||"Something went wrong.");}
   };
 
-  const confirmDel=(item)=>{doDelete(item.match,item.person);setRemovedList(r=>[...r,{person:item.person,item:item.match.item}]);setPending(p=>p.filter(x=>x!==item));};
-  const cancelDel=(item)=>setPending(p=>p.filter(x=>x!==item));
+  const applySelected=()=>{
+    const toApply=actions.filter((_,i)=>selected[i]);
+    const packBatch={};const res=[];
+    toApply.forEach(a=>{
+      try{
+        if(a.type==="taskToggle"){
+          toggleCheck(a.key);
+          res.push({ok:true,label:`Toggled "${a._label||a.key}"`});
+        } else if(a.type==="coreToggle"){
+          toggleCore(a.key);
+          res.push({ok:true,label:`${a.isCore?"Starred":"Unstarred"} "${a._label||a.key}"`});
+        } else if(a.type==="taskDelete"){
+          if(a._isPretrip){
+            if(a.key.startsWith("ptc-"))silentRemovePreTripCustom(a.key.replace("ptc-",""));
+            else{const m=a.key.match(/^pretrip-(\d{4}-\d{2}-\d{2})-(\d+)$/);if(m)silentDeleteItem(`pretrip-def-${m[1]}-${m[2]}`);}
+          } else {
+            if(a.key.includes("-c")){const m=a.key.match(/^trip-(\d{4}-\d{2}-\d{2})-c(\d+)$/);if(m)silentRemoveTask(m[1],parseInt(m[2]));}
+            else{const m=a.key.match(/^trip-(\d{4}-\d{2}-\d{2})-(\d+)$/);if(m)silentDeleteItem(`itinerary-${m[1]}-${m[2]}`);}
+          }
+          res.push({ok:true,label:`Deleted "${a._label||a.key}"`});
+        } else if(a.type==="taskEdit"){
+          if(a._isPretrip){
+            if(a.key.startsWith("ptc-"))editPreTripCustom(a.key.replace("ptc-",""),{text:a.newText});
+            else{const m=a.key.match(/^pretrip-(\d{4}-\d{2}-\d{2})-(\d+)$/);if(m)editBuiltinPreTrip(m[1],parseInt(m[2]),{text:a.newText});}
+          } else {
+            if(a.key.includes("-c")){const m=a.key.match(/^trip-(\d{4}-\d{2}-\d{2})-c(\d+)$/);if(m)editTask(m[1],parseInt(m[2]),{text:a.newText});}
+            else editBuiltinItem(a.key.replace("trip-","itinerary-"),{text:a.newText});
+          }
+          res.push({ok:true,label:`Edited to "${a.newText}"`});
+        } else if(a.type==="taskAdd"){
+          if(a.date==="pretrip")addPreTripTask(a.text,a.taskType||"reminder",null);
+          else addCustomTask(a.date,a.text,a.taskType||"activity");
+          res.push({ok:true,label:`Added "${a.text}"`});
+        } else if(a.type==="packAdd"){
+          const people=a.person==="everyone"?["Chris","McKenna","Sawyer","Pierce","Bennett"]:[a.person];
+          people.forEach(p=>{const cat=p==="General"?(a.category||Object.keys(MASTER_PACKING)[0]):`👤 ${p}`;packBatch[p]=packBatch[p]||{};packBatch[p][cat]=[...(packBatch[p][cat]||[]),a.item];});
+          res.push({ok:true,label:`Added "${a.item}" → ${a.person==="everyone"?"everyone":a.person}`});
+        } else if(a.type==="packRemove"){
+          const person=a._matchedPerson||a.person;const item=a._matchedItem||a.item;
+          let removed=false;
+          if(person==="General"){
+            Object.entries(MASTER_PACKING).forEach(([cat,items])=>{items.forEach((it,idx)=>{if(!removed&&norml(it)===norml(item)){silentDeleteItem(`pack-base-${person}-${cat}-${idx}`);removed=true;}});});
+          } else {
+            const ic=`👤 ${person}`;(INDIVIDUAL_PACKING[person]||[]).forEach((it,idx)=>{if(!removed&&norml(it)===norml(item)){silentDeleteItem(`pack-base-${person}-${ic}-${idx}`);removed=true;}});
+          }
+          if(!removed)updatePackItems(p=>{const n={...p,[person]:{...(p[person]||{})}};Object.keys(n[person]).forEach(cat=>{n[person][cat]=(n[person][cat]||[]).filter(it=>norml(it)!==norml(item));});return n;});
+          res.push({ok:true,label:`Removed "${item}" from ${person}`});
+        } else if(a.type==="reservationAdd"){
+          addTravelItem({title:a.title,type:a.travelType||"other",confirmNum:a.confirmNum||"",startDate:a.date||"",endDate:"",time:a.time||"",location:a.location||"",notes:a.notes||""});
+          res.push({ok:true,label:`Added reservation "${a.title}"`});
+        } else if(a.type==="reservationEdit"){
+          editTravelItem(a.id,a.updates||{});
+          res.push({ok:true,label:`Updated "${a._label||a.id}"`});
+        }
+      }catch(err){res.push({ok:false,label:a._label||a.type,err:err.message});}
+    });
+    if(Object.keys(packBatch).length)updatePackItems(p=>{const n={...p};Object.entries(packBatch).forEach(([person,cats])=>{n[person]={...(n[person]||{})};Object.entries(cats).forEach(([cat,items])=>{n[person][cat]=[...(n[person][cat]||[]),...items];});});return n;});
+    setResults(res);setStatus("done");
+  };
+
+  const reset=()=>{setCmd("");setStatus("idle");setActions([]);setSelected({});setResults([]);setErrMsg("");};
+  const close=()=>{setOpen(false);reset();};
+
+  const actionLabel=a=>{
+    if(a.type==="taskToggle")return `${a.done===false?"↩ Uncheck":"✓ Check"}: ${a._label||a.key}`;
+    if(a.type==="coreToggle")return `${a.isCore?"⭐ Star":"☆ Unstar"} as core: ${a._label||a.key}`;
+    if(a.type==="taskDelete")return `🗑 Delete: ${a._label||a.key}`;
+    if(a.type==="taskEdit")return `✏️ Edit: "${a._label||a.key}" → "${a.newText}"`;
+    if(a.type==="taskAdd")return `➕ Add task: "${a.text}"${a.date&&a.date!=="pretrip"?" ("+a.date+")":""}`;
+    if(a.type==="packAdd")return `📦 Pack for ${a.person==="everyone"?"everyone":a.person}: "${a.item}"`;
+    if(a.type==="packRemove")return `🗑 Unpack: "${a._matchedItem||a.item}" (${a._matchedPerson||a.person})`;
+    if(a.type==="reservationAdd")return `📋 Add reservation: "${a.title}"`;
+    if(a.type==="reservationEdit")return `✏️ Update reservation: "${a._label||a.id}"`;
+    return `${a.type}: ${a._label||a.key||""}`;
+  };
+
+  if(!open)return(
+    <button onClick={()=>setOpen(true)} title="AI Command Bar"
+      style={{position:"fixed",bottom:24,right:24,width:54,height:54,borderRadius:"50%",border:"none",
+        background:"linear-gradient(135deg,#4f46e5,#7c3aed)",color:"white",fontSize:22,cursor:"pointer",
+        boxShadow:"0 4px 20px rgba(79,70,229,0.45)",zIndex:9999,display:"flex",alignItems:"center",
+        justifyContent:"center",transition:"transform 0.15s,box-shadow 0.15s"}}
+      onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.1)";e.currentTarget.style.boxShadow="0 6px 28px rgba(79,70,229,0.6)";}}
+      onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.boxShadow="0 4px 20px rgba(79,70,229,0.45)";}}>
+      ✨
+    </button>
+  );
 
   return(
-    <div style={{background:"linear-gradient(160deg,#f0f4ff,#faf5ff)",borderRadius:16,padding:"16px 18px",marginBottom:16,border:"1.5px solid #e0e7ff"}}>
-      <div style={{fontSize:11,fontWeight:800,color:"#4338ca",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:10}}>🤖 Smart Pack Update</div>
-      <div style={{display:"flex",gap:8}}>
-        <input value={cmd} onChange={e=>setCmd(e.target.value)} onKeyDown={e=>e.key==="Enter"&&runCmd()} disabled={status==="loading"}
-          placeholder={`e.g. "add sunscreen to everyone" or "remove shaving kit from Chris, add laptop"`}
-          style={{flex:1,fontSize:13,padding:"10px 12px",borderRadius:10,border:"1.5px solid #c7d2fe",background:"white",color:"#1e1b4b",minWidth:0}}/>
-        <button onClick={runCmd} disabled={!cmd.trim()||status==="loading"} style={{padding:"10px 16px",borderRadius:10,border:"none",flexShrink:0,
-          background:cmd.trim()&&status!=="loading"?"linear-gradient(135deg,#4338ca,#6366f1)":"#e2e8f0",
-          color:cmd.trim()&&status!=="loading"?"white":"#94a3b8",fontWeight:700,fontSize:13,
-          cursor:cmd.trim()&&status!=="loading"?"pointer":"default"}}>
-          {status==="loading"?"…":"Apply"}
-        </button>
-      </div>
-
-      {pending.map((item,i)=>(
-        <div key={i} style={{marginTop:10,padding:"11px 13px",borderRadius:11,background:"#fffbeb",border:"1.5px solid #fde68a"}}>
-          {!item.match
-            ?<div style={{fontSize:12,color:"#92400e"}}>❓ Couldn't find <b>"{item.query}"</b> in {item.person}'s list — skipped</div>
-            :<>
-              <div style={{fontSize:12,color:"#92400e",marginBottom:8}}>🔍 <b>{item.person}</b>: delete "<b>{item.match.item}</b>" instead of "{item.query}"?</div>
-              <div style={{display:"flex",gap:7}}>
-                <button onClick={()=>confirmDel(item)} style={{padding:"5px 13px",borderRadius:8,border:"none",background:"#ef4444",color:"white",fontSize:12,fontWeight:700,cursor:"pointer"}}>Yes, delete it</button>
-                <button onClick={()=>cancelDel(item)} style={{padding:"5px 12px",borderRadius:8,border:"1.5px solid #e2e8f0",background:"white",color:"#64748b",fontSize:12,cursor:"pointer"}}>Skip</button>
+    <div style={{position:"fixed",inset:0,zIndex:9999}}>
+      <div onClick={close} style={{position:"absolute",inset:0,background:"rgba(15,36,68,0.45)",backdropFilter:"blur(2px)"}}/>
+      <div style={{position:"absolute",bottom:0,left:0,right:0,background:"white",borderRadius:"20px 20px 0 0",
+        maxHeight:"85vh",display:"flex",flexDirection:"column",boxShadow:"0 -8px 40px rgba(15,36,68,0.2)",
+        animation:"slideUp 0.28s cubic-bezier(0.22,1,0.36,1)"}}>
+        <div style={{textAlign:"center",padding:"12px 0 4px"}}>
+          <div style={{width:36,height:4,borderRadius:99,background:"#e2e8f0",display:"inline-block"}}/>
+        </div>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"4px 20px 14px"}}>
+          <div>
+            <div style={{fontSize:16,fontWeight:800,color:"#4f46e5"}}>✨ AI Assistant</div>
+            <div style={{fontSize:12,color:"#94a3b8",marginTop:1}}>Tasks, packing, reservations — just type what you need</div>
+          </div>
+          <button onClick={close} style={{background:"#f1f5f9",border:"none",borderRadius:99,padding:"6px 12px",fontSize:13,color:"#64748b",cursor:"pointer",fontWeight:600}}>✕</button>
+        </div>
+        <div style={{flex:1,overflowY:"auto",padding:"0 20px 24px"}}>
+          {(status==="idle"||status==="loading")&&(
+            <div>
+              <textarea value={cmd} onChange={e=>setCmd(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter"&&(e.metaKey||e.ctrlKey))runCommand();}}
+                disabled={status==="loading"}
+                placeholder={"e.g. \"Mark Empire State Building as done, add sunscreen to General, remove blazer from Chris\""}
+                rows={3}
+                style={{width:"100%",fontSize:14,padding:"12px 14px",borderRadius:12,border:"1.5px solid #e0e7ff",
+                  background:status==="loading"?"#f8faff":"white",color:"#1e1b4b",resize:"none",
+                  boxSizing:"border-box",fontFamily:"inherit",outline:"none"}}/>
+              <div style={{fontSize:11,color:"#94a3b8",margin:"6px 0 12px",textAlign:"right"}}>⌘↵ or Ctrl+↵ to send</div>
+              <button onClick={runCommand} disabled={!cmd.trim()||status==="loading"}
+                style={{width:"100%",padding:"14px",borderRadius:12,border:"none",
+                  background:cmd.trim()&&status!=="loading"?"linear-gradient(135deg,#4f46e5,#7c3aed)":"#e2e8f0",
+                  color:cmd.trim()&&status!=="loading"?"white":"#94a3b8",
+                  fontWeight:700,fontSize:15,cursor:cmd.trim()&&status!=="loading"?"pointer":"default",
+                  display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+                {status==="loading"
+                  ?<><span style={{display:"inline-block",animation:"spin 0.8s linear infinite"}}>◌</span> Thinking…</>
+                  :"✨ Run Command"}
+              </button>
+            </div>
+          )}
+          {status==="preview"&&(
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#1e1b4b",marginBottom:12}}>Review {actions.length} action{actions.length!==1?"s":""}:</div>
+              {actions.map((a,i)=>(
+                <div key={i}
+                  onClick={e=>{if(e.target.type==="checkbox")return;if(!a._notFound)setSelected(s=>({...s,[i]:!s[i]}));}}
+                  style={{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:11,
+                    background:a._notFound?"#fff5f5":selected[i]?"#f0f4ff":"#f8faff",
+                    border:`1.5px solid ${a._notFound?"#fca5a5":selected[i]?"#c7d2fe":"#e2e8f0"}`,
+                    marginBottom:8,cursor:a._notFound?"default":"pointer"}}>
+                  <input type="checkbox" checked={!!selected[i]} disabled={!!a._notFound}
+                    onChange={e=>{e.stopPropagation();setSelected(s=>({...s,[i]:e.target.checked}));}}
+                    style={{marginTop:2,width:16,height:16,accentColor:"#4f46e5",flexShrink:0}}/>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:13,color:a._notFound?"#ef4444":"#1e1b4b",fontWeight:500}}>{actionLabel(a)}</div>
+                    {a._warning&&<div style={{fontSize:11,color:a._notFound?"#ef4444":"#b45309",marginTop:3}}>⚠ {a._warning}</div>}
+                  </div>
+                </div>
+              ))}
+              <div style={{display:"flex",gap:8,marginTop:16}}>
+                <button onClick={applySelected} disabled={!Object.values(selected).some(Boolean)}
+                  style={{flex:1,padding:"13px",borderRadius:12,border:"none",
+                    background:Object.values(selected).some(Boolean)?"linear-gradient(135deg,#4f46e5,#7c3aed)":"#e2e8f0",
+                    color:Object.values(selected).some(Boolean)?"white":"#94a3b8",
+                    fontWeight:700,fontSize:14,cursor:Object.values(selected).some(Boolean)?"pointer":"default"}}>
+                  Apply {Object.values(selected).filter(Boolean).length} Action{Object.values(selected).filter(Boolean).length!==1?"s":""}
+                </button>
+                <button onClick={reset} style={{padding:"13px 18px",borderRadius:12,border:"1.5px solid #e2e8f0",background:"white",color:"#64748b",fontWeight:600,fontSize:14,cursor:"pointer"}}>← Back</button>
               </div>
-            </>
-          }
+            </div>
+          )}
+          {status==="done"&&(
+            <div>
+              <div style={{fontSize:13,fontWeight:700,color:"#1e1b4b",marginBottom:12}}>Done! {results.filter(r=>r.ok).length}/{results.length} applied:</div>
+              {results.map((r,i)=>(
+                <div key={i} style={{fontSize:13,color:r.ok?"#166534":"#dc2626",padding:"7px 10px",borderRadius:9,
+                  background:r.ok?"#f0fdf4":"#fff5f5",marginBottom:6,border:`1px solid ${r.ok?"#bbf7d0":"#fca5a5"}`}}>
+                  {r.ok?"✅":"❌"} {r.label}{r.err?` — ${r.err}`:""}
+                </div>
+              ))}
+              <button onClick={reset} style={{width:"100%",marginTop:14,padding:"13px",borderRadius:12,border:"1.5px solid #e0e7ff",background:"white",color:"#4f46e5",fontWeight:700,fontSize:14,cursor:"pointer"}}>✨ New Command</button>
+            </div>
+          )}
+          {status==="error"&&(
+            <div>
+              <div style={{padding:"14px",borderRadius:12,background:"#fff5f5",border:"1.5px solid #fca5a5",color:"#dc2626",fontSize:13,marginBottom:12}}>⚠️ {errMsg||"Something went wrong."}</div>
+              <button onClick={reset} style={{width:"100%",padding:"13px",borderRadius:12,border:"1.5px solid #e0e7ff",background:"white",color:"#4f46e5",fontWeight:700,fontSize:14,cursor:"pointer"}}>Try Again</button>
+            </div>
+          )}
         </div>
-      ))}
-
-      {status==="done"&&(addedList.length>0||removedList.length>0)&&(
-        <div style={{marginTop:10,padding:"10px 13px",borderRadius:11,background:"#f0fdf4",border:"1px solid #bbf7d0"}}>
-          {addedList.length>0&&<div style={{fontSize:12,color:"#166534",marginBottom:removedList.length?4:0}}>✅ Added {addedList.length} item{addedList.length!==1?"s":""}: {[...new Set(addedList.map(a=>a.item))].join(", ")}</div>}
-          {removedList.length>0&&<div style={{fontSize:12,color:"#166534"}}>🗑️ Removed {removedList.length} item{removedList.length!==1?"s":""}: {removedList.map(r=>`${r.item} (${r.person})`).join(", ")}</div>}
-        </div>
-      )}
-      {status==="error"&&<div style={{marginTop:8,fontSize:12,color:"#dc2626"}}>⚠️ Something went wrong — check your connection and try again.</div>}
+      </div>
     </div>
   );
 }
@@ -638,7 +821,6 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
   const removeIt=(cat,idx,bl)=>{const ci=idx-bl;setCustomPackItems(p=>({...p,[packPerson]:{...(p[packPerson]||{}),[cat]:((p[packPerson]||{})[cat]||[]).filter((_,i)=>i!==ci)}}));};
   return(
     <div>
-      <PackCommandBar customPackItems={customPackItems} setCustomPackItems={setCustomPackItems} deletedItems={deletedItems} silentDeleteItem={silentDeleteItem}/>
       <div style={{display:"flex",gap:7,overflowX:"auto",paddingBottom:8,marginBottom:14}}>
         {persons.map(p=>(
           <button key={p} onClick={()=>setPackPerson(p)} style={{whiteSpace:"nowrap",padding:"8px 17px",borderRadius:22,border:`1.5px solid ${packPerson===p?S.navy:"#e2e8f0"}`,fontSize:13,fontWeight:packPerson===p?700:500,background:packPerson===p?S.navy:"white",color:packPerson===p?"white":"#64748b",flexShrink:0,boxShadow:packPerson===p?"0 4px 12px rgba(15,36,68,0.25)":"none"}}>
@@ -1319,6 +1501,9 @@ function App(){
   const addTravelItem=data=>{const id=`ti-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;setTravelItems(p=>{const n=[...p,{...data,id}];syncNow({...getState(),travelItems:n});return n;});};
   const editTravelItem=(id,upd)=>{setTravelItems(p=>{const n=p.map(t=>t.id===id?{...t,...upd}:t);syncNow({...getState(),travelItems:n});return n;});};
   const removeTravelItem=id=>{if(!window.confirm("Remove this item?"))return;setTravelItems(p=>{const n=p.filter(t=>t.id!==id);syncNow({...getState(),travelItems:n});return n;});};
+  const addCustomTask=(date,text,type)=>{setCustomTasks(p=>{const n={...p,[date]:[...(p[date]||[]),{text,type}]};syncNow({...getState(),customTasks:n});return n;});};
+  const silentRemoveTask=(date,idx)=>{setCustomTasks(p=>{const n={...p,[date]:(p[date]||[]).filter((_,i)=>i!==idx)};syncNow({...getState(),customTasks:n});return n;});};
+  const silentRemovePreTripCustom=(id)=>{setPreTripCustom(p=>{const n=p.filter(t=>t.id!==id);syncNow({...getState(),preTripCustom:n});return n;});};
   const runCheckFit=async(day)=>{
     const date=day.date;
     setFitStatus(p=>({...p,[date]:"loading"}));
@@ -1643,6 +1828,16 @@ function App(){
 
       </div>
 
+      <UniversalCommandBar
+        customTasks={customTasks} checked={checked} coreTasks={coreTasks} packChecked={packChecked}
+        customPackItems={customPackItems} deletedItems={deletedItems} editedItems={editedItems}
+        travelItems={travelItems} preTripCustom={preTripCustom} preTripEdits={preTripEdits}
+        toggleCheck={toggleCheck} toggleCore={toggleCore} silentDeleteItem={silentDeleteItem}
+        addPreTripTask={addPreTripTask} editPreTripCustom={editPreTripCustom} silentRemovePreTripCustom={silentRemovePreTripCustom}
+        editBuiltinPreTrip={editBuiltinPreTrip}
+        editTask={editTask} addCustomTask={addCustomTask} silentRemoveTask={silentRemoveTask}
+        editBuiltinItem={editBuiltinItem} updatePackItems={updatePackItems}
+        addTravelItem={addTravelItem} editTravelItem={editTravelItem}/>
       {showTour&&<GuidedTour onClose={()=>setShowTour(false)}/>}
 
     </div>
