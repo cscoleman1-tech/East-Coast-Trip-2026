@@ -98,6 +98,38 @@ const ITINERARY=[
   {date:"2026-07-24",label:"Fri Jul 24",city:"Fly Home",emoji:"✈️",title:"Fly Home to SLC",summary:"Drop car 11am · Depart ORF 3:30pm",lodging:"",transit:"",confirmations:[],items:[{text:"Check out JMJ Seascape",type:"transport"},{text:"Drop Enterprise at ORF by 11am — 2200 Norview Ave, Norfolk",type:"transport"},{text:"SW 3187 departs ORF 3:30pm",type:"transport"},{text:"Connect MDW → SW 2660",type:"transport"},{text:"Arrive SLC 12:35am (July 25) 🏠",type:"transport"}]},
 ];
 
+const TRAVEL_TYPES=[
+  {key:"flight",icon:"✈️",label:"Flight"},
+  {key:"train", icon:"🚂",label:"Train"},
+  {key:"car",   icon:"🚗",label:"Car Rental"},
+  {key:"hotel", icon:"🏨",label:"Hotel"},
+  {key:"house", icon:"🏠",label:"House/VRBO"},
+  {key:"ferry", icon:"⛴️",label:"Ferry"},
+  {key:"subway",icon:"🚇",label:"Subway"},
+  {key:"event", icon:"⛪",label:"Event"},
+  {key:"errand",icon:"🛒",label:"Errand"},
+  {key:"other", icon:"📌",label:"Other"},
+];
+
+const TRAVEL_SEED=[
+  {id:"ts01",iconType:"flight",icon:"✈️",startDate:"2026-07-09",endDate:"",label:"SW 3750 · SLC → MDW",confirmNum:"",time:"Departs 2:05pm",location:"Salt Lake City International Airport, Salt Lake City, UT",notes:"Check in 24hrs before via Southwest app"},
+  {id:"ts02",iconType:"flight",icon:"✈️",startDate:"2026-07-09",endDate:"",label:"SW 4120 · MDW → LGA",confirmNum:"",time:"Arrives ~11pm",location:"LaGuardia Airport, Queens, NY",notes:"Connecting at Chicago Midway"},
+  {id:"ts03",iconType:"house",icon:"🏠",startDate:"2026-07-09",endDate:"2026-07-10",label:"Brooklyn VRBO",confirmNum:"",time:"",location:"Herkimer Street & Nostrand Avenue, Brooklyn, NY",notes:"Check in tonight"},
+  {id:"ts04",iconType:"subway",icon:"🚇",startDate:"2026-07-10",endDate:"",label:"OMNY Tap-to-Pay Subway",confirmNum:"",time:"",location:"NYC MTA Subway",notes:"No MetroCard — tap any contactless card/phone. A/C/E → Penn Station."},
+  {id:"ts05",iconType:"train",icon:"🚂",startDate:"2026-07-11",endDate:"",label:"Amtrak Keystone 667",confirmNum:"594764",time:"Departs 3:13pm",location:"Moynihan Train Hall, Penn Station, New York, NY",notes:"5 Coach seats · Arrives Philadelphia 30th St 4:38pm"},
+  {id:"ts06",iconType:"house",icon:"🏠",startDate:"2026-07-11",endDate:"2026-07-12",label:"Lynn's House · West Chester PA",confirmNum:"",time:"",location:"512 Court Circle, West Chester, PA 19382",notes:""},
+  {id:"ts07",iconType:"train",icon:"🚂",startDate:"2026-07-13",endDate:"",label:"Amtrak Keystone 649",confirmNum:"594C90",time:"Departs 4:40pm",location:"30th Street Station, Philadelphia, PA",notes:"5 Unreserved Coach seats · Arrives Harrisburg 6:39pm"},
+  {id:"ts08",iconType:"hotel",icon:"🏨",startDate:"2026-07-13",endDate:"2026-07-16",label:"Ramada by Wyndham · Harrisburg/Hershey",confirmNum:"",time:"",location:"Ramada by Wyndham Harrisburg Hershey, PA",notes:""},
+  {id:"ts09",iconType:"car",icon:"🚗",startDate:"2026-07-17",endDate:"2026-07-24",label:"Enterprise · Chrysler Pacifica",confirmNum:"",time:"Pickup 11am",location:"112 N Mountain Rd, Harrisburg, PA",notes:"7 passengers · Unlimited miles · Return at ORF (2200 Norview Ave, Norfolk VA) by 11am Jul 24"},
+  {id:"ts10",iconType:"hotel",icon:"🏨",startDate:"2026-07-17",endDate:"",label:"Williamsburg Woodlands Hotel & Suites",confirmNum:"",time:"",location:"105 Visitor Center Dr, Williamsburg, VA",notes:"Confirm dog weight limit on arrival"},
+  {id:"ts11",iconType:"errand",icon:"🛒",startDate:"2026-07-18",endDate:"",label:"Costco Newport News — Stock Up",confirmNum:"",time:"",location:"12300 Jefferson Ave, Newport News, VA",notes:"Last big grocery run before OBX — bring coolers!"},
+  {id:"ts12",iconType:"house",icon:"🏠",startDate:"2026-07-18",endDate:"2026-07-23",label:"JMJ Seascape · South Nags Head",confirmNum:"",time:"",location:"Milepost 19, South Nags Head, NC",notes:"Check in today"},
+  {id:"ts13",iconType:"event",icon:"⛪",startDate:"2026-07-19",endDate:"",label:"LDS Church · Nags Head",confirmNum:"",time:"10am",location:"3342 W Windjammer Rd, Nags Head, NC",notes:""},
+  {id:"ts14",iconType:"ferry",icon:"⛴️",startDate:"2026-07-22",endDate:"",label:"Ocracoke Island Ferry",confirmNum:"",time:"",location:"Cape Hatteras National Seashore Ferry Terminal, Hatteras, NC",notes:"Free ferry from Cape Hatteras · schedule varies"},
+  {id:"ts15",iconType:"flight",icon:"✈️",startDate:"2026-07-24",endDate:"",label:"SW 3187 · ORF → MDW",confirmNum:"",time:"Departs 3:30pm",location:"Norfolk International Airport, 2200 Norview Ave, Norfolk, VA",notes:"Check in 24hrs before · Enterprise drop-off at ORF by 11am"},
+  {id:"ts16",iconType:"flight",icon:"✈️",startDate:"2026-07-24",endDate:"",label:"SW 2660 · MDW → SLC",confirmNum:"",time:"Arrives SLC 12:35am (Jul 25)",location:"",notes:"Connecting at Chicago Midway"},
+];
+
 const STILL_NEEDED_ITEMS=["Statue Cruises (Statue of Liberty ferry) — book NOW","9/11 Museum timed entry — book NOW","Independence Hall timed entry — book NOW","OBX beach gear rentals (Farmdog / Beach EZ / Ocean Atlantic)","Williamsburg Woodlands — call to confirm dog weight limit","Decide: Colonial Williamsburg vs Jamestown (Jul 18 morning)"];
 
 const NEARBY_BY_DATE={
@@ -146,13 +178,14 @@ const S={
 };
 
 // ── TASK ITEM ─────────────────────────────────────────────────────────────────
-function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit}){
+function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggleCore,fitWarning,showDueDateEdit}){
   const [editing,setEditing]=useState(false);
   const [editText,setEditText]=useState(task.text);
   const [editType,setEditType]=useState(task.type);
+  const [editDueDate,setEditDueDate]=useState(task.dueDate||"");
   const done=!!checked[checkKey];
-  const bColor=TYPE_BORDER[task.type]||"#94a3b8";
-  const save=()=>{if(editText.trim())onEdit&&onEdit({text:editText.trim(),type:editType});setEditing(false);};
+  const bColor=isCore?"#f59e0b":(TYPE_BORDER[task.type]||"#94a3b8");
+  const save=()=>{if(editText.trim()){const upd={text:editText.trim(),type:editType};if(showDueDateEdit)upd.dueDate=editDueDate||null;onEdit&&onEdit(upd);}setEditing(false);};
 
   if(editing) return(
     <div style={{...S.cardSm,padding:"14px 15px",marginBottom:8,borderLeft:`4px solid ${S.accent}`}}>
@@ -163,6 +196,16 @@ function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit}){
           <button key={v} onClick={()=>setEditType(v)} style={{padding:"5px 11px",borderRadius:20,border:`1.5px solid ${editType===v?S.navy:"#e2e8f0"}`,fontSize:12,fontWeight:editType===v?700:400,background:editType===v?S.navy:"white",color:editType===v?"white":"#64748b"}}>{ic} {v}</button>
         ))}
       </div>
+      {showDueDateEdit&&(
+        <div style={{marginBottom:10}}>
+          <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Due date (optional)</div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}>
+            <input type="date" value={editDueDate} onChange={e=>setEditDueDate(e.target.value)}
+              style={{flex:1,padding:"9px 13px",borderRadius:10,border:"1.5px solid #e2e8f0",fontSize:14,boxSizing:"border-box",background:"#f8fafc"}}/>
+            {editDueDate&&<button onClick={()=>setEditDueDate("")} style={{padding:"9px 12px",background:"#f1f5f9",color:"#94a3b8",border:"none",borderRadius:10,fontSize:12,fontWeight:600,flexShrink:0}}>Clear</button>}
+          </div>
+        </div>
+      )}
       <div style={{display:"flex",gap:8}}>
         <button onClick={save} style={{flex:1,padding:"10px",background:S.navy,color:"white",border:"none",borderRadius:11,fontSize:14,fontWeight:700}}>Save</button>
         <button onClick={()=>setEditing(false)} style={{padding:"10px 16px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:11,fontSize:14,fontWeight:600}}>Cancel</button>
@@ -171,18 +214,23 @@ function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit}){
   );
 
   return(
-    <div style={{display:"flex",alignItems:"flex-start",gap:12,...S.cardSm,padding:"13px 14px 13px 15px",marginBottom:8,borderLeft:`4px solid ${done?"#e2e8f0":bColor}`,background:done?"#f8fafc":"white",transition:"all 0.18s"}}>
-      <div onClick={()=>onToggle(checkKey)} style={{width:24,height:24,borderRadius:7,border:done?"none":`2px solid ${bColor}`,background:done?"#22c55e":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,cursor:"pointer",boxShadow:done?"0 2px 8px rgba(34,197,94,0.35)":"none",transition:"all 0.15s"}}>
-        {done&&<span style={{color:"white",fontSize:13,fontWeight:900,lineHeight:1}}>✓</span>}
+    <div style={{marginBottom:8}}>
+      <div style={{display:"flex",alignItems:"flex-start",gap:12,...S.cardSm,padding:"13px 14px 13px 15px",borderLeft:`4px solid ${done?"#e2e8f0":bColor}`,background:done?"#f8fafc":"white",transition:"all 0.18s",borderRadius:fitWarning?"14px 14px 0 0":14}}>
+        <div onClick={()=>onToggle(checkKey)} style={{width:24,height:24,borderRadius:7,border:done?"none":`2px solid ${bColor}`,background:done?"#22c55e":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,cursor:"pointer",boxShadow:done?"0 2px 8px rgba(34,197,94,0.35)":"none",transition:"all 0.15s"}}>
+          {done&&<span style={{color:"white",fontSize:13,fontWeight:900,lineHeight:1}}>✓</span>}
+        </div>
+        <div style={{flex:1,fontSize:15,color:done?"#94a3b8":"#1e293b",lineHeight:1.45,textDecoration:done?"line-through":"none",textDecorationColor:"#cbd5e1",cursor:"pointer"}} onClick={()=>onToggle(checkKey)}>
+          <span style={{marginRight:6}}>{TYPE_ICONS[task.type]||"•"}</span>{task.text}
+          {isCore&&!done&&<span style={{marginLeft:6,fontSize:10,fontWeight:800,color:"#d97706",background:"#fef3c7",borderRadius:5,padding:"1px 6px",verticalAlign:"middle"}}>CORE</span>}
+          {showDueDateEdit&&task.dueDate&&!done&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>📅 {fmtDate(task.dueDate)}</div>}
+        </div>
+        <div style={{display:"flex",gap:5,flexShrink:0,alignItems:"center",marginTop:1}}>
+          {onToggleCore&&<span onClick={e=>{e.stopPropagation();onToggleCore(checkKey);}} style={{fontSize:14,cursor:"pointer",opacity:isCore?1:0.22,lineHeight:1}}>⭐</span>}
+          {onEdit&&!done&&<span onClick={()=>{setEditText(task.text);setEditType(task.type);if(showDueDateEdit)setEditDueDate(task.dueDate||"");setEditing(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.3,lineHeight:1}}>✏️</span>}
+          {onRemove&&<span onClick={onRemove} style={{color:"#cbd5e1",fontSize:22,cursor:"pointer",lineHeight:1,padding:"0 2px",fontWeight:300}}>×</span>}
+        </div>
       </div>
-      <div style={{flex:1,fontSize:15,color:done?"#94a3b8":"#1e293b",lineHeight:1.45,textDecoration:done?"line-through":"none",textDecorationColor:"#cbd5e1",cursor:"pointer"}} onClick={()=>onToggle(checkKey)}>
-        <span style={{marginRight:6}}>{TYPE_ICONS[task.type]||"•"}</span>{task.text}
-      </div>
-      <div style={{display:"flex",gap:5,flexShrink:0,alignItems:"center",marginTop:1}}>
-        {onEdit&&!done&&<span onClick={()=>{setEditText(task.text);setEditType(task.type);setEditing(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.3,lineHeight:1}}>✏️</span>}
-        {!onEdit&&!onRemove&&<span style={{fontSize:11,opacity:0.12}}>🔒</span>}
-        {onRemove&&<span onClick={onRemove} style={{color:"#cbd5e1",fontSize:22,cursor:"pointer",lineHeight:1,padding:"0 2px",fontWeight:300}}>×</span>}
-      </div>
+      {fitWarning&&<div style={{fontSize:12,color:"#92400e",background:"#fef3c7",padding:"6px 14px 7px 15px",borderLeft:"4px solid #f59e0b",borderRadius:"0 0 14px 14px"}}>⚠️ {fitWarning}</div>}
     </div>
   );
 }
@@ -200,6 +248,37 @@ function AddTaskForm({taskText,setTaskText,taskType,setTaskType,onAdd,onCancel})
       </div>
       <div style={{display:"flex",gap:9}}>
         <button onClick={onAdd} style={{flex:1,padding:"12px",background:S.navy,color:"white",border:"none",borderRadius:12,fontSize:14,fontWeight:700}}>Add Task</button>
+        <button onClick={onCancel} style={{padding:"12px 18px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:12,fontSize:14,fontWeight:600}}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+// ── PRE-TRIP ADD FORM ─────────────────────────────────────────────────────────
+function PreTripAddForm({onAdd,onCancel}){
+  const [text,setText]=useState("");
+  const [type,setType]=useState("confirm");
+  const [dueDate,setDueDate]=useState("");
+  const add=()=>{if(!text.trim())return;onAdd(text.trim(),type,dueDate||null);setText("");setDueDate("");};
+  return(
+    <div style={{...S.cardSm,padding:15,border:"2px dashed #cbd5e1",background:"#f8fafc",marginBottom:8,boxShadow:"none"}}>
+      <input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>e.key==="Enter"&&add()} placeholder="What needs to get done?" autoFocus
+        style={{width:"100%",padding:"11px 14px",borderRadius:11,border:"1.5px solid #e2e8f0",fontSize:15,marginBottom:10,boxSizing:"border-box",background:"white"}}/>
+      <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
+        {[["booking","🎟️ Book"],["confirm","📞 Confirm"],["pack","🎒 Pack"],["activity","🎯 Do"],["food","🍽️ Food"]].map(([v,l])=>(
+          <button key={v} onClick={()=>setType(v)} style={{padding:"6px 12px",borderRadius:20,border:`1.5px solid ${type===v?S.navy:"#e2e8f0"}`,fontSize:12,fontWeight:type===v?700:500,background:type===v?S.navy:"white",color:type===v?"white":"#64748b"}}>{l}</button>
+        ))}
+      </div>
+      <div style={{marginBottom:11}}>
+        <div style={{fontSize:10,fontWeight:800,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:5}}>Due date (optional)</div>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+          <input type="date" value={dueDate} onChange={e=>setDueDate(e.target.value)}
+            style={{flex:1,padding:"9px 13px",borderRadius:11,border:"1.5px solid #e2e8f0",fontSize:14,boxSizing:"border-box",background:"white"}}/>
+          {dueDate&&<button onClick={()=>setDueDate("")} style={{padding:"9px 12px",background:"#f1f5f9",color:"#94a3b8",border:"none",borderRadius:11,fontSize:12,fontWeight:600,flexShrink:0}}>Clear</button>}
+        </div>
+      </div>
+      <div style={{display:"flex",gap:9}}>
+        <button onClick={add} style={{flex:1,padding:"12px",background:S.navy,color:"white",border:"none",borderRadius:12,fontSize:14,fontWeight:700}}>Add Task</button>
         <button onClick={onCancel} style={{padding:"12px 18px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:12,fontSize:14,fontWeight:600}}>Cancel</button>
       </div>
     </div>
@@ -282,6 +361,132 @@ function CountdownCard(){
       <div style={{background:"rgba(255,255,255,0.12)",borderRadius:14,padding:"10px 16px",fontSize:13,textAlign:"center",fontWeight:500,backdropFilter:"blur(8px)"}}>
         ✈️ Departs SLC · Thu Jul 9, 2:05pm
       </div>
+    </div>
+  );
+}
+
+// ── TRAVEL CARD ───────────────────────────────────────────────────────────────
+function TravelItemForm({item,dayDate,onSave,onCancel}){
+  const [iconType,setIconType]=useState(item?.iconType||"flight");
+  const [label,setLabel]=useState(item?.label||"");
+  const [confirmNum,setConfirmNum]=useState(item?.confirmNum||"");
+  const [time,setTime]=useState(item?.time||"");
+  const [startDate,setStartDate]=useState(item?.startDate||dayDate||"");
+  const [endDate,setEndDate]=useState(item?.endDate||"");
+  const [location,setLocation]=useState(item?.location||"");
+  const [notes,setNotes]=useState(item?.notes||"");
+  const save=()=>{
+    if(!label.trim())return;
+    const t=TRAVEL_TYPES.find(t=>t.key===iconType)||TRAVEL_TYPES[0];
+    onSave({iconType,icon:t.icon,label:label.trim(),confirmNum:confirmNum.trim(),time:time.trim(),startDate,endDate,location:location.trim(),notes:notes.trim()});
+  };
+  const inp={width:"100%",padding:"10px 12px",border:"1.5px solid #cbd5e1",borderRadius:10,fontSize:14,boxSizing:"border-box",marginBottom:8,fontFamily:"inherit"};
+  return(
+    <div style={{background:"#f0f9ff",borderRadius:14,padding:"14px",marginBottom:8,border:"1.5px solid #bfdbfe"}}>
+      <div style={{marginBottom:10}}>
+        <div style={{fontSize:10,fontWeight:800,color:"#1e40af",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:6}}>Type</div>
+        <div style={{display:"flex",flexWrap:"wrap",gap:5}}>
+          {TRAVEL_TYPES.map(t=>(
+            <button key={t.key} onClick={()=>setIconType(t.key)} style={{padding:"5px 9px",borderRadius:8,fontSize:12,fontWeight:700,border:"1.5px solid",borderColor:iconType===t.key?"#3b82f6":"#cbd5e1",background:iconType===t.key?"#eff6ff":"white",color:iconType===t.key?"#1e40af":"#64748b",cursor:"pointer"}}>{t.icon} {t.label}</button>
+          ))}
+        </div>
+      </div>
+      <input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Name / description *" style={inp}/>
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        <input value={confirmNum} onChange={e=>setConfirmNum(e.target.value)} placeholder="Confirmation #" style={{...inp,flex:1,marginBottom:0}}/>
+        <input value={time} onChange={e=>setTime(e.target.value)} placeholder="Time" style={{...inp,flex:1,marginBottom:0}}/>
+      </div>
+      <div style={{display:"flex",gap:8,marginBottom:8}}>
+        <div style={{flex:1}}>
+          <div style={{fontSize:11,color:"#64748b",marginBottom:3}}>Start date</div>
+          <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={{...inp,marginBottom:0}}/>
+        </div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:11,color:"#64748b",marginBottom:3}}>End date (optional)</div>
+          <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} style={{...inp,marginBottom:0}}/>
+        </div>
+      </div>
+      <input value={location} onChange={e=>setLocation(e.target.value)} placeholder="Location / address (for Directions button)" style={inp}/>
+      <input value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Notes (optional)" style={{...inp,marginBottom:10}}/>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={save} style={{flex:1,padding:"11px",background:"#0f2444",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer"}}>Save</button>
+        <button onClick={onCancel} style={{padding:"11px 16px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer"}}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function TravelCard({dayDate,travelItems,onAdd,onEdit,onDelete}){
+  const [open,setOpen]=useState(false);
+  const [editId,setEditId]=useState(null);
+  const [adding,setAdding]=useState(false);
+  const dayItems=(travelItems||[]).filter(item=>{
+    const end=item.endDate||item.startDate;
+    return item.startDate<=dayDate&&dayDate<=end;
+  });
+  if(!dayItems.length&&!adding){
+    return(
+      <div style={{marginBottom:14}}>
+        <button onClick={()=>setAdding(true)} style={{width:"100%",padding:"11px",background:"transparent",color:"#93c5fd",border:"1.5px dashed #bfdbfe",borderRadius:14,fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Add travel & reservations</button>
+      </div>
+    );
+  }
+  if(!dayItems.length&&adding){
+    return(
+      <div style={{marginBottom:14}}>
+        <TravelItemForm dayDate={dayDate} onSave={data=>{onAdd(data);setAdding(false);}} onCancel={()=>setAdding(false)}/>
+      </div>
+    );
+  }
+  const first=dayItems[0];
+  const summaryText=`${first.icon} ${first.label}${first.time?" · "+first.time:""}${dayItems.length>1?" +"+(dayItems.length-1)+" more":""}`;
+  return(
+    <div style={{background:"linear-gradient(135deg,#eff6ff 0%,#f0f9ff 100%)",borderRadius:16,marginBottom:14,border:"1.5px solid #bfdbfe",overflow:"hidden"}}>
+      <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",cursor:"pointer"}}>
+        <div style={{width:32,height:32,borderRadius:10,background:"#dbeafe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,flexShrink:0}}>🗂️</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:10,fontWeight:800,color:"#1e40af",textTransform:"uppercase",letterSpacing:"0.12em",marginBottom:1}}>Travel & Reservations</div>
+          <div style={{fontSize:12,color:"#334155",fontWeight:600,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{summaryText}</div>
+        </div>
+        <div style={{color:"#93c5fd",fontSize:18,transition:"transform 0.2s",transform:open?"rotate(90deg)":"none",flexShrink:0}}>›</div>
+      </div>
+      {open&&(
+        <div style={{borderTop:"1px solid #dbeafe",padding:"8px 14px 12px"}}>
+          {dayItems.map((item,i)=>(
+            <div key={item.id}>
+              {editId===item.id?(
+                <TravelItemForm item={item} dayDate={dayDate} onSave={data=>{onEdit(item.id,data);setEditId(null);}} onCancel={()=>setEditId(null)}/>
+              ):(
+                <div style={{display:"flex",alignItems:"flex-start",gap:10,paddingTop:10,paddingBottom:10,borderBottom:i<dayItems.length-1?"1px solid #e0f2fe":"none"}}>
+                  <div style={{width:36,height:36,borderRadius:11,background:"#dbeafe",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0,marginTop:1}}>{item.icon}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:13,fontWeight:700,color:"#1e293b",lineHeight:1.3}}>{item.label}</div>
+                    {item.confirmNum&&<div style={{fontSize:11,color:"#64748b",marginTop:2}}>Conf: <span style={{fontFamily:"monospace",fontWeight:700,color:"#1e40af"}}>{item.confirmNum}</span></div>}
+                    {item.time&&<div style={{fontSize:11,color:"#64748b",marginTop:2}}>{item.time}</div>}
+                    {item.location&&<div style={{fontSize:11,color:"#64748b",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{item.location}</div>}
+                    {item.endDate&&item.endDate!==item.startDate&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>Through {fmtDate(item.endDate)}</div>}
+                    {item.notes&&<div style={{fontSize:11,color:"#94a3b8",marginTop:3,lineHeight:1.4}}>{item.notes}</div>}
+                    {item.location&&(
+                      <div style={{marginTop:7}}>
+                        <a href={`https://maps.google.com/?q=${encodeURIComponent(item.location)}`} target="_blank" rel="noreferrer" style={{fontSize:11,fontWeight:700,color:"#1e40af",background:"white",borderRadius:20,padding:"5px 11px",textDecoration:"none",border:"1.5px solid #bfdbfe",display:"inline-block"}}>Directions →</a>
+                      </div>
+                    )}
+                  </div>
+                  <div style={{display:"flex",gap:5,flexShrink:0,marginTop:2}}>
+                    <span onClick={()=>{setEditId(item.id);setOpen(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.45,lineHeight:1}}>✏️</span>
+                    <span onClick={()=>onDelete(item.id)} style={{fontSize:20,cursor:"pointer",color:"#cbd5e1",lineHeight:1}}>×</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+          {adding?(
+            <TravelItemForm dayDate={dayDate} onSave={data=>{onAdd(data);setAdding(false);}} onCancel={()=>setAdding(false)}/>
+          ):(
+            <button onClick={()=>setAdding(true)} style={{width:"100%",marginTop:8,padding:"10px",background:"transparent",color:"#60a5fa",border:"1.5px dashed #bfdbfe",borderRadius:12,fontSize:13,fontWeight:700,cursor:"pointer"}}>+ Add to this day</button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -905,6 +1110,93 @@ function PlanMyDaySection({day,dayPlans,dayPlanStatus,dayPlanError,planDay,custo
   );
 }
 
+// ── GUIDED TOUR ───────────────────────────────────────────────────────────────
+const TOUR_KEY="trip2026_tour_seen";
+const TOUR_STEPS=[
+  {target:"header",    title:"Welcome to the Trip App! 🌊",   body:"Your family's complete East Coast adventure companion — tasks, itinerary, packing, and more, all synced across every device."},
+  {target:"tab-today", title:"Pre-Trip Tasks 📋",              body:"To-dos before the trip, sorted by due date. Check them off as you go — completed tasks stay visible, crossed out, at the bottom."},
+  {target:"tab-trip",  title:"Day-by-Day Itinerary 🗺️",      body:"Browse every travel day. Star activities as Core, edit any item, and tap \"Plan My Day\" to get an AI-optimized route."},
+  {target:"tab-pack",  title:"Packing Lists 🎒",               body:"Individual and shared packing lists for all five of you. Use the Smart Pack bar to bulk-add or remove items with plain language."},
+  {target:"tab-nearby",title:"Nearby Search 📍",               body:"Location-aware quick searches tied to your trip day — find food, gas, and attractions near wherever you are."},
+  {target:"tab-search",title:"Search Everything 🔍",           body:"Search across all tasks, packing items, and activities at once. Tap any result to jump straight to it."},
+];
+
+function GuidedTour({onClose}){
+  const [step,setStep]=useState(0);
+  const [rect,setRect]=useState(null);
+  const cur=TOUR_STEPS[step];
+  const isLast=step===TOUR_STEPS.length-1;
+
+  useEffect(()=>{
+    const measure=()=>{
+      const el=document.querySelector(`[data-tour="${cur.target}"]`);
+      if(el){const r=el.getBoundingClientRect();setRect({left:r.left,top:r.top,width:r.width,height:r.height});}
+      else setRect(null);
+    };
+    requestAnimationFrame(measure);
+    window.addEventListener("resize",measure);
+    return()=>window.removeEventListener("resize",measure);
+  },[step]);
+
+  const finish=()=>{try{localStorage.setItem(TOUR_KEY,"1");}catch{}onClose();};
+  const next=()=>{if(isLast)finish();else setStep(s=>s+1);};
+
+  const PAD=6,vw=window.innerWidth,vh=window.innerHeight;
+  const sr=rect?{
+    l:Math.max(0,rect.left-PAD),
+    t:Math.max(0,rect.top-PAD),
+    r:Math.min(vw,rect.left+rect.width+PAD),
+    b:Math.min(vh,rect.top+rect.height+PAD),
+  }:null;
+  const srW=sr?sr.r-sr.l:0,srH=sr?sr.b-sr.t:0;
+
+  let ttTop,ttBottom,ttTransform="translateX(-50%)",arrowDir=null;
+  if(sr){
+    if(sr.b+220<vh){ttTop=sr.b+14;arrowDir="up";}
+    else{ttBottom=vh-sr.t+14;arrowDir="down";}
+  }else{ttTop="50%";ttTransform="translate(-50%,-50%)";}
+
+  const panel={position:"fixed",background:"rgba(0,0,0,0.65)",zIndex:910};
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:909}}>
+      {sr?(
+        <>
+          <div onClick={finish} style={{...panel,top:0,left:0,right:0,height:sr.t}}/>
+          <div onClick={finish} style={{...panel,top:sr.b,left:0,right:0,bottom:0}}/>
+          <div onClick={finish} style={{...panel,top:sr.t,left:0,width:sr.l,height:srH}}/>
+          <div onClick={finish} style={{...panel,top:sr.t,left:sr.r,right:0,height:srH}}/>
+          <div style={{position:"fixed",top:sr.t,left:sr.l,width:srW,height:srH,borderRadius:14,border:"2px solid rgba(255,255,255,0.4)",zIndex:911,pointerEvents:"none"}}/>
+        </>
+      ):(
+        <div onClick={finish} style={{...panel,inset:0}}/>
+      )}
+      <div style={{position:"fixed",left:"50%",transform:ttTransform,top:ttTop,bottom:ttBottom,width:"min(340px,calc(100vw - 36px))",zIndex:912}}>
+        <div style={{background:"white",borderRadius:20,padding:"20px 20px 16px",boxShadow:"0 20px 60px rgba(0,0,0,0.45)",position:"relative"}}>
+          {arrowDir&&<div style={{position:"absolute",[arrowDir==="up"?"top":"bottom"]:-10,left:"50%",transform:"translateX(-50%)",width:0,height:0,borderLeft:"10px solid transparent",borderRight:"10px solid transparent",[arrowDir==="up"?"borderBottom":"borderTop"]:"10px solid white"}}/>}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+            <div style={{display:"flex",gap:5}}>
+              {TOUR_STEPS.map((_,i)=>(
+                <div key={i} style={{width:i===step?22:7,height:7,borderRadius:99,background:i===step?"#0f2444":i<step?"#94a3b8":"#e2e8f0",transition:"all 0.25s"}}/>
+              ))}
+            </div>
+            <span style={{fontSize:11,fontWeight:600,color:"#94a3b8"}}>{step+1} of {TOUR_STEPS.length}</span>
+          </div>
+          <div style={{fontSize:16,fontWeight:800,color:"#0f2444",marginBottom:8,lineHeight:1.3}}>{cur.title}</div>
+          <div style={{fontSize:14,color:"#475569",lineHeight:1.6,marginBottom:18}}>{cur.body}</div>
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={next} style={{flex:1,padding:"13px",background:"#0f2444",color:"white",border:"none",borderRadius:13,fontSize:14,fontWeight:700}}>
+              {isLast?"Let's go! 🚀":"Next →"}
+            </button>
+            <button onClick={finish} style={{padding:"13px 16px",background:"#f1f5f9",color:"#64748b",border:"none",borderRadius:13,fontSize:14,fontWeight:600}}>
+              Skip
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function App(){
   const phase=getPhase();
@@ -913,7 +1205,6 @@ function App(){
 
   const [tab,setTab]=useState("today");
   const [dayIdx,setDayIdx]=useState(tripDayIdx);
-  const [preTripDate,setPreTripDate]=useState(today);
   const [customTasks,setCustomTasks]=useState({});
   const [checked,setChecked]=useState({});
   const [packChecked,setPackChecked]=useState({});
@@ -924,8 +1215,9 @@ function App(){
   const [taskText,setTaskText]=useState("");
   const [taskType,setTaskType]=useState("confirm");
   const [taskDate,setTaskDate]=useState(today);
-  const [showCalendar,setShowCalendar]=useState(false);
   const [expandedDay,setExpandedDay]=useState(null);
+  const [preTripCustom,setPreTripCustom]=useState([]);
+  const [preTripEdits,setPreTripEdits]=useState({});
   const [locLabel,setLocLabel]=useState(null);
   const [locError,setLocError]=useState(null);
   const [locLoading,setLocLoading]=useState(false);
@@ -938,6 +1230,12 @@ function App(){
   const [dayPlanStatus,setDayPlanStatus]=useState({});
   const [dayPlanError,setDayPlanError]=useState({});
   const [dayPlanSuggestion,setDayPlanSuggestion]=useState({});
+  const [coreTasks,setCoreTasks]=useState({});
+  const [fitWarnings,setFitWarnings]=useState({});
+  const [fitStatus,setFitStatus]=useState({});
+  const [editedItems,setEditedItems]=useState({});
+  const [showTour,setShowTour]=useState(false);
+  const [travelItems,setTravelItems]=useState(TRAVEL_SEED);
   const syncTimer=useRef(null);
   const latestPatch=useRef(null);
   const isSaving=useRef(false);
@@ -953,7 +1251,7 @@ function App(){
     navigator.geolocation.getCurrentPosition(async pos=>{const{latitude:lat,longitude:lng}=pos.coords;setLocation({lat,lng});setLocLoading(false);setLocLabel(await reverseGeocode(lat,lng));},err=>{setLocLoading(false);if(err.code===1)setLocError("Location denied — check Settings");else setLocError("Location unavailable — tap Retry");},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
   };
 
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans});
+  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems});
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks)setCustomTasks(data.customTasks);
@@ -962,6 +1260,11 @@ function App(){
     if(data.customPackItems){const cpi={...data.customPackItems};if(cpi.Master&&!cpi.General){cpi.General=cpi.Master;delete cpi.Master;}setCustomPackItems(cpi);}
     if(data.deletedItems)setDeletedItems(data.deletedItems);
     if(data.dayPlans)setDayPlans(data.dayPlans);
+    if(data.coreTasks)setCoreTasks(data.coreTasks);
+    if(data.editedItems)setEditedItems(data.editedItems);
+    if(data.preTripCustom)setPreTripCustom(data.preTripCustom);
+    if(data.preTripEdits)setPreTripEdits(data.preTripEdits);
+    if(data.travelItems)setTravelItems(data.travelItems);
     if(data._by){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
   const syncNow=async(patch)=>{
@@ -991,10 +1294,11 @@ function App(){
   };
   useEffect(()=>{pullSync();},[]);
   useEffect(()=>{const id=setInterval(pullSync,10000);return()=>clearInterval(id);},[]);
+  useEffect(()=>{try{if(!localStorage.getItem(TOUR_KEY))setTimeout(()=>setShowTour(true),900);}catch{}},[]);
 
   const toggleCheck=key=>{setChecked(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),checked:n});return n;});};
   const togglePack=key=>{setPackChecked(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),packChecked:n});return n;});};
-  const deleteItem=key=>{if(!window.confirm("Delete this item permanently?"))return;setDeletedItems(p=>{const n={...p,[key]:true};syncNow({...getState(),deletedItems:n});return n;});};
+  const deleteItem=key=>{if(!window.confirm("Remove this task?"))return;setDeletedItems(p=>{const n={...p,[key]:true};syncNow({...getState(),deletedItems:n});return n;});};
   const silentDeleteItem=key=>{setDeletedItems(p=>{const n={...p,[key]:true};syncNow({...getState(),deletedItems:n});return n;});};
   const handleAddTask=()=>{
     if(!taskText.trim())return;const target=taskDate||today;
@@ -1005,13 +1309,40 @@ function App(){
   const editTask=(date,idx,upd)=>{setCustomTasks(p=>{const n={...p,[date]:(p[date]||[]).map((t,i)=>i===idx?{...t,...upd}:t)};syncNow({...getState(),customTasks:n});return n;});};
   const updatePackItems=fn=>{setCustomPackItems(p=>{const n=typeof fn==="function"?fn(p):fn;syncNow({...getState(),customPackItems:n});return n;});};
   const openAddForm=dateKey=>{setAddingTo(dateKey);setTaskDate(dateKey);setTaskText("");setTaskType("confirm");};
-  const allPreDates=()=>[...new Set([...Object.keys(DEFAULT_PRETRIP),...Object.keys(customTasks)])].sort();
-  const tasksForDate=d=>({def:DEFAULT_PRETRIP[d]||[],cust:customTasks[d]||[]});
-  const markedDates=allPreDates();
-
+  const toggleCore=key=>{setCoreTasks(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),coreTasks:n});return n;});};
+  const editBuiltinItem=(key,upd)=>{setEditedItems(p=>{const n={...p,[key]:{...(p[key]||{}),...upd}};syncNow({...getState(),editedItems:n});return n;});};
+  const addPreTripTask=(text,type,dueDate)=>{const id=`ptc-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;setPreTripCustom(p=>{const n=[...p,{id,text,type,dueDate:dueDate||null}];syncNow({...getState(),preTripCustom:n});return n;});};
+  const editPreTripCustom=(id,upd)=>{setPreTripCustom(p=>{const n=p.map(t=>t.id===id?{...t,...upd}:t);syncNow({...getState(),preTripCustom:n});return n;});};
+  const removePreTripCustom=(id)=>{if(!window.confirm("Remove this task?"))return;setPreTripCustom(p=>{const n=p.filter(t=>t.id!==id);syncNow({...getState(),preTripCustom:n});return n;});};
+  const editBuiltinPreTrip=(date,i,upd)=>{const key=`${date}-${i}`;setPreTripEdits(p=>{const n={...p,[key]:{...(p[key]||{}),...upd}};syncNow({...getState(),preTripEdits:n});return n;});};
+  const deleteBuiltinPreTrip=(date,i)=>{const delKey=`pretrip-def-${date}-${i}`;if(!window.confirm("Remove this task?"))return;setDeletedItems(p=>{const n={...p,[delKey]:true};syncNow({...getState(),deletedItems:n});return n;});};
+  const addTravelItem=data=>{const id=`ti-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;setTravelItems(p=>{const n=[...p,{...data,id}];syncNow({...getState(),travelItems:n});return n;});};
+  const editTravelItem=(id,upd)=>{setTravelItems(p=>{const n=p.map(t=>t.id===id?{...t,...upd}:t);syncNow({...getState(),travelItems:n});return n;});};
+  const removeTravelItem=id=>{if(!window.confirm("Remove this item?"))return;setTravelItems(p=>{const n=p.filter(t=>t.id!==id);syncNow({...getState(),travelItems:n});return n;});};
+  const runCheckFit=async(day)=>{
+    const date=day.date;
+    setFitStatus(p=>({...p,[date]:"loading"}));
+    setFitWarnings(p=>({...p,[date]:{}}));
+    try{
+      const tasks=[
+        ...day.items.filter((_,j)=>!deletedItems[`itinerary-${date}-${j}`]).map((it,j)=>({key:`trip-${date}-${j}`,text:(editedItems[`itinerary-${date}-${j}`]?.text)||it.text,isCore:!!coreTasks[`trip-${date}-${j}`]})),
+        ...(customTasks[date]||[]).map((t,j)=>({key:`trip-${date}-c${j}`,text:t.text,isCore:!!coreTasks[`trip-${date}-c${j}`]})),
+      ];
+      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"checkFit",city:day.city,date:day.label,tasks}),signal:AbortSignal.timeout(20000)});
+      if(!resp.ok){let d="Status "+resp.status;try{const e=await resp.json();d=e.error||d;}catch{}throw new Error(d);}
+      const result=await resp.json();
+      const warnMap={};
+      (result.warnings||[]).forEach(w=>{warnMap[w.key]=w.reason;});
+      setFitWarnings(p=>({...p,[date]:warnMap}));
+      setFitStatus(p=>({...p,[date]:"done"}));
+    }catch(e){
+      console.error("checkFit:",e);
+      setFitStatus(p=>({...p,[date]:"error"}));
+    }
+  };
   const planDay=async(day,suggestion=null)=>{
     const allItems=[
-      ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]).map(it=>it.text),
+      ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]).map((it,j)=>(editedItems[`itinerary-${day.date}-${j}`]?.text)||it.text),
       ...(customTasks[day.date]||[]).map(t=>t.text),
     ];
     if(allItems.length<2)return;
@@ -1077,10 +1408,8 @@ function App(){
   return(
     <div style={{fontFamily:"-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif",background:"#eef1f7",minHeight:"100vh",maxWidth:480,margin:"0 auto",position:"relative"}}>
 
-      {showCalendar&&<MiniCalendar markedDates={markedDates} selectedDate={taskDate} onSelect={d=>{setTaskDate(d);setShowCalendar(false);}} onClose={()=>setShowCalendar(false)}/>}
-
       {/* ── HEADER ── */}
-      <div style={{background:"linear-gradient(155deg,#091d38 0%,#0f2c52 45%,#1a4b88 100%)",padding:"0 18px",color:"white",boxShadow:"0 4px 32px rgba(9,29,56,0.45)",position:"sticky",top:0,zIndex:100}}>
+      <div data-tour="header" style={{background:"linear-gradient(155deg,#091d38 0%,#0f2c52 45%,#1a4b88 100%)",padding:"0 18px",color:"white",boxShadow:"0 4px 32px rgba(9,29,56,0.45)",position:"sticky",top:0,zIndex:100}}>
         <div style={{paddingTop:"max(16px, env(safe-area-inset-top))"}}>
 
           {/* Title row */}
@@ -1089,10 +1418,13 @@ function App(){
               <div style={{fontSize:10,fontWeight:800,letterSpacing:"0.16em",opacity:0.55,textTransform:"uppercase",marginBottom:3}}>East Coast Family Trip</div>
               <div style={{fontSize:22,fontWeight:900,letterSpacing:"-0.5px",lineHeight:1}}>Jul 9 – 24, 2026</div>
             </div>
-            <button onClick={pullSync} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:12,color:"white",padding:"8px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,backdropFilter:"blur(8px)"}}>
-              <span style={{width:8,height:8,borderRadius:"50%",background:syncDot,display:"inline-block",flexShrink:0,boxShadow:`0 0 6px ${syncDot}`}}/>
-              <span style={{fontSize:12,fontWeight:600,opacity:0.85}}>↻ {syncLabel}</span>
-            </button>
+            <div style={{display:"flex",gap:7,alignItems:"center"}}>
+              <button onClick={()=>setShowTour(true)} title="App tour" style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:11,color:"white",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,cursor:"pointer",flexShrink:0,backdropFilter:"blur(8px)"}}>?</button>
+              <button onClick={pullSync} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:12,color:"white",padding:"8px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,backdropFilter:"blur(8px)"}}>
+                <span style={{width:8,height:8,borderRadius:"50%",background:syncDot,display:"inline-block",flexShrink:0,boxShadow:`0 0 6px ${syncDot}`}}/>
+                <span style={{fontSize:12,fontWeight:600,opacity:0.85}}>↻ {syncLabel}</span>
+              </button>
+            </div>
           </div>
 
           {lastBy&&<div style={{fontSize:11,opacity:0.55,marginBottom:6}}>✨ {lastBy} just updated</div>}
@@ -1124,7 +1456,7 @@ function App(){
             {TABS.map(t=>{
               const isActive=tab===t.id;
               return(
-                <button key={t.id} onClick={()=>setTab(t.id)} style={{
+                <button key={t.id} data-tour={`tab-${t.id}`} onClick={()=>setTab(t.id)} style={{
                   flex:1,padding:"8px 4px",border:"none",cursor:"pointer",
                   background:isActive?"rgba(255,255,255,0.16)":"transparent",
                   borderRadius:13,display:"flex",flexDirection:"column",alignItems:"center",gap:3,
@@ -1148,96 +1480,46 @@ function App(){
         {tab==="today"&&(
           <div style={{animation:"fadeUp 0.22s ease"}}>
             {phase==="pretrip"&&(()=>{
-              const{def,cust}=tasksForDate(preTripDate);
-              const hasTasks=def.length+cust.length>0;
+              const ptTasks=[];
+              Object.entries(DEFAULT_PRETRIP).forEach(([date,tasks])=>{
+                tasks.forEach((t,i)=>{
+                  const delKey=`pretrip-def-${date}-${i}`;
+                  if(deletedItems[delKey])return;
+                  const checkKey=`${date}-def-${i}`;
+                  const edit=preTripEdits[`${date}-${i}`]||{};
+                  const dueDate=edit.dueDate!==undefined?edit.dueDate:date;
+                  ptTasks.push({task:{...t,...edit,dueDate},checkKey,isBuiltin:true,_date:date,_idx:i,dueDate});
+                });
+              });
+              preTripCustom.forEach(item=>{
+                ptTasks.push({task:{text:item.text,type:item.type,dueDate:item.dueDate},checkKey:item.id,isBuiltin:false,id:item.id,dueDate:item.dueDate});
+              });
+              const incomplete=ptTasks.filter(t=>!checked[t.checkKey]);
+              const complete=ptTasks.filter(t=>!!checked[t.checkKey]);
+              const dated=incomplete.filter(t=>t.dueDate).sort((a,b)=>a.dueDate<b.dueDate?-1:a.dueDate>b.dueDate?1:0);
+              const undated=incomplete.filter(t=>!t.dueDate).sort((a,b)=>a.task.text.localeCompare(b.task.text));
+              const sorted=[...dated,...undated,...complete];
               return(
                 <div>
-                  {/* Date nav */}
-                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:16}}>
-                    <button onClick={()=>{const d=new Date(preTripDate+"T12:00:00");d.setDate(d.getDate()-1);const s=d.toISOString().split("T")[0];if(s>=today)setPreTripDate(s);}}
-                      disabled={preTripDate<=today} style={{width:40,height:40,borderRadius:13,...S.cardSm,border:"none",fontSize:18,color:"#64748b",opacity:preTripDate<=today?0.3:1,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-                    <div style={{flex:1,textAlign:"center"}}>
-                      <div style={{fontWeight:800,fontSize:15,color:S.navy}}>{preTripDate===today?"📋 Today's To-Dos":`📋 ${fmtDate(preTripDate)}`}</div>
-                      {preTripDate!==today&&<div style={{fontSize:11,color:"#94a3b8",marginTop:2}}>{getDaysBetween(preTripDate)>0?`in ${getDaysBetween(preTripDate)} days`:`${Math.abs(getDaysBetween(preTripDate))} days ago`}</div>}
-                    </div>
-                    <button onClick={()=>{const d=new Date(preTripDate+"T12:00:00");d.setDate(d.getDate()+1);const s=d.toISOString().split("T")[0];if(s<TRIP_START)setPreTripDate(s);}}
-                      disabled={preTripDate>=new Date(new Date(TRIP_START+"T12:00:00").getTime()-86400000).toISOString().split("T")[0]}
-                      style={{width:40,height:40,borderRadius:13,...S.cardSm,border:"none",fontSize:18,color:"#64748b",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
-                  </div>
-
-                  {preTripDate===today&&<CountdownCard/>}
-
-                  {/* Overdue rollover */}
-                  {preTripDate===today&&(()=>{
-                    const rollover=[];
-                    Object.entries(DEFAULT_PRETRIP).forEach(([date,tasks])=>{if(date<today)tasks.forEach((t,i)=>{if(!checked[`${date}-def-${i}`]&&!deletedItems[`pretrip-def-${date}-${i}`])rollover.push({...t,_checkKey:`${date}-def-${i}`,_delKey:`pretrip-def-${date}-${i}`,_dateLabel:fmtDate(date)});});});
-                    Object.entries(customTasks).forEach(([date,tasks])=>{if(date<today)tasks.forEach((t,i)=>{if(!checked[`${date}-cust-${i}`]&&!deletedItems[`pretrip-cust-${date}-${i}`])rollover.push({...t,_checkKey:`${date}-cust-${i}`,_delKey:`pretrip-cust-${date}-${i}`,_dateLabel:fmtDate(date)});});});
-                    STILL_NEEDED_ITEMS.forEach((text,i)=>{if(!checked[`booking-${i}`]&&!deletedItems[`stillneeded-${i}`])rollover.push({text,type:"booking",_checkKey:`booking-${i}`,_delKey:`stillneeded-${i}`,_dateLabel:"Still needed"});});
-                    if(!rollover.length)return null;
-                    return(
-                      <div style={{marginBottom:16}}>
-                        <div style={{fontSize:11,fontWeight:800,color:"#f97316",textTransform:"uppercase",letterSpacing:"0.1em",marginBottom:9}}>⚠️ Overdue — Rolled Forward</div>
-                        {rollover.map((item,idx)=>(
-                          <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:12,...S.cardSm,padding:"13px 14px 13px 15px",marginBottom:8,borderLeft:"4px solid #f97316",background:"#fffbf7"}}>
-                            <div onClick={()=>toggleCheck(item._checkKey)} style={{width:24,height:24,borderRadius:7,border:"2px solid #fed7aa",background:"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1,cursor:"pointer"}}/>
-                            <div style={{flex:1,cursor:"pointer"}} onClick={()=>toggleCheck(item._checkKey)}>
-                              <div style={{fontSize:15,color:"#7c2d12",lineHeight:1.4}}><span style={{marginRight:6}}>{TYPE_ICONS[item.type]||"•"}</span>{item.text}</div>
-                              <div style={{fontSize:11,color:"#d97706",marginTop:3,fontWeight:600}}>{item._dateLabel}</div>
-                            </div>
-                            <span onClick={()=>deleteItem(item._delKey)} style={{color:"#e2e8f0",fontSize:22,cursor:"pointer",lineHeight:1,padding:"0 2px"}}>×</span>
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-
-                  {hasTasks?(
-                    <>
-                      <div style={{...S.label,marginBottom:9}}>{preTripDate===today?"Due Today":"Tasks for this date"}</div>
-                      {def.map((t,i)=>deletedItems[`pretrip-def-${preTripDate}-${i}`]?null:<TaskItem key={`d${i}`} task={t} checkKey={`${preTripDate}-def-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`pretrip-def-${preTripDate}-${i}`)}/>)}
-                      {cust.map((t,i)=><TaskItem key={`c${i}`} task={t} checkKey={`${preTripDate}-cust-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(preTripDate,i)} onEdit={u=>editTask(preTripDate,i,u)}/>)}
-                    </>
-                  ):(
+                  <CountdownCard/>
+                  {sorted.length===0&&(
                     <div style={{...S.card,padding:"26px 18px",textAlign:"center",marginBottom:12}}>
-                      <div style={{fontSize:36,marginBottom:10}}>{preTripDate===today?"🌴":"📭"}</div>
-                      <div style={{fontWeight:800,fontSize:15,color:"#1e293b"}}>{preTripDate===today?"Nothing due today!":"No tasks on this date"}</div>
-                      <div style={{fontSize:13,color:"#94a3b8",marginTop:5}}>{preTripDate===today?"Enjoy the calm before the adventure.":"Add one below, or browse with ‹ ›"}</div>
+                      <div style={{fontSize:36,marginBottom:10}}>🌴</div>
+                      <div style={{fontWeight:800,fontSize:15,color:"#1e293b"}}>All tasks complete!</div>
+                      <div style={{fontSize:13,color:"#94a3b8",marginTop:5}}>Add more tasks below.</div>
                     </div>
                   )}
-
-                  {addingTo===preTripDate?(
-                    <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
+                  {sorted.map(entry=>(
+                    <TaskItem key={entry.checkKey} task={entry.task} checkKey={entry.checkKey} checked={checked} onToggle={toggleCheck} showDueDateEdit={true}
+                      onEdit={entry.isBuiltin?upd=>editBuiltinPreTrip(entry._date,entry._idx,upd):upd=>editPreTripCustom(entry.id,upd)}
+                      onRemove={entry.isBuiltin?()=>deleteBuiltinPreTrip(entry._date,entry._idx):()=>removePreTripCustom(entry.id)}
+                    />
+                  ))}
+                  {addingTo==="pretrip"?(
+                    <PreTripAddForm onAdd={(text,type,dueDate)=>{addPreTripTask(text,type,dueDate);setAddingTo(null);}} onCancel={()=>setAddingTo(null)}/>
                   ):(
-                    <button onClick={()=>openAddForm(preTripDate)} style={{width:"100%",padding:"13px",...S.cardSm,background:"white",color:S.navy,border:"2px dashed #cbd5e1",fontSize:14,fontWeight:700,marginBottom:14,boxShadow:"none"}}>+ Add a task</button>
+                    <button onClick={()=>setAddingTo("pretrip")} style={{width:"100%",padding:"13px",...S.cardSm,background:"white",color:S.navy,border:"2px dashed #cbd5e1",fontSize:14,fontWeight:700,marginBottom:14,boxShadow:"none"}}>+ Add a task</button>
                   )}
-
-                  {preTripDate===today&&(()=>{
-                    const up=allPreDates().filter(d=>d>today).slice(0,2);
-                    if(!up.length)return null;
-                    return(
-                      <div style={{...S.card,padding:"15px 17px"}}>
-                        <div style={{...S.label,marginBottom:11}}>Coming Up</div>
-                        {up.map(d=>{
-                          const{def:df,cust:ct}=tasksForDate(d);const tot=df.length+ct.length;
-                          return(
-                            <div key={d} onClick={()=>setPreTripDate(d)} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:"1px solid #f8fafc",cursor:"pointer"}}>
-                              <div style={{width:46,textAlign:"center",background:"#eff6ff",borderRadius:12,padding:"5px 0"}}>
-                                <div style={{fontSize:11,fontWeight:700,color:"#64748b"}}>{fmtDate(d).split(",")[0]}</div>
-                                <div style={{fontSize:11,color:S.accent,fontWeight:800}}>in {getDaysBetween(d)}d</div>
-                              </div>
-                              <div style={{flex:1}}>
-                                <div style={{fontSize:14,color:"#1e293b",fontWeight:700}}>{tot} task{tot!==1?"s":""} due</div>
-                                <div style={{fontSize:12,color:"#94a3b8",marginTop:1}}>{(df[0]||ct[0])?.text?.slice(0,44)}…</div>
-                              </div>
-                              <div style={{color:"#d1d5db",fontSize:18}}>›</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-
-                  {preTripDate!==today&&<button onClick={()=>setPreTripDate(today)} style={{width:"100%",marginTop:10,padding:"13px",background:S.navy,color:"white",border:"none",borderRadius:14,fontSize:14,fontWeight:700,boxShadow:"0 4px 14px rgba(15,36,68,0.3)"}}>Back to Today</button>}
                 </div>
               );
             })()}
@@ -1255,19 +1537,12 @@ function App(){
                 <div style={{...S.card,padding:"16px 18px",marginBottom:12}}>
                   <div style={{fontWeight:900,fontSize:20,color:S.navy,letterSpacing:"-0.3px"}}>{ITINERARY[dayIdx].title}</div>
                   <div style={{fontSize:13,color:"#64748b",marginTop:4,lineHeight:1.5}}>{ITINERARY[dayIdx].summary}</div>
-                  {ITINERARY[dayIdx].lodging&&<div style={{marginTop:10,fontSize:12,color:"#475569",background:"#f8fafc",borderRadius:10,padding:"8px 12px",fontWeight:500}}>🏨 {ITINERARY[dayIdx].lodging}</div>}
-                  {ITINERARY[dayIdx].transit&&<div style={{marginTop:7,fontSize:12,color:"#475569",background:"#f8fafc",borderRadius:10,padding:"8px 12px",fontWeight:500}}>🚌 {ITINERARY[dayIdx].transit}</div>}
                 </div>
-                {ITINERARY[dayIdx].confirmations?.map((c,i)=>(
-                  <div key={i} style={{background:"#eff6ff",borderRadius:14,padding:"12px 16px",marginBottom:9,border:"1.5px solid #bfdbfe"}}>
-                    <div style={{fontWeight:700,fontSize:13,color:"#1e40af"}}>✅ {c.label}</div>
-                    <div style={{fontSize:12,color:"#3b5ba5",marginTop:3}}>{c.detail}</div>
-                  </div>
-                ))}
-                <div style={{...S.label,marginBottom:9}}>Plan for the day</div>
-                {ITINERARY[dayIdx].items.map((it,i)=>deletedItems[`itinerary-${ITINERARY[dayIdx].date}-${i}`]?null:<TaskItem key={i} task={it} checkKey={`trip-${ITINERARY[dayIdx].date}-${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`itinerary-${ITINERARY[dayIdx].date}-${i}`)}/>)}
+                <TravelCard dayDate={ITINERARY[dayIdx].date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
+                <div style={{...S.label,marginBottom:9}}>Activities</div>
+                {ITINERARY[dayIdx].items.map((it,i)=>{const key=`itinerary-${ITINERARY[dayIdx].date}-${i}`;const ck=`trip-${ITINERARY[dayIdx].date}-${i}`;if(deletedItems[key])return null;return(<TaskItem key={i} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore}/>);})}
                 {(customTasks[ITINERARY[dayIdx].date]||[]).map((t,i)=>(
-                  <TaskItem key={`c${i}`} task={t} checkKey={`trip-${ITINERARY[dayIdx].date}-c${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(ITINERARY[dayIdx].date,i)} onEdit={u=>editTask(ITINERARY[dayIdx].date,i,u)}/>
+                  <TaskItem key={`c${i}`} task={t} checkKey={`trip-${ITINERARY[dayIdx].date}-c${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(ITINERARY[dayIdx].date,i)} onEdit={u=>editTask(ITINERARY[dayIdx].date,i,u)} isCore={!!coreTasks[`trip-${ITINERARY[dayIdx].date}-c${i}`]} onToggleCore={toggleCore}/>
                 ))}
                 {addingTo===ITINERARY[dayIdx].date?(
                   <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
@@ -1319,27 +1594,23 @@ function App(){
                   </div>
                   {isOpen&&(
                     <div style={{padding:"0 16px 16px",borderTop:"1px solid #f8fafc"}}>
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap",margin:"12px 0 10px"}}>
-                        {day.lodging&&<div style={{fontSize:11,background:"#eff6ff",color:"#1e40af",borderRadius:8,padding:"4px 10px",fontWeight:600}}>🏨 {day.lodging}</div>}
-                        {day.transit&&<div style={{fontSize:11,background:"#f0fdf4",color:"#166534",borderRadius:8,padding:"4px 10px",fontWeight:600}}>🚌 {day.transit}</div>}
+                      <div style={{marginTop:12}}>
+                        <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
                       </div>
-                      {day.confirmations?.map((c,ci)=>(
-                        <div key={ci} style={{background:"#eff6ff",borderRadius:11,padding:"10px 14px",marginBottom:9,border:"1px solid #bfdbfe"}}>
-                          <div style={{fontWeight:700,fontSize:12,color:"#1e40af"}}>✅ {c.label}</div>
-                          <div style={{fontSize:11,color:"#3b5ba5",marginTop:2}}>{c.detail}</div>
-                        </div>
-                      ))}
                       <div style={{...S.label,marginBottom:8}}>Activities</div>
-                      {day.items.map((it,j)=>deletedItems[`itinerary-${day.date}-${j}`]?null:<TaskItem key={j} task={it} checkKey={`trip-${day.date}-${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(`itinerary-${day.date}-${j}`)}/>)}
-                      {cust.length>0&&<div style={{...S.label,margin:"10px 0 8px"}}>Added by family</div>}
+                      {day.items.map((it,j)=>{const key=`itinerary-${day.date}-${j}`;const ck=`trip-${day.date}-${j}`;if(deletedItems[key])return null;return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);})}
                       {cust.map((t,j)=>(
-                        <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)}/>
+                        <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)} isCore={!!coreTasks[`trip-${day.date}-c${j}`]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[`trip-${day.date}-c${j}`]}/>
                       ))}
                       {addingTo===day.date?(
                         <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
                       ):(
                         <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:9,padding:"11px",background:"#f8fafc",color:S.blue,border:"2px dashed #cbd5e1",borderRadius:12,fontSize:13,fontWeight:700}}>+ Add task to this day</button>
                       )}
+                      <button onClick={()=>runCheckFit(day)} disabled={fitStatus[day.date]==="loading"} style={{width:"100%",marginTop:8,padding:"11px",background:fitStatus[day.date]==="loading"?"#e2e8f0":"#0d9488",color:fitStatus[day.date]==="loading"?"#94a3b8":"white",border:"none",borderRadius:12,fontSize:13,fontWeight:700,cursor:fitStatus[day.date]==="loading"?"default":"pointer"}}>
+                        {fitStatus[day.date]==="loading"?"Checking fit…":"⚡ Check Fit"}
+                      </button>
+                      {fitStatus[day.date]==="error"&&<div style={{fontSize:12,color:"#dc2626",textAlign:"center",marginTop:6}}>Check fit failed — try again</div>}
                       <PlanMyDaySection day={day} dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay} customTasks={customTasks} suggestion={dayPlanSuggestion[day.date]||""} setSuggestion={s=>setDayPlanSuggestion(p=>({...p,[day.date]:s}))} revertPlan={revertPlan}/>
                     </div>
                   )}
@@ -1371,6 +1642,8 @@ function App(){
         )}
 
       </div>
+
+      {showTour&&<GuidedTour onClose={()=>setShowTour(false)}/>}
 
     </div>
   );
