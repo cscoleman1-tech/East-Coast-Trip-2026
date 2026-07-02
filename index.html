@@ -492,6 +492,52 @@ function TravelCard({dayDate,travelItems,onAdd,onEdit,onDelete}){
   );
 }
 
+// ── DAY DETAIL VIEW (shared: Today tab + Trip tab expanded) ──────────────────
+function DayDetailView({
+  day,showHeader,
+  checked,toggleCheck,deletedItems,editedItems,coreTasks,toggleCore,customTasks,
+  travelItems,addTravelItem,editTravelItem,removeTravelItem,
+  fitWarnings,fitStatus,runCheckFit,
+  dayPlans,dayPlanStatus,dayPlanError,planDay,dayPlanSuggestion,setDayPlanSuggestion,revertPlan,
+  addingTo,setAddingTo,openAddForm,taskText,setTaskText,taskType,setTaskType,handleAddTask,
+  removeTask,editTask,deleteItem,editBuiltinItem,
+}){
+  return(
+    <div>
+      {showHeader&&(
+        <div style={{...S.card,padding:"16px 18px",marginBottom:12}}>
+          <div style={{fontWeight:900,fontSize:20,color:S.navy,letterSpacing:"-0.3px"}}>{day.title}</div>
+          <div style={{fontSize:13,color:"#64748b",marginTop:4,lineHeight:1.5}}>{day.summary}</div>
+        </div>
+      )}
+      <div style={{marginTop:showHeader?0:12}}>
+        <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
+      </div>
+      <div style={{...S.label,marginBottom:8}}>Activities</div>
+      {day.items.map((it,j)=>{
+        const key=`itinerary-${day.date}-${j}`;
+        const ck=`trip-${day.date}-${j}`;
+        if(deletedItems[key])return null;
+        return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);
+      })}
+      {(customTasks[day.date]||[]).map((t,j)=>(
+        <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)} isCore={!!coreTasks[`trip-${day.date}-c${j}`]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[`trip-${day.date}-c${j}`]}/>
+      ))}
+      {addingTo===day.date?(
+        <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
+      ):(
+        <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:9,padding:"11px",background:"#f8fafc",color:S.blue,border:"2px dashed #cbd5e1",borderRadius:12,fontSize:13,fontWeight:700}}>+ Add task to this day</button>
+      )}
+      <button onClick={()=>runCheckFit(day)} disabled={fitStatus[day.date]==="loading"}
+        style={{width:"100%",marginTop:8,padding:"11px",background:fitStatus[day.date]==="loading"?"#e2e8f0":"#0d9488",color:fitStatus[day.date]==="loading"?"#94a3b8":"white",border:"none",borderRadius:12,fontSize:13,fontWeight:700,cursor:fitStatus[day.date]==="loading"?"default":"pointer"}}>
+        {fitStatus[day.date]==="loading"?"Checking fit…":"⚡ Check Fit"}
+      </button>
+      {fitStatus[day.date]==="error"&&<div style={{fontSize:12,color:"#dc2626",textAlign:"center",marginTop:6}}>Check fit failed — try again</div>}
+      <PlanMyDaySection day={day} dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay} customTasks={customTasks} suggestion={dayPlanSuggestion[day.date]||""} setSuggestion={s=>setDayPlanSuggestion(p=>({...p,[day.date]:s}))} revertPlan={revertPlan}/>
+    </div>
+  );
+}
+
 // ── UNIVERSAL COMMAND BAR ──────────────────────────────────────────────────────
 function UniversalCommandBar({
   customTasks,checked,coreTasks,packChecked,customPackItems,deletedItems,editedItems,travelItems,preTripCustom,preTripEdits,
@@ -1709,35 +1755,56 @@ function App(){
               );
             })()}
 
-            {phase==="trip"&&(
-              <div>
-                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
-                  <button onClick={()=>setDayIdx(Math.max(0,dayIdx-1))} disabled={dayIdx===0} style={{width:40,height:40,borderRadius:13,...S.cardSm,border:"none",fontSize:18,color:"#64748b",opacity:dayIdx===0?0.3:1,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
-                  <div style={{flex:1,textAlign:"center"}}>
-                    <div style={{fontWeight:800,fontSize:15,color:S.navy}}>{ITINERARY[dayIdx].emoji} {ITINERARY[dayIdx].label} — {ITINERARY[dayIdx].city}</div>
-                    <div style={{fontSize:11,color:getDaysBetween(ITINERARY[dayIdx].date)===0?S.accent:"#94a3b8",marginTop:2,fontWeight:getDaysBetween(ITINERARY[dayIdx].date)===0?700:400}}>{getDaysBetween(ITINERARY[dayIdx].date)===0?"Today!":getDaysBetween(ITINERARY[dayIdx].date)>0?`in ${getDaysBetween(ITINERARY[dayIdx].date)} days`:`${Math.abs(getDaysBetween(ITINERARY[dayIdx].date))} days ago`}</div>
+            {phase==="trip"&&(()=>{
+              const day=ITINERARY[dayIdx];
+              const ptTasks=[];
+              Object.entries(DEFAULT_PRETRIP).forEach(([date,tasks])=>{
+                tasks.forEach((t,i)=>{
+                  if(deletedItems[`pretrip-def-${date}-${i}`])return;
+                  const edit=preTripEdits[`${date}-${i}`]||{};
+                  ptTasks.push({task:{...t,...edit},checkKey:`${date}-def-${i}`,isBuiltin:true,_date:date,_idx:i});
+                });
+              });
+              preTripCustom.forEach(item=>{
+                ptTasks.push({task:{text:item.text,type:item.type},checkKey:item.id,isBuiltin:false,id:item.id});
+              });
+              const incompletePt=ptTasks.filter(e=>!checked[e.checkKey]);
+              return(
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
+                    <button onClick={()=>{const ni=Math.max(0,dayIdx-1);setDayIdx(ni);setExpandedDay(ni);}} disabled={dayIdx===0} style={{width:40,height:40,borderRadius:13,...S.cardSm,border:"none",fontSize:18,color:"#64748b",opacity:dayIdx===0?0.3:1,display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+                    <div style={{flex:1,textAlign:"center"}}>
+                      <div style={{fontWeight:800,fontSize:15,color:S.navy}}>{day.emoji} {day.label} — {day.city}</div>
+                      <div style={{fontSize:11,color:getDaysBetween(day.date)===0?S.accent:"#94a3b8",marginTop:2,fontWeight:getDaysBetween(day.date)===0?700:400}}>{getDaysBetween(day.date)===0?"Today!":getDaysBetween(day.date)>0?`in ${getDaysBetween(day.date)} days`:`${Math.abs(getDaysBetween(day.date))} days ago`}</div>
+                    </div>
+                    <button onClick={()=>{const ni=Math.min(ITINERARY.length-1,dayIdx+1);setDayIdx(ni);setExpandedDay(ni);}} disabled={dayIdx===ITINERARY.length-1} style={{width:40,height:40,borderRadius:13,...S.cardSm,border:"none",fontSize:18,color:"#64748b",opacity:dayIdx===ITINERARY.length-1?0.3:1,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
                   </div>
-                  <button onClick={()=>setDayIdx(Math.min(ITINERARY.length-1,dayIdx+1))} disabled={dayIdx===ITINERARY.length-1} style={{width:40,height:40,borderRadius:13,...S.cardSm,border:"none",fontSize:18,color:"#64748b",opacity:dayIdx===ITINERARY.length-1?0.3:1,display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+                  <DayDetailView day={day} showHeader
+                    checked={checked} toggleCheck={toggleCheck} deletedItems={deletedItems} editedItems={editedItems}
+                    coreTasks={coreTasks} toggleCore={toggleCore} customTasks={customTasks}
+                    travelItems={travelItems} addTravelItem={addTravelItem} editTravelItem={editTravelItem} removeTravelItem={removeTravelItem}
+                    fitWarnings={fitWarnings} fitStatus={fitStatus} runCheckFit={runCheckFit}
+                    dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay}
+                    dayPlanSuggestion={dayPlanSuggestion} setDayPlanSuggestion={setDayPlanSuggestion} revertPlan={revertPlan}
+                    addingTo={addingTo} setAddingTo={setAddingTo} openAddForm={openAddForm}
+                    taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} handleAddTask={handleAddTask}
+                    removeTask={removeTask} editTask={editTask} deleteItem={deleteItem} editBuiltinItem={editBuiltinItem}
+                  />
+                  {incompletePt.length>0&&(
+                    <div>
+                      <div style={{...S.label,margin:"18px 0 8px"}}>Pre-Trip Tasks Still Pending</div>
+                      {incompletePt.map(entry=>(
+                        <TaskItem key={entry.checkKey} task={entry.task} checkKey={entry.checkKey} checked={checked} onToggle={toggleCheck}
+                          onEdit={entry.isBuiltin?upd=>editBuiltinPreTrip(entry._date,entry._idx,upd):upd=>editPreTripCustom(entry.id,upd)}
+                          onRemove={entry.isBuiltin?()=>deleteBuiltinPreTrip(entry._date,entry._idx):()=>removePreTripCustom(entry.id)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {dayIdx!==tripDayIdx&&<button onClick={()=>{setDayIdx(tripDayIdx);setExpandedDay(tripDayIdx);}} style={{width:"100%",padding:"13px",background:S.navy,color:"white",border:"none",borderRadius:14,fontSize:14,fontWeight:700,boxShadow:"0 4px 14px rgba(15,36,68,0.3)",marginTop:12}}>Jump to Today</button>}
                 </div>
-                <div style={{...S.card,padding:"16px 18px",marginBottom:12}}>
-                  <div style={{fontWeight:900,fontSize:20,color:S.navy,letterSpacing:"-0.3px"}}>{ITINERARY[dayIdx].title}</div>
-                  <div style={{fontSize:13,color:"#64748b",marginTop:4,lineHeight:1.5}}>{ITINERARY[dayIdx].summary}</div>
-                </div>
-                <TravelCard dayDate={ITINERARY[dayIdx].date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
-                <div style={{...S.label,marginBottom:9}}>Activities</div>
-                {ITINERARY[dayIdx].items.map((it,i)=>{const key=`itinerary-${ITINERARY[dayIdx].date}-${i}`;const ck=`trip-${ITINERARY[dayIdx].date}-${i}`;if(deletedItems[key])return null;return(<TaskItem key={i} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore}/>);})}
-                {(customTasks[ITINERARY[dayIdx].date]||[]).map((t,i)=>(
-                  <TaskItem key={`c${i}`} task={t} checkKey={`trip-${ITINERARY[dayIdx].date}-c${i}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(ITINERARY[dayIdx].date,i)} onEdit={u=>editTask(ITINERARY[dayIdx].date,i,u)} isCore={!!coreTasks[`trip-${ITINERARY[dayIdx].date}-c${i}`]} onToggleCore={toggleCore}/>
-                ))}
-                {addingTo===ITINERARY[dayIdx].date?(
-                  <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
-                ):(
-                  <button onClick={()=>openAddForm(ITINERARY[dayIdx].date)} style={{width:"100%",padding:"13px",...S.cardSm,background:"white",color:S.navy,border:"2px dashed #cbd5e1",fontSize:14,fontWeight:700,marginBottom:12,boxShadow:"none"}}>+ Add a task</button>
-                )}
-                <PlanMyDaySection day={ITINERARY[dayIdx]} dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay} customTasks={customTasks} suggestion={dayPlanSuggestion[ITINERARY[dayIdx].date]||""} setSuggestion={s=>setDayPlanSuggestion(p=>({...p,[ITINERARY[dayIdx].date]:s}))} revertPlan={revertPlan}/>
-                {dayIdx!==tripDayIdx&&<button onClick={()=>setDayIdx(tripDayIdx)} style={{width:"100%",padding:"13px",background:S.navy,color:"white",border:"none",borderRadius:14,fontSize:14,fontWeight:700,boxShadow:"0 4px 14px rgba(15,36,68,0.3)"}}>Jump to Today</button>}
-              </div>
-            )}
+              );
+            })()}
 
             {phase==="posttrip"&&(
               <div style={{textAlign:"center",padding:"56px 20px"}}>
@@ -1762,7 +1829,7 @@ function App(){
               const done=[...day.items.map((_,j)=>checked[`trip-${day.date}-${j}`]),...cust.map((_,j)=>checked[`trip-${day.date}-c${j}`])].filter(Boolean).length;
               return(
                 <div key={i} style={{...S.card,marginBottom:10,overflow:"hidden",borderLeft:isToday?"4px solid "+S.accent:"4px solid transparent"}}>
-                  <div onClick={()=>setExpandedDay(isOpen?null:i)} style={{display:"flex",alignItems:"center",gap:11,padding:"14px 16px",cursor:"pointer",background:isToday?"#eff6ff":isPast?"#fafafa":"white"}}>
+                  <div onClick={()=>{const opening=!isOpen;setExpandedDay(opening?i:null);if(opening)setDayIdx(i);}} style={{display:"flex",alignItems:"center",gap:11,padding:"14px 16px",cursor:"pointer",background:isToday?"#eff6ff":isPast?"#fafafa":"white"}}>
                     <div style={{fontSize:24,flexShrink:0}}>{day.emoji}</div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>
@@ -1779,24 +1846,17 @@ function App(){
                   </div>
                   {isOpen&&(
                     <div style={{padding:"0 16px 16px",borderTop:"1px solid #f8fafc"}}>
-                      <div style={{marginTop:12}}>
-                        <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
-                      </div>
-                      <div style={{...S.label,marginBottom:8}}>Activities</div>
-                      {day.items.map((it,j)=>{const key=`itinerary-${day.date}-${j}`;const ck=`trip-${day.date}-${j}`;if(deletedItems[key])return null;return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);})}
-                      {cust.map((t,j)=>(
-                        <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)} isCore={!!coreTasks[`trip-${day.date}-c${j}`]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[`trip-${day.date}-c${j}`]}/>
-                      ))}
-                      {addingTo===day.date?(
-                        <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
-                      ):(
-                        <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:9,padding:"11px",background:"#f8fafc",color:S.blue,border:"2px dashed #cbd5e1",borderRadius:12,fontSize:13,fontWeight:700}}>+ Add task to this day</button>
-                      )}
-                      <button onClick={()=>runCheckFit(day)} disabled={fitStatus[day.date]==="loading"} style={{width:"100%",marginTop:8,padding:"11px",background:fitStatus[day.date]==="loading"?"#e2e8f0":"#0d9488",color:fitStatus[day.date]==="loading"?"#94a3b8":"white",border:"none",borderRadius:12,fontSize:13,fontWeight:700,cursor:fitStatus[day.date]==="loading"?"default":"pointer"}}>
-                        {fitStatus[day.date]==="loading"?"Checking fit…":"⚡ Check Fit"}
-                      </button>
-                      {fitStatus[day.date]==="error"&&<div style={{fontSize:12,color:"#dc2626",textAlign:"center",marginTop:6}}>Check fit failed — try again</div>}
-                      <PlanMyDaySection day={day} dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay} customTasks={customTasks} suggestion={dayPlanSuggestion[day.date]||""} setSuggestion={s=>setDayPlanSuggestion(p=>({...p,[day.date]:s}))} revertPlan={revertPlan}/>
+                      <DayDetailView day={day}
+                        checked={checked} toggleCheck={toggleCheck} deletedItems={deletedItems} editedItems={editedItems}
+                        coreTasks={coreTasks} toggleCore={toggleCore} customTasks={customTasks}
+                        travelItems={travelItems} addTravelItem={addTravelItem} editTravelItem={editTravelItem} removeTravelItem={removeTravelItem}
+                        fitWarnings={fitWarnings} fitStatus={fitStatus} runCheckFit={runCheckFit}
+                        dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay}
+                        dayPlanSuggestion={dayPlanSuggestion} setDayPlanSuggestion={setDayPlanSuggestion} revertPlan={revertPlan}
+                        addingTo={addingTo} setAddingTo={setAddingTo} openAddForm={openAddForm}
+                        taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} handleAddTask={handleAddTask}
+                        removeTask={removeTask} editTask={editTask} deleteItem={deleteItem} editBuiltinItem={editBuiltinItem}
+                      />
                     </div>
                   )}
                 </div>
