@@ -129,6 +129,90 @@ Use the exact key string from the brackets in the input (e.g. trip-2026-07-10-3)
         return json(JSON.parse(match[0]));
       }
 
+      // ── UNIVERSAL COMMAND PARSER ─────────────────────────────────────────────
+      if (body.action === "universalCommand") {
+        const { command = "", context = {} } = body;
+        if (!command.trim()) return json({ error: "No command provided" }, 400);
+        const { preTripTasks = [], tripTasks = [], packItems = {}, reservations = [] } = context;
+
+        const preTripSummary = preTripTasks.length
+          ? preTripTasks.map(t => `  [${t.key}] ${t.text} (${t.date}${t.done ? ", done" : ""})`).join("\n")
+          : "  (none)";
+        const tripSummary = tripTasks.length
+          ? tripTasks.map(t => `  [${t.key}] ${t.text} — ${t.city} ${t.date}${t.done ? " ✓" : ""}${t.isCore ? " [CORE]" : ""}`).join("\n")
+          : "  (none)";
+        const packSummary = Object.entries(packItems).map(([person, cats]) =>
+          `  ${person}: ${Object.entries(cats).map(([cat, items]) => items.map(i => `${i.text}${i.done?" ✓":""}`).join(", ")).join(" | ")}`
+        ).join("\n") || "  (none)";
+        const resSummary = reservations.length
+          ? reservations.map(r => `  [${r.id}] ${r.title} (${r.type}) ${r.date || r.startDate || ""}${r.confirmNum ? " conf:"+r.confirmNum : ""}`).join("\n")
+          : "  (none)";
+
+        const prompt = `You are an AI assistant for the Coleman family East Coast Trip 2026 planning app.
+Parse the user's command and return structured actions.
+
+CURRENT APP STATE:
+Pre-trip tasks:
+${preTripSummary}
+
+Trip day tasks:
+${tripSummary}
+
+Packing lists (person → category → items):
+${packSummary}
+
+Reservations/Travel:
+${resSummary}
+
+USER COMMAND: "${command}"
+
+Return ONLY valid JSON, no markdown, no code fences:
+{"actions":[...]}
+
+Each action must have a "type" field. Supported types and their schemas:
+
+taskToggle — mark a task done/undone
+  {"type":"taskToggle","key":"EXACT_KEY","label":"display text","done":true|false}
+
+taskAdd — add a new task to a specific date
+  {"type":"taskAdd","date":"YYYY-MM-DD","text":"task text","taskType":"activity"|"food"|"transport"|"booking"|"reminder"}
+  Use date "pretrip" for pre-trip tasks.
+
+taskDelete — remove a task
+  {"type":"taskDelete","key":"EXACT_KEY","label":"display text"}
+
+taskEdit — edit a task's text
+  {"type":"taskEdit","key":"EXACT_KEY","label":"old text","newText":"new text"}
+
+packAdd — add item to a person's packing list
+  {"type":"packAdd","person":"Chris"|"McKenna"|"Sawyer"|"Pierce"|"Bennett"|"General","item":"item text","category":"👕 Clothes & Personal Care"|"🔌 Electronics & Chargers"|"🏖️ Beach & Outdoor Gear"|"👦 Kids' Stuff"|"📄 Documents & Travel Info"}
+
+packRemove — remove a packing item
+  {"type":"packRemove","person":"NAME","item":"EXACT_ITEM_TEXT","label":"display text"}
+
+reservationAdd — add a new reservation/travel item
+  {"type":"reservationAdd","title":"name","travelType":"flight"|"hotel"|"train"|"car"|"restaurant"|"activity"|"ferry"|"bus"|"attraction"|"other","confirmNum":"","date":"YYYY-MM-DD","time":"","location":"","notes":""}
+
+reservationEdit — edit an existing reservation
+  {"type":"reservationEdit","id":"EXACT_ID","label":"display text","updates":{"field":"value"}}
+
+coreToggle — mark a trip task as core/non-core
+  {"type":"coreToggle","key":"EXACT_KEY","label":"display text","isCore":true|false}
+
+Rules:
+- Use EXACT keys/IDs from the state above when available. If uncertain, use the closest match and include a "fuzzy":true field.
+- For packRemove, match exact item text from the state; if uncertain use fuzzy:true.
+- Return only the actions the user asked for.
+- For multi-part commands, return multiple actions.
+- If no matching task/item found for an operation, still return the action with your best guess at key/text and fuzzy:true.`;
+
+        const text = await callAnthropic(apiKey, prompt, 1500);
+        const match = text.match(/\{[\s\S]*\}/);
+        if (!match) return json({ error: "AI returned no JSON", raw: text }, 502);
+        try { return json(JSON.parse(match[0])); }
+        catch { return json({ error: "Invalid JSON from AI", raw: text }, 502); }
+      }
+
       // ── DAY PLANNER ─────────────────────────────────────────────────────────
       const { city = "unknown city", date = "", activities = [], suggestion = null, currentPlan = null } = body;
 
