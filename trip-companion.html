@@ -72,7 +72,7 @@ const TYPE_COLORS={
 const TRIP_CONTEXT=`You are a friendly trip assistant for Chris's family East Coast trip July 2026.
 Family: Chris, McKenna (wife), sons Sawyer (14), Pierce (11), Bennett (10). They have a dog.
 CONFIRMED: Flights IN Jul 9 SLC→LGA 11pm SW 3750+4120 via MDW. Flights OUT Jul 24 ORF→SLC 3:30pm SW 3187+2660 via MDW arrives 12:35am Jul 25. Amtrak 667 Jul 11 NYC→Philly 3:13pm→4:38pm conf 594764. Amtrak 649 Jul 13 Philly→Harrisburg 4:40pm→6:39pm conf 594C90. Enterprise Chrysler Pacifica pickup Jul 17 11am Harrisburg drop Jul 24 11am Norfolk ORF. OBX JMJ Seascape South Nags Head milepost 19 Jul 18-24 ~13 people. NYC Brooklyn VRBO Herkimer St & Nostrand Ave. Philly Lynn's house 512 Court Circle West Chester PA. Harrisburg Ramada by Wyndham. Williamsburg Woodlands Hotel.
-STILL TO BOOK: Statue Cruises, 9/11 Museum timed entry, Independence Hall timed entry, OBX beach gear rentals, Williamsburg dog weight limit.
+STILL TO BOOK: 9/11 Museum timed entry, Independence Hall timed entry, OBX beach gear rentals, Williamsburg dog weight limit. Staten Island Ferry is FREE — no booking needed for Liberty views.
 Respond helpfully and concisely. Brief for simple questions, organized for planning. No walls of text.`;
 
 const MASTER_PACKING={
@@ -91,10 +91,10 @@ const INDIVIDUAL_PACKING={
 };
 
 const DEFAULT_PRETRIP={
-  "2026-06-13":[{text:"Book Statue Cruises (Statue of Liberty ferry) — sells out fast!",type:"booking"},{text:"Book 9/11 Museum timed entry tickets",type:"booking"},{text:"Book Independence Hall timed entry (free via recreation.gov)",type:"booking"}],
+  "2026-06-13":[{text:"Book 9/11 Museum timed entry tickets",type:"booking"},{text:"Book Independence Hall timed entry (free via recreation.gov)",type:"booking"}],
   "2026-06-20":[{text:"Call Williamsburg Woodlands to confirm dog weight limit",type:"confirm"},{text:"Book OBX beach gear rentals (Farmdog, Beach EZ, or Ocean Atlantic)",type:"booking"},{text:"Decide: Colonial Williamsburg vs Jamestown for Jul 18 morning",type:"confirm"}],
   "2026-06-27":[{text:"Buy Luna Park wristbands online if doing Coney Island (cheaper in advance)",type:"booking"},{text:"Check Hershey Park accessibility pass process for Tourette's",type:"confirm"},{text:"Start packing list — 5 people, 16 days",type:"pack"}],
-  "2026-07-01":[{text:"Confirm OBX private chef birthday dinner details (Jul 19)",type:"confirm"},{text:"Coordinate Costco run — who brings coolers/insulated bags?",type:"confirm"},{text:"Text Steve & Tina to confirm Hershey Park plan (Jul 14)",type:"confirm"},{text:"Reach out to cousin Allie to set a time (Jul 15)",type:"confirm"},{text:"Reach out to Jeana to set a time (Jul 16)",type:"confirm"}],
+  "2026-07-01":[{text:"Confirm OBX private chef birthday dinner details (Jul 19)",type:"confirm"},{text:"Coordinate Costco run — who brings coolers/insulated bags?",type:"confirm"},{text:"Text Steve & Tina to confirm Hershey Park plan (Jul 14)",type:"confirm"},{text:"Reach out to Jeana to set a time (Jul 16)",type:"confirm"}],
   "2026-07-04":[{text:"Pack sunscreen, beach towels, boogie boards",type:"pack"},{text:"Download Amtrak app & save tickets (594764 & 594C90)",type:"confirm"},{text:"Download Southwest app & note check-in window (24 hrs before)",type:"confirm"}],
   "2026-07-07":[{text:"Pack everyone's bags — check weather for each city",type:"pack"},{text:"Charge all devices & portable battery banks",type:"pack"},{text:"Print or save all confirmations offline",type:"confirm"},{text:"Download NYC subway map for offline use",type:"confirm"},{text:"Confirm ride to SLC airport on Jul 9",type:"confirm"}],
   "2026-07-08":[{text:"Check in to Southwest flight! (opens 24 hrs before Jul 9 departure)",type:"booking"},{text:"Final bag check — all 5 people packed?",type:"pack"},{text:"Snacks & drinks for travel day",type:"pack"},{text:"Cash on hand for tips, markets, small vendors",type:"pack"}],
@@ -107,7 +107,7 @@ const ITINERARY=[
   {date:"2026-07-12",label:"Sun Jul 12",city:"Philly",emoji:"🔔",title:"Philadelphia",summary:"Liberty Bell · Cheesesteak · Ice Cream",lodging:"Lynn's house · 512 Court Circle, West Chester PA",transit:"Borrow Lynn's car",confirmations:[],items:[{text:"Liberty Bell & Independence Hall (timed entry)",type:"priority"},{text:"Cheesesteak (Pat's, Geno's, or Jim's)",type:"food"},{text:"LDS Temple exterior view",type:"activity"},{text:"Scoops DeVille ice cream 🍦",type:"food"},{text:"Reading Terminal Market (if time)",type:"optional"}]},
   {date:"2026-07-13",label:"Mon Jul 13",city:"Philly→Harrisburg",emoji:"🚂",title:"Philadelphia → Harrisburg",summary:"Morning Philly · Train 4:40pm · Arrive 6:39pm",lodging:"Ramada by Wyndham Harrisburg/Hershey",transit:"",confirmations:[{label:"Amtrak #594C90",detail:"Keystone 649 · 5 Unreserved Coach seats · Departs 4:40pm"}],items:[{text:"Morning: anything left in Philly",type:"activity"},{text:"Drive to Philly 30th St Station (~30-40 min from West Chester)",type:"transport"},{text:"Amtrak Keystone 649 departs 4:40pm",type:"transport"},{text:"Arrive Harrisburg 6:39pm",type:"transport"},{text:"Check in: Ramada by Wyndham Harrisburg/Hershey",type:"transport"}]},
   {date:"2026-07-14",label:"Tue Jul 14",city:"Harrisburg",emoji:"🍫",title:"Hershey Park Day!",summary:"Hershey Park & Chocolate World with Steve & Tina",lodging:"Ramada by Wyndham Harrisburg/Hershey",transit:"Borrow parents' car",confirmations:[],items:[{text:"Hershey Park — arrive early!",type:"priority"},{text:"Tourette's accessibility pass (4 per ride)",type:"tip"},{text:"All Day Drink Pass (every 15 min)",type:"tip"},{text:"All Day Dining Pass (every 90 min)",type:"tip"},{text:"Chocolate World 🍫",type:"activity"}]},
-  {date:"2026-07-15",label:"Wed Jul 15",city:"Harrisburg",emoji:"🐎",title:"Harrisburg Free Day",summary:"Amish country · Visit Allie",lodging:"Ramada by Wyndham Harrisburg/Hershey",transit:"Borrow parents' car",confirmations:[],items:[{text:"Amish country — Intercourse PA (optional)",type:"optional"},{text:"Visit cousin Allie (lunch or dinner TBD)",type:"activity"},{text:"Visit parents in Linglestown",type:"activity"},{text:"Try teaberry ice cream! (3 B's in Harrisburg) 🍦",type:"food"},{text:"Find Middleswarth BBQ chips at grocery",type:"food"},{text:"Hit a Sheetz or Wawa! ⛽",type:"food"}]},
+  {date:"2026-07-15",label:"Wed Jul 15",city:"Harrisburg",emoji:"🐎",title:"Harrisburg Free Day",summary:"Amish country · Visit parents",lodging:"Ramada by Wyndham Harrisburg/Hershey",transit:"Borrow parents' car",confirmations:[],items:[{text:"Amish country — Intercourse PA (optional)",type:"optional"},{text:"Visit parents in Linglestown",type:"activity"},{text:"Try teaberry ice cream! (3 B's in Harrisburg) 🍦",type:"food"},{text:"Find Middleswarth BBQ chips at grocery",type:"food"},{text:"Hit a Sheetz or Wawa! ⛽",type:"food"}]},
   {date:"2026-07-16",label:"Thu Jul 16",city:"Harrisburg",emoji:"🛒",title:"Markets & Friends",summary:"Broad Street Market · City Island · Jeana",lodging:"Ramada by Wyndham Harrisburg/Hershey",transit:"Borrow parents' car",confirmations:[],items:[{text:"Broad Street Market for lunch 🥙",type:"priority"},{text:"City Island",type:"activity"},{text:"Visit Jeana (TBD)",type:"activity"}]},
   {date:"2026-07-17",label:"Fri Jul 17",city:"Harrisburg→Williamsburg",emoji:"🚗",title:"Drive to Williamsburg",summary:"Pick up rental 11am · ~4.5 hrs · Stops along way",lodging:"Williamsburg Woodlands Hotel & Suites",transit:"",confirmations:[{label:"Enterprise Rental",detail:"Chrysler Pacifica · 7 passengers · Unlimited miles · Pickup 11am"}],items:[{text:"Pick up Enterprise Pacifica 11am — 112 N Mountain Rd, Harrisburg",type:"transport"},{text:"Stop: Gateway Candyland 🍬",type:"activity"},{text:"Stop: DC LDS Temple (exterior)",type:"activity"},{text:"Lunch near DC",type:"food"},{text:"Dog potty breaks every ~2 hrs 🐕",type:"tip"},{text:"Check in: Williamsburg Woodlands Hotel",type:"transport"}]},
   {date:"2026-07-18",label:"Sat Jul 18",city:"Williamsburg→OBX",emoji:"🏖️",title:"Williamsburg → Outer Banks!",summary:"Morning sightseeing · Costco · Arrive OBX",lodging:"JMJ Seascape · South Nags Head ~Milepost 19",transit:"",confirmations:[],items:[{text:"Morning: Colonial Williamsburg OR Jamestown Settlement",type:"priority"},{text:"Stop: Costco Newport News 🛒 (bring coolers!)",type:"priority"},{text:"Drive to OBX South Nags Head (~3.5 hrs)",type:"transport"},{text:"Check in: JMJ Seascape",type:"transport"}]},
@@ -119,7 +119,7 @@ const ITINERARY=[
   {date:"2026-07-24",label:"Fri Jul 24",city:"Fly Home",emoji:"✈️",title:"Fly Home to SLC",summary:"Drop car 11am · Depart ORF 3:30pm",lodging:"",transit:"",confirmations:[],items:[{text:"Check out JMJ Seascape",type:"transport"},{text:"Drop Enterprise at ORF by 11am — 2200 Norview Ave, Norfolk",type:"transport"},{text:"SW 3187 departs ORF 3:30pm",type:"transport"},{text:"Connect MDW → SW 2660",type:"transport"},{text:"Arrive SLC 12:35am (July 25) 🏠",type:"transport"}]},
 ];
 
-const STILL_NEEDED_ITEMS=["Statue Cruises (Statue of Liberty ferry) — book NOW","9/11 Museum timed entry — book NOW","Independence Hall timed entry — book NOW","OBX beach gear rentals (Farmdog / Beach EZ / Ocean Atlantic)","Williamsburg Woodlands — call to confirm dog weight limit","Decide: Colonial Williamsburg vs Jamestown (Jul 18 morning)"];
+const STILL_NEEDED_ITEMS=["9/11 Museum timed entry — book NOW","Independence Hall timed entry — book NOW","OBX beach gear rentals (Farmdog / Beach EZ / Ocean Atlantic)","Williamsburg Woodlands — call to confirm dog weight limit"];
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
 const todayStr=()=>new Date().toISOString().split("T")[0];
@@ -411,6 +411,7 @@ function App(){
   const [taskDate,setTaskDate]=useState(today);
   const [showCalendar,setShowCalendar]=useState(false);
   const [expandedDay,setExpandedDay]=useState(null);
+  const [flappyActive,setFlappyActive]=useState(false);
 
   // Location
   const [locLabel,setLocLabel]=useState(null);
@@ -701,7 +702,7 @@ function App(){
 
           {/* Tabs */}
           <div style={{display:"flex",gap:2}}>
-            {[{id:"today",label:phase==="pretrip"?"Pre-Trip":"Today"},{id:"trip",label:"Trip"},{id:"pack",label:"🎒"},{id:"chat",label:"Ask AI"}].map(t=>(
+            {[{id:"today",label:phase==="pretrip"?"Pre-Trip":"Today"},{id:"trip",label:"Trip"},{id:"pack",label:"🎒"},{id:"search",label:"🔍"},{id:"chat",label:"Ask AI"}].map(t=>(
               <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"9px 4px",border:"none",cursor:"pointer",background:tab===t.id?"white":"transparent",color:tab===t.id?"#1a3a5c":"rgba(255,255,255,0.75)",fontWeight:tab===t.id?700:500,fontSize:13,borderRadius:"8px 8px 0 0",transition:"all 0.15s"}}>{t.label}</button>
             ))}
           </div>
@@ -906,6 +907,9 @@ function App(){
           <PackingTab packChecked={packChecked} onTogglePack={togglePack} customPackItems={customPackItems} setCustomPackItems={updatePackItems} packPerson={packPerson} setPackPerson={setPackPerson}/>
         )}
 
+        {/* SEARCH TAB */}
+        {tab==="search"&&<SearchTab onFlappy={()=>setFlappyActive(true)}/>}
+
         {/* CHAT TAB */}
         {tab==="chat"&&(
           <div style={{display:"flex",flexDirection:"column",height:"calc(100dvh - 220px)",minHeight:380}}>
@@ -931,6 +935,504 @@ function App(){
           </div>
         )}
       </div>
+
+      {flappyActive&&<FlappyGame onExit={()=>setFlappyActive(false)}/>}
+    </div>
+  );
+}
+
+// ── FLAPPY PLANE GAME ─────────────────────────────────────────────────────────
+const FLAPPY_LS="flappy2026_progress";
+const WORLDS=[
+  {id:0,name:"NYC",emoji:"🗽",color:"#1a237e",sky:"#1565c0",ground:"#37474f",
+   desc:"NYC Skyline",finaleDesc:"Empire State spire!",
+   obstacleColor:"#263238",gapSize:145,speed:2.8},
+  {id:1,name:"Philly",emoji:"🔔",color:"#4a148c",sky:"#1b5e20",ground:"#4e342e",
+   desc:"Liberty Bell gaps",finaleDesc:"Fly through the crack!",
+   obstacleColor:"#5d4037",gapSize:135,speed:3.1},
+  {id:2,name:"Hershey",emoji:"🍫",color:"#3e2723",sky:"#bf360c",ground:"#4e342e",
+   desc:"Chocolate bar obstacles",finaleDesc:"Between the Kisses!",
+   obstacleColor:"#6d4c41",gapSize:128,speed:3.4},
+  {id:3,name:"Williamsburg",emoji:"🏛️",color:"#1b5e20",sky:"#2e7d32",ground:"#33691e",
+   desc:"Picket fences + windmills",finaleDesc:"Through the windmill!",
+   obstacleColor:"#558b2f",gapSize:120,speed:3.7},
+  {id:4,name:"OBX",emoji:"🌊",color:"#006064",sky:"#0277bd",ground:"#37474f",
+   desc:"Lighthouse beams",finaleDesc:"Through the gallery railing!",
+   obstacleColor:"#e65100",gapSize:112,speed:4.0},
+];
+
+function loadFlappyProgress(){
+  try{const s=localStorage.getItem(FLAPPY_LS);return s?JSON.parse(s):{unlockedWorld:0,highScores:{}};}
+  catch{return{unlockedWorld:0,highScores:{}};}
+}
+function saveFlappyProgress(p){try{localStorage.setItem(FLAPPY_LS,JSON.stringify(p));}catch{}}
+
+function FlappyGame({onExit}){
+  const canvasRef=useRef(null);
+  const stateRef=useRef(null);
+  const rafRef=useRef(null);
+  const [screen,setScreen]=useState("worldselect"); // worldselect|playing|gameover|worldclear
+  const [selectedWorld,setSelectedWorld]=useState(0);
+  const [progress,setProgress]=useState(loadFlappyProgress);
+  const [score,setScore]=useState(0);
+  const [finalScore,setFinalScore]=useState(0);
+  const [isFinale,setIsFinale]=useState(false);
+  const [worldCleared,setWorldCleared]=useState(false);
+
+  const W=360,H=540;
+
+  // ── GAME LOOP ──────────────────────────────────────────────────────────────
+  const startGame=useCallback((worldId)=>{
+    const world=WORLDS[worldId];
+    const gs={
+      world:worldId,
+      plane:{x:80,y:H/2,vy:0,rotation:0},
+      obstacles:[],
+      particles:[],
+      score:0,
+      obstacleTimer:0,
+      obstacleInterval:95, // frames between obstacles
+      finaleTriggered:false,
+      finaleCleared:false,
+      dead:false,
+      started:false,
+      frameCount:0,
+      groundY:H-50,
+      speed:world.speed,
+      gapSize:world.gapSize,
+      windmillAngle:0, // for world 3
+      beamAngle:0, // for world 4
+    };
+    stateRef.current=gs;
+    setScore(0);
+    setIsFinale(false);
+    setScreen("playing");
+  },[]);
+
+  const flap=useCallback(()=>{
+    const gs=stateRef.current;
+    if(!gs)return;
+    if(!gs.started){gs.started=true;return;}
+    if(gs.dead)return;
+    gs.plane.vy=-7.5;
+  },[]);
+
+  useEffect(()=>{
+    if(screen!=="playing")return;
+    const canvas=canvasRef.current;
+    if(!canvas)return;
+    const ctx=canvas.getContext("2d");
+    const world=WORLDS[selectedWorld];
+
+    const spawnObstacle=(gs,isFinale)=>{
+      const gapY=80+Math.random()*(gs.groundY-160-gs.gapSize);
+      const type=isFinale?"finale":world.id;
+      gs.obstacles.push({x:W+10,gapY,gapSize:isFinale?gs.gapSize-20:gs.gapSize,type,passed:false,angle:0,born:gs.frameCount});
+    };
+
+    const drawPlane=(ctx,plane)=>{
+      ctx.save();
+      ctx.translate(plane.x,plane.y);
+      ctx.rotate(Math.min(Math.max(plane.rotation,-0.5),0.5));
+      ctx.font="22px serif";
+      ctx.textAlign="center";
+      ctx.textBaseline="middle";
+      ctx.fillText("✈️",0,0);
+      ctx.restore();
+    };
+
+    const drawObstacle=(ctx,obs,gs)=>{
+      const w=WORLDS[gs.world];
+      // top pipe
+      const topH=obs.gapY;
+      const botY=obs.gapY+obs.gapSize;
+      const botH=gs.groundY-botY;
+      ctx.fillStyle=w.obstacleColor;
+
+      if(obs.type==="finale"&&gs.world===0){
+        // Empire State spire — very narrow tower pair
+        ctx.fillStyle="#546e7a";
+        ctx.fillRect(obs.x-16,0,32,topH-14);
+        // spire tip
+        ctx.beginPath();ctx.moveTo(obs.x-5,topH-14);ctx.lineTo(obs.x,topH-28);ctx.lineTo(obs.x+5,topH-14);ctx.fill();
+        ctx.fillRect(obs.x-16,botY,32,botH);
+        ctx.beginPath();ctx.moveTo(obs.x-5,botY+14);ctx.lineTo(obs.x,botY+28);ctx.lineTo(obs.x+5,botY+14);ctx.fill();
+      } else if(gs.world===0){
+        // NYC buildings — staggered rectangles
+        ctx.fillRect(obs.x-22,0,44,topH);
+        // crenellations
+        for(let i=0;i<3;i++){ctx.fillRect(obs.x-20+i*16,topH-12,10,12);}
+        ctx.fillRect(obs.x-22,botY,44,botH);
+        for(let i=0;i<3;i++){ctx.fillRect(obs.x-20+i*16,botY,10,12);}
+      } else if(obs.type==="finale"&&gs.world===1){
+        // Liberty Bell crack — draw bell outlines top and bottom, tiny gap = crack
+        ctx.fillStyle="#7b5e3a";
+        // top bell silhouette (upside down)
+        ctx.beginPath();ctx.arc(obs.x,topH,22,Math.PI,0);ctx.lineTo(obs.x+22,0);ctx.lineTo(obs.x-22,0);ctx.fill();
+        // bottom bell silhouette
+        ctx.beginPath();ctx.arc(obs.x,botY,22,0,Math.PI);ctx.lineTo(obs.x+22,gs.groundY);ctx.lineTo(obs.x-22,gs.groundY);ctx.fill();
+        // crack visual
+        ctx.strokeStyle="#ffd54f";ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(obs.x-2,topH);ctx.lineTo(obs.x+1,topH+obs.gapSize/2);ctx.lineTo(obs.x-1,botY);ctx.stroke();
+      } else if(gs.world===1){
+        // Liberty Bell silhouettes
+        ctx.fillStyle="#7b5e3a";
+        ctx.fillRect(obs.x-20,0,40,topH-18);
+        ctx.beginPath();ctx.arc(obs.x,topH-18,20,Math.PI,0);ctx.fill();
+        ctx.fillRect(obs.x-20,botY+18,40,botH-18);
+        ctx.beginPath();ctx.arc(obs.x,botY+18,20,0,Math.PI);ctx.fill();
+      } else if(obs.type==="finale"&&gs.world===2){
+        // Hershey Kisses — pair of triangles
+        ctx.fillStyle="#3e2723";
+        ctx.beginPath();ctx.moveTo(obs.x,0);ctx.lineTo(obs.x-26,topH);ctx.lineTo(obs.x+26,topH);ctx.fill();
+        ctx.beginPath();ctx.moveTo(obs.x-26,topH);ctx.lineTo(obs.x+26,topH);ctx.lineTo(obs.x,topH-10);ctx.fill();
+        ctx.beginPath();ctx.moveTo(obs.x,gs.groundY);ctx.lineTo(obs.x-26,botY);ctx.lineTo(obs.x+26,botY);ctx.fill();
+        ctx.beginPath();ctx.moveTo(obs.x-26,botY);ctx.lineTo(obs.x+26,botY);ctx.lineTo(obs.x,botY+10);ctx.fill();
+      } else if(gs.world===2){
+        // Chocolate bars — brown rectangles with segments
+        ctx.fillStyle="#6d4c41";
+        ctx.fillRect(obs.x-22,0,44,topH);
+        for(let seg=0;seg<Math.floor(topH/20);seg++){ctx.fillStyle="#5d4037";ctx.fillRect(obs.x-20,seg*20,40,2);}
+        ctx.fillStyle="#6d4c41";
+        ctx.fillRect(obs.x-22,botY,44,botH);
+        for(let seg=0;seg<Math.floor(botH/20);seg++){ctx.fillStyle="#5d4037";ctx.fillRect(obs.x-20,botY+seg*20,40,2);}
+      } else if(obs.type==="finale"&&gs.world===3){
+        // Rotating windmill — draw arms based on angle
+        const ang=gs.windmillAngle;
+        ctx.fillStyle="#558b2f";
+        // top post + bottom post as barriers
+        ctx.fillRect(obs.x-10,0,20,topH-30);
+        ctx.fillRect(obs.x-10,botY+30,20,botH-30);
+        // rotating blades in the gap center
+        const cx=obs.x,cy=(topH+botY)/2;
+        ctx.save();ctx.translate(cx,cy);ctx.rotate(ang);
+        for(let b=0;b<4;b++){
+          ctx.save();ctx.rotate(b*Math.PI/2);
+          ctx.fillStyle="#8bc34a";
+          ctx.fillRect(-5,-40,10,40);
+          ctx.restore();
+        }
+        ctx.restore();
+        // draw hub
+        ctx.fillStyle="#795548";ctx.beginPath();ctx.arc(cx,cy,7,0,Math.PI*2);ctx.fill();
+      } else if(gs.world===3){
+        // Picket fences
+        ctx.fillStyle="#a5d6a7";
+        // top fence
+        for(let p=-1;p<=1;p++){ctx.fillRect(obs.x+p*18-5,0,10,topH-8);ctx.fillRect(obs.x+p*18-7,topH-16,14,8);}
+        // bottom fence
+        for(let p=-1;p<=1;p++){ctx.fillRect(obs.x+p*18-5,botY+8,10,botH-8);ctx.fillRect(obs.x+p*18-7,botY,14,8);}
+      } else if(obs.type==="finale"&&gs.world===4){
+        // Lighthouse with sweeping beam
+        ctx.fillStyle="#b0bec5";
+        ctx.fillRect(obs.x-14,0,28,topH-20);
+        ctx.fillRect(obs.x-14,botY+20,28,botH-20);
+        // gallery railing gap
+        ctx.fillStyle="#ffd54f";
+        ctx.fillRect(obs.x-24,topH-20,48,8);  // railing
+        ctx.fillRect(obs.x-24,botY+12,48,8);  // railing
+        // sweeping beam visual
+        const bAng=gs.beamAngle;
+        ctx.save();ctx.translate(obs.x,(topH+botY)/2);
+        ctx.globalAlpha=0.18;ctx.fillStyle="#fff176";
+        ctx.beginPath();ctx.moveTo(0,0);
+        const bx=Math.cos(bAng)*120,by=Math.sin(bAng)*120;
+        ctx.lineTo(bx-20*Math.sin(bAng),by+20*Math.cos(bAng));
+        ctx.lineTo(bx+20*Math.sin(bAng),by-20*Math.cos(bAng));
+        ctx.closePath();ctx.fill();
+        ctx.globalAlpha=1;ctx.restore();
+      } else if(gs.world===4){
+        // Lighthouse stripes
+        ctx.fillStyle="#b0bec5";
+        ctx.fillRect(obs.x-18,0,36,topH);
+        for(let s=0;s<Math.floor(topH/30);s++){
+          if(s%2===0){ctx.fillStyle="#ef9a9a";ctx.fillRect(obs.x-18,s*30,36,15);}
+        }
+        ctx.fillStyle="#b0bec5";
+        ctx.fillRect(obs.x-18,botY,36,botH);
+        for(let s=0;s<Math.floor(botH/30);s++){
+          if(s%2===0){ctx.fillStyle="#ef9a9a";ctx.fillRect(obs.x-18,botY+s*30,36,15);}
+        }
+      }
+    };
+
+    const checkCollision=(plane,obs,groundY)=>{
+      const pr=14; // plane radius
+      const px=plane.x,py=plane.y;
+      // Ground / ceiling
+      if(py+pr>groundY||py-pr<0)return true;
+      // Obstacle bounds
+      const ox=obs.x,ow=(obs.type==="finale"&&(obs.type==="finale"))?26:22;
+      if(px+pr>ox-ow&&px-pr<ox+ow){
+        if(py-pr<obs.gapY||py+pr>obs.gapY+obs.gapSize)return true;
+      }
+      // Windmill special: rotating blades
+      if(WORLDS[stateRef.current.world].id===3&&obs.type==="finale"){
+        const cx=obs.x,cy=(obs.gapY+obs.gapY+obs.gapSize)/2;
+        const dx=px-cx,dy=py-cy;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        const angle=Math.atan2(dy,dx)-stateRef.current.windmillAngle;
+        const normalizedAngle=((angle%(Math.PI/2))+(Math.PI/2))%(Math.PI/2);
+        if(dist<42&&(normalizedAngle<0.18||normalizedAngle>1.39))return true;
+      }
+      return false;
+    };
+
+    const loop=()=>{
+      const gs=stateRef.current;
+      if(!gs)return;
+      ctx.clearRect(0,0,W,H);
+
+      // Sky gradient
+      const skyGrad=ctx.createLinearGradient(0,0,0,H);
+      skyGrad.addColorStop(0,WORLDS[gs.world].sky);
+      skyGrad.addColorStop(1,"#b3e5fc");
+      ctx.fillStyle=skyGrad;
+      ctx.fillRect(0,0,W,H);
+
+      // Ground
+      ctx.fillStyle=WORLDS[gs.world].ground;
+      ctx.fillRect(0,gs.groundY,W,H-gs.groundY);
+      ctx.fillStyle="#66bb6a";
+      ctx.fillRect(0,gs.groundY,W,8);
+
+      if(!gs.started){
+        drawPlane(ctx,gs.plane);
+        ctx.fillStyle="rgba(0,0,0,0.45)";ctx.fillRect(0,0,W,H);
+        ctx.fillStyle="white";ctx.font="bold 22px system-ui";ctx.textAlign="center";
+        ctx.fillText("Tap to Start!",W/2,H/2-20);
+        ctx.font="16px system-ui";ctx.fillText(WORLDS[gs.world].desc,W/2,H/2+12);
+        ctx.font="14px system-ui";ctx.fillStyle="rgba(255,255,255,0.75)";
+        ctx.fillText(`World ${gs.world+1}: ${WORLDS[gs.world].name}`,W/2,H/2+38);
+        rafRef.current=requestAnimationFrame(loop);return;
+      }
+
+      if(!gs.dead){
+        gs.frameCount++;
+        // Gravity
+        gs.plane.vy+=0.45;
+        gs.plane.y+=gs.plane.vy;
+        gs.plane.rotation=gs.plane.vy*0.07;
+
+        // Spawn obstacles
+        gs.obstacleTimer++;
+        // Trigger finale at score 12
+        if(!gs.finaleTriggered&&gs.score>=12){
+          gs.finaleTriggered=true;
+          gs.obstacles=[];gs.obstacleTimer=gs.obstacleInterval+1;
+        }
+        if(gs.obstacleTimer>=gs.obstacleInterval){
+          spawnObstacle(gs,gs.finaleTriggered);
+          gs.obstacleTimer=0;
+          gs.obstacleInterval=80+Math.floor(Math.random()*30);
+        }
+
+        // Move obstacles
+        for(const obs of gs.obstacles){
+          obs.x-=gs.speed;
+          if(WORLDS[gs.world].id===3&&obs.type==="finale") gs.windmillAngle+=0.05;
+          if(WORLDS[gs.world].id===4&&obs.type==="finale") gs.beamAngle+=0.03;
+          // Score
+          if(!obs.passed&&obs.x<gs.plane.x-20){
+            obs.passed=true;
+            gs.score++;
+            setScore(gs.score);
+            if(obs.type==="finale"){gs.finaleCleared=true;}
+          }
+          // Collision
+          if(!gs.dead&&checkCollision(gs.plane,obs,gs.groundY)){
+            gs.dead=true;
+          }
+        }
+        // ground/ceiling collision
+        if(gs.plane.y+14>gs.groundY||gs.plane.y-14<0)gs.dead=true;
+
+        // Remove off-screen
+        gs.obstacles=gs.obstacles.filter(o=>o.x>-60);
+
+        // World cleared?
+        if(gs.finaleCleared&&gs.obstacles.length===0&&!gs.dead){
+          const newProg={...progress};
+          if(gs.world+1>newProg.unlockedWorld)newProg.unlockedWorld=gs.world+1;
+          const hs=newProg.highScores||{};
+          if(!hs[gs.world]||gs.score>hs[gs.world])hs[gs.world]=gs.score;
+          newProg.highScores=hs;
+          saveFlappyProgress(newProg);
+          setProgress(newProg);
+          setFinalScore(gs.score);
+          setWorldCleared(true);
+          setScreen("worldclear");
+          return;
+        }
+      }
+
+      // Draw obstacles
+      for(const obs of gs.obstacles)drawObstacle(ctx,obs,gs);
+
+      // Draw particles
+      for(const p of gs.particles){p.x+=p.vx;p.y+=p.vy;p.life-=1;p.vy+=0.2;if(p.life>0){ctx.globalAlpha=p.life/20;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}}
+      gs.particles=gs.particles.filter(p=>p.life>0);
+
+      // Draw plane
+      drawPlane(ctx,gs.plane);
+
+      // Score HUD
+      ctx.fillStyle="rgba(0,0,0,0.35)";ctx.fillRect(W/2-40,12,80,34);
+      ctx.fillStyle="white";ctx.font="bold 20px system-ui";ctx.textAlign="center";
+      ctx.fillText(gs.score,W/2,34);
+      if(gs.finaleTriggered){
+        ctx.fillStyle="#ffd54f";ctx.font="bold 13px system-ui";ctx.fillText("⭐ FINALE",W/2,52);
+      }
+
+      if(gs.dead){
+        setFinalScore(gs.score);
+        // Save high score
+        const newProg={...progress};
+        const hs=newProg.highScores||{};
+        if(!hs[gs.world]||gs.score>hs[gs.world])hs[gs.world]=gs.score;
+        newProg.highScores=hs;
+        saveFlappyProgress(newProg);
+        setProgress(newProg);
+        setWorldCleared(false);
+        setScreen("gameover");
+        return;
+      }
+
+      rafRef.current=requestAnimationFrame(loop);
+    };
+
+    rafRef.current=requestAnimationFrame(loop);
+    return()=>{if(rafRef.current)cancelAnimationFrame(rafRef.current);};
+  },[screen,selectedWorld]);
+
+  // Tap/click handler
+  useEffect(()=>{
+    if(screen!=="playing")return;
+    const canvas=canvasRef.current;
+    if(!canvas)return;
+    const onTap=(e)=>{e.preventDefault();flap();};
+    canvas.addEventListener("touchstart",onTap,{passive:false});
+    canvas.addEventListener("mousedown",onTap);
+    const onKey=(e)=>{if(e.code==="Space"||e.code==="ArrowUp"){e.preventDefault();flap();}};
+    window.addEventListener("keydown",onKey);
+    return()=>{canvas.removeEventListener("touchstart",onTap);canvas.removeEventListener("mousedown",onTap);window.removeEventListener("keydown",onKey);};
+  },[screen,flap]);
+
+  // ── SCREENS ────────────────────────────────────────────────────────────────
+  const overlayStyle={position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflowY:"auto",padding:"16px 0"};
+  const btnStyle={padding:"14px 32px",borderRadius:14,border:"none",fontSize:16,fontWeight:700,cursor:"pointer",width:200};
+
+  if(screen==="worldselect") return(
+    <div style={overlayStyle}>
+      <button onClick={onExit} style={{position:"absolute",top:16,right:18,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,color:"white",fontSize:18,padding:"8px 14px",cursor:"pointer",fontWeight:700}}>✕ Exit</button>
+      <div style={{fontSize:40,marginBottom:4}}>✈️</div>
+      <div style={{color:"white",fontWeight:900,fontSize:26,marginBottom:4}}>Flappy Plane</div>
+      <div style={{color:"rgba(255,255,255,0.6)",fontSize:13,marginBottom:22}}>Secret Coleman Family Edition</div>
+      <div style={{width:"100%",maxWidth:340,display:"flex",flexDirection:"column",gap:10,padding:"0 16px"}}>
+        {WORLDS.map((w,i)=>{
+          const locked=i>progress.unlockedWorld;
+          const hs=progress.highScores?.[i];
+          return(
+            <button key={i} onClick={()=>{if(!locked){setSelectedWorld(i);startGame(i);}}}
+              style={{display:"flex",alignItems:"center",gap:14,padding:"14px 18px",borderRadius:16,border:`2px solid ${locked?"#444":w.color}`,
+                background:locked?"#222":`${w.color}22`,cursor:locked?"not-allowed":"pointer",opacity:locked?0.45:1,textAlign:"left"}}>
+              <span style={{fontSize:28}}>{w.emoji}</span>
+              <div style={{flex:1}}>
+                <div style={{color:locked?"#666":"white",fontWeight:700,fontSize:15}}>World {i+1}: {w.name}</div>
+                <div style={{color:locked?"#555":"rgba(255,255,255,0.6)",fontSize:12}}>{locked?"🔒 Clear the previous world to unlock":w.desc}</div>
+              </div>
+              {hs&&<div style={{color:"#ffd54f",fontSize:12,fontWeight:700,textAlign:"right"}}>Best<br/>{hs}</div>}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  if(screen==="gameover") return(
+    <div style={overlayStyle}>
+      <div style={{fontSize:48,marginBottom:8}}>💥</div>
+      <div style={{color:"white",fontWeight:900,fontSize:28,marginBottom:4}}>Game Over</div>
+      <div style={{color:"rgba(255,255,255,0.7)",fontSize:16,marginBottom:4}}>Score: <strong style={{color:"#ffd54f"}}>{finalScore}</strong></div>
+      {(progress.highScores?.[selectedWorld]||0)>0&&<div style={{color:"rgba(255,255,255,0.5)",fontSize:13,marginBottom:20}}>Best: {progress.highScores[selectedWorld]}</div>}
+      <div style={{display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
+        <button onClick={()=>startGame(selectedWorld)} style={{...btnStyle,background:"#2d7dd2",color:"white"}}>Try Again</button>
+        <button onClick={()=>setScreen("worldselect")} style={{...btnStyle,background:"rgba(255,255,255,0.1)",color:"white",border:"1px solid #555"}}>World Select</button>
+        <button onClick={onExit} style={{...btnStyle,background:"transparent",color:"rgba(255,255,255,0.5)",border:"none",width:"auto",padding:"10px 20px",fontSize:14}}>✕ Exit Game</button>
+      </div>
+    </div>
+  );
+
+  if(screen==="worldclear") return(
+    <div style={overlayStyle}>
+      <div style={{fontSize:52,marginBottom:8}}>{WORLDS[selectedWorld].emoji}</div>
+      <div style={{color:"#ffd54f",fontWeight:900,fontSize:26,marginBottom:4}}>World Cleared! 🎉</div>
+      <div style={{color:"white",fontSize:16,marginBottom:4,fontWeight:600}}>{WORLDS[selectedWorld].name} Complete</div>
+      <div style={{color:"rgba(255,255,255,0.6)",fontSize:14,marginBottom:20}}>Score: {finalScore}</div>
+      <div style={{display:"flex",flexDirection:"column",gap:10,alignItems:"center"}}>
+        {selectedWorld<WORLDS.length-1&&(
+          <button onClick={()=>{const nw=selectedWorld+1;setSelectedWorld(nw);startGame(nw);}}
+            style={{...btnStyle,background:"#22c55e",color:"white"}}>
+            Next World: {WORLDS[selectedWorld+1].name} {WORLDS[selectedWorld+1].emoji}
+          </button>
+        )}
+        {selectedWorld===WORLDS.length-1&&<div style={{color:"#ffd54f",fontWeight:800,fontSize:18,marginBottom:8}}>🏆 ALL WORLDS CLEARED!</div>}
+        <button onClick={()=>startGame(selectedWorld)} style={{...btnStyle,background:"rgba(255,255,255,0.1)",color:"white",border:"1px solid #555"}}>Replay {WORLDS[selectedWorld].name}</button>
+        <button onClick={()=>setScreen("worldselect")} style={{...btnStyle,background:"transparent",color:"rgba(255,255,255,0.5)",border:"none",width:"auto",padding:"10px 20px",fontSize:14}}>World Select</button>
+        <button onClick={onExit} style={{...btnStyle,background:"transparent",color:"rgba(255,255,255,0.35)",border:"none",width:"auto",padding:"10px 20px",fontSize:14}}>✕ Exit</button>
+      </div>
+    </div>
+  );
+
+  // Playing screen
+  return(
+    <div style={{position:"fixed",inset:0,background:"#000",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+      <button onClick={onExit} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,color:"white",fontSize:15,padding:"6px 12px",cursor:"pointer",fontWeight:700,zIndex:10}}>✕ Exit</button>
+      <canvas ref={canvasRef} width={W} height={H} style={{borderRadius:12,maxWidth:"100%",maxHeight:"100dvh",touchAction:"none"}}/>
+    </div>
+  );
+}
+
+// ── SEARCH TAB ────────────────────────────────────────────────────────────────
+function SearchTab({onFlappy}){
+  const [query,setQuery]=useState("");
+  const results=query.trim().length<2?[]:(()=>{
+    if(query.trim().toLowerCase()==="flappy"){onFlappy();return[];}
+    const q=query.toLowerCase();
+    const out=[];
+    ITINERARY.forEach(day=>{
+      day.items.forEach(it=>{
+        if(it.text.toLowerCase().includes(q))
+          out.push({label:`${day.label} · ${day.city}`,text:it.text,emoji:day.emoji});
+      });
+      if(day.title.toLowerCase().includes(q)||day.summary.toLowerCase().includes(q))
+        out.push({label:`${day.label}`,text:`${day.title} — ${day.summary}`,emoji:day.emoji});
+    });
+    Object.entries(DEFAULT_PRETRIP).forEach(([date,tasks])=>{
+      tasks.forEach(t=>{
+        if(t.text.toLowerCase().includes(q))
+          out.push({label:`Pre-trip · ${fmtDate(date)}`,text:t.text,emoji:"📋"});
+      });
+    });
+    return out.slice(0,20);
+  })();
+
+  return(
+    <div>
+      <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search the trip…"
+        style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1px solid #ddd",fontSize:16,background:"white",boxSizing:"border-box",marginBottom:12}}/>
+      {results.length>0&&results.map((r,i)=>(
+        <div key={i} style={{background:"white",borderRadius:10,padding:"11px 14px",marginBottom:7,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
+          <div style={{fontSize:11,color:"#888",fontWeight:600,marginBottom:3}}>{r.emoji} {r.label}</div>
+          <div style={{fontSize:14,color:"#1a3a5c"}}>{r.text}</div>
+        </div>
+      ))}
+      {query.trim().length>=2&&results.length===0&&query.trim().toLowerCase()!=="flappy"&&(
+        <div style={{textAlign:"center",color:"#aaa",padding:"32px 0",fontSize:15}}>No results for "{query}"</div>
+      )}
+      {query.trim().length<2&&(
+        <div style={{textAlign:"center",color:"#bbb",padding:"24px 0",fontSize:14}}>Type to search activities, tasks, cities…</div>
+      )}
     </div>
   );
 }
