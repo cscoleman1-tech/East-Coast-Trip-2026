@@ -994,18 +994,28 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
 const FLAPPY_LS="flappy2026_progress";
 const WORLDS=[
   {id:0,name:"NYC",emoji:"🗽",color:"#1a237e",sky:"#1565c0",ground:"#37474f",
+   grad:["#0d1b4a","#3d1a6e","#8b2060","#b05000"],
+   groundColor:"#37474f",grassColor:"#546e7a",
    desc:"NYC Skyline",finaleDesc:"Empire State spire!",
    obstacleColor:"#263238",gapSize:145,speed:2.8},
   {id:1,name:"Philly",emoji:"🔔",color:"#4a148c",sky:"#1b5e20",ground:"#4e342e",
+   grad:["#5c3320","#8b5e3c","#c4956a","#d4a872"],
+   groundColor:"#5d4037",grassColor:"#8d6e63",
    desc:"Liberty Bell gaps",finaleDesc:"Fly through the crack!",
    obstacleColor:"#5d4037",gapSize:135,speed:3.1},
   {id:2,name:"Hershey",emoji:"🍫",color:"#3e2723",sky:"#bf360c",ground:"#4e342e",
+   grad:["#1a0800","#4a1c06","#7a3f1e","#a06030"],
+   groundColor:"#3e2723",grassColor:"#6d4c41",
    desc:"Chocolate bar obstacles",finaleDesc:"Between the Kisses!",
    obstacleColor:"#6d4c41",gapSize:128,speed:3.4},
   {id:3,name:"Williamsburg",emoji:"🏛️",color:"#1b5e20",sky:"#2e7d32",ground:"#33691e",
+   grad:["#7eb8e8","#b8d8f0","#c8e6b8","#a8d890"],
+   groundColor:"#33691e",grassColor:"#7cb342",
    desc:"Picket fences + windmills",finaleDesc:"Through the windmill!",
    obstacleColor:"#558b2f",gapSize:120,speed:3.7},
   {id:4,name:"OBX",emoji:"🌊",color:"#006064",sky:"#0277bd",ground:"#37474f",
+   grad:["#0a5c8a","#1a8bbd","#72c4e8","#e8d4a0"],
+   groundColor:"#8d6e4e",grassColor:"#c8b882",
    desc:"Lighthouse beams",finaleDesc:"Through the gallery railing!",
    obstacleColor:"#e65100",gapSize:112,speed:4.0},
 ];
@@ -1050,6 +1060,7 @@ function FlappyGame({onExit}){
       gapSize:world.gapSize,
       windmillAngle:0,
       beamAngle:0,
+      bgOffset:0,
     };
     stateRef.current=gs;
     setScore(0);
@@ -1181,6 +1192,80 @@ function FlappyGame({onExit}){
       }
     };
 
+    const drawBgLayer=(ctx,gs)=>{
+      const tileW=W;
+      const ox=-(gs.bgOffset%tileW);
+      const gy=gs.groundY;
+      ctx.save();
+      if(gs.world===0){
+        ctx.fillStyle="rgba(8,4,30,0.5)";
+        const blds=[[10,95,36],[50,70,28],[82,125,48],[134,88,36],[174,112,44],[222,78,33],[258,102,40],[302,68,33],[338,90,22]];
+        for(let rep=0;rep<3;rep++){
+          const bx=ox+rep*tileW;
+          blds.forEach(([x,h,wd])=>{
+            ctx.fillRect(bx+x,gy-h,wd,h);
+            if(h>100)ctx.fillRect(bx+x+wd/2-2,gy-h-18,3,18);
+          });
+          ctx.fillStyle="rgba(255,200,80,0.12)";
+          blds.forEach(([x,h,wd])=>{
+            for(let wy=gy-h+10;wy<gy-12;wy+=16){
+              for(let wx=bx+x+5;wx<bx+x+wd-5;wx+=10){ctx.fillRect(wx,wy,4,7);}
+            }
+          });
+          ctx.fillStyle="rgba(8,4,30,0.5)";
+        }
+      } else if(gs.world===1){
+        ctx.fillStyle="rgba(60,30,10,0.35)";
+        const blds=[[5,58,44],[54,72,38],[96,52,40],[140,68,46],[190,62,38],[232,78,44],[280,58,40],[325,65,35]];
+        for(let rep=0;rep<3;rep++){
+          const bx=ox+rep*tileW;
+          blds.forEach(([x,h,wd])=>{
+            ctx.fillRect(bx+x,gy-h,wd,h);
+            ctx.beginPath();ctx.moveTo(bx+x,gy-h);ctx.lineTo(bx+x+wd/2,gy-h-18);ctx.lineTo(bx+x+wd,gy-h);ctx.closePath();ctx.fill();
+          });
+        }
+      } else if(gs.world===2){
+        ctx.fillStyle="rgba(25,8,0,0.45)";
+        for(let rep=0;rep<3;rep++){
+          const bx=ox+rep*tileW;
+          ctx.beginPath();
+          ctx.moveTo(bx,gy);
+          ctx.bezierCurveTo(bx+40,gy-55,bx+85,gy-58,bx+115,gy-22);
+          ctx.bezierCurveTo(bx+145,gy+10,bx+195,gy-68,bx+235,gy-38);
+          ctx.bezierCurveTo(bx+275,gy-8,bx+318,gy-48,bx+tileW,gy-28);
+          ctx.lineTo(bx+tileW,gy+2);ctx.closePath();ctx.fill();
+        }
+      } else if(gs.world===3){
+        ctx.fillStyle="rgba(20,50,15,0.4)";
+        const trees=[[15,75],[58,92],[98,80],[145,88],[188,72],[228,85],[272,78],[316,90]];
+        for(let rep=0;rep<3;rep++){
+          const bx=ox+rep*tileW;
+          trees.forEach(([x,h])=>{
+            const tw=30;
+            ctx.fillRect(bx+x+tw/2-4,gy-38,8,38);
+            ctx.beginPath();ctx.moveTo(bx+x,gy-38);ctx.lineTo(bx+x+tw/2,gy-h);ctx.lineTo(bx+x+tw,gy-38);ctx.closePath();ctx.fill();
+            ctx.beginPath();ctx.moveTo(bx+x-5,gy-50);ctx.lineTo(bx+x+tw/2,gy-h-18);ctx.lineTo(bx+x+tw+5,gy-50);ctx.closePath();ctx.fill();
+          });
+        }
+      } else {
+        ctx.fillStyle="rgba(0,90,140,0.2)";
+        for(let rep=0;rep<3;rep++)ctx.fillRect(ox+rep*tileW,gy-75,tileW,75);
+        ctx.strokeStyle="rgba(255,255,255,0.18)";ctx.lineWidth=2;
+        for(let rep=0;rep<3;rep++){
+          const bx=ox+rep*tileW;
+          [0,22,44].forEach(yo=>{
+            ctx.beginPath();ctx.moveTo(bx,gy-52+yo);
+            for(let wx=0;wx<tileW;wx+=36){
+              ctx.quadraticCurveTo(bx+wx+9,gy-62+yo,bx+wx+18,gy-52+yo);
+              ctx.quadraticCurveTo(bx+wx+27,gy-42+yo,bx+wx+36,gy-52+yo);
+            }
+            ctx.stroke();
+          });
+        }
+      }
+      ctx.restore();
+    };
+
     const checkCollision=(plane,obs,groundY)=>{
       const pr=14;
       const px=plane.x,py=plane.y;
@@ -1206,15 +1291,18 @@ function FlappyGame({onExit}){
       ctx.clearRect(0,0,W,H);
 
       const skyGrad=ctx.createLinearGradient(0,0,0,H);
-      skyGrad.addColorStop(0,WORLDS[gs.world].sky);
-      skyGrad.addColorStop(1,"#b3e5fc");
+      const gc=WORLDS[gs.world].grad;
+      gc.forEach((c,i)=>skyGrad.addColorStop(i/(gc.length-1),c));
       ctx.fillStyle=skyGrad;
       ctx.fillRect(0,0,W,H);
+      drawBgLayer(ctx,gs);
 
-      ctx.fillStyle=WORLDS[gs.world].ground;
+      ctx.fillStyle=WORLDS[gs.world].groundColor;
       ctx.fillRect(0,gs.groundY,W,H-gs.groundY);
-      ctx.fillStyle="#66bb6a";
+      ctx.fillStyle=WORLDS[gs.world].grassColor;
       ctx.fillRect(0,gs.groundY,W,8);
+
+      gs.bgOffset+=gs.speed*0.25;
 
       if(!gs.started){
         drawPlane(ctx,gs.plane);
