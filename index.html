@@ -1323,7 +1323,7 @@ function FlappyGame({onExit}){
     return()=>{canvas.removeEventListener("touchstart",onTap);canvas.removeEventListener("mousedown",onTap);window.removeEventListener("keydown",onKey);};
   },[screen,flap]);
 
-  const overlayStyle={position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflowY:"auto",padding:"16px 0"};
+  const overlayStyle={position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.88)",zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflowY:"auto",padding:"16px 0"};
   const btnStyle={padding:"14px 32px",borderRadius:14,border:"none",fontSize:16,fontWeight:700,cursor:"pointer",width:200};
 
   if(screen==="worldselect") return(
@@ -1389,7 +1389,7 @@ function FlappyGame({onExit}){
   );
 
   return(
-    <div style={{position:"fixed",inset:0,background:"#000",zIndex:1000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+    <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"#000",zIndex:9999,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
       <button onClick={onExit} style={{position:"absolute",top:16,right:16,background:"rgba(255,255,255,0.15)",border:"none",borderRadius:10,color:"white",fontSize:15,padding:"6px 12px",cursor:"pointer",fontWeight:700,zIndex:10}}>✕ Exit</button>
       <canvas ref={canvasRef} width={W} height={H} style={{borderRadius:12,maxWidth:"100%",maxHeight:"100dvh",touchAction:"none"}}/>
     </div>
@@ -2100,7 +2100,7 @@ function App(){
 
   const syncDot=syncStatus==="ok"?"#22c55e":syncStatus==="local"?"#fbbf24":"#93c5fd";
 
-  return(
+  return(<>
     <div style={{fontFamily:"-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif",background:"#eef1f7",minHeight:"100vh",maxWidth:480,margin:"0 auto",position:"relative"}}>
 
       {/* ── HEADER ── */}
@@ -2363,9 +2363,10 @@ function App(){
         editBuiltinItem={editBuiltinItem} updatePackItems={updatePackItems}
         addTravelItem={addTravelItem} editTravelItem={editTravelItem}/>
       {showTour&&<GuidedTour onClose={()=>setShowTour(false)}/>}
-      {flappyActive&&<FlappyGame onExit={()=>setFlappyActive(false)}/>}
 
     </div>
+    {flappyActive&&<FlappyGame onExit={()=>setFlappyActive(false)}/>}
+  </>
   );
 }
 
