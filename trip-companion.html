@@ -1397,7 +1397,6 @@ function FlappyGame({onExit}){
 function SearchTab({onFlappy}){
   const [query,setQuery]=useState("");
   const results=query.trim().length<2?[]:(()=>{
-    if(query.trim().toLowerCase()==="flappy"){onFlappy();return[];}
     const q=query.toLowerCase();
     const out=[];
     ITINERARY.forEach(day=>{
@@ -1419,7 +1418,7 @@ function SearchTab({onFlappy}){
 
   return(
     <div>
-      <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search the trip…"
+      <input value={query} onChange={e=>{const v=e.target.value;setQuery(v);if(v.trim().toLowerCase()==="flappy")onFlappy();}} placeholder="Search the trip…"
         style={{width:"100%",padding:"13px 16px",borderRadius:12,border:"1px solid #ddd",fontSize:16,background:"white",boxSizing:"border-box",marginBottom:12}}/>
       {results.length>0&&results.map((r,i)=>(
         <div key={i} style={{background:"white",borderRadius:10,padding:"11px 14px",marginBottom:7,boxShadow:"0 1px 4px rgba(0,0,0,0.06)"}}>
@@ -1427,7 +1426,7 @@ function SearchTab({onFlappy}){
           <div style={{fontSize:14,color:"#1a3a5c"}}>{r.text}</div>
         </div>
       ))}
-      {query.trim().length>=2&&results.length===0&&query.trim().toLowerCase()!=="flappy"&&(
+      {query.trim().length>=2&&results.length===0&&(
         <div style={{textAlign:"center",color:"#aaa",padding:"32px 0",fontSize:15}}>No results for "{query}"</div>
       )}
       {query.trim().length<2&&(
