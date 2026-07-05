@@ -133,6 +133,20 @@ const TRAVEL_SEED=[
 
 const STILL_NEEDED_ITEMS=["9/11 Museum timed entry — book NOW","Independence Hall timed entry — book NOW","OBX beach gear rentals (Farmdog / Beach EZ / Ocean Atlantic)","Williamsburg Woodlands — call to confirm dog weight limit"];
 
+// ── HOME CARE DATA ────────────────────────────────────────────────────────────
+const HOME_CARE_CATEGORIES={
+  dog:{label:"Dog",icon:"🐕"},
+  // add more categories here later (mail, plants, house-sitter, etc.)
+};
+
+const DEFAULT_HOME_CARE=[
+  {id:"hc-1",name:"Emma",  startDate:"2026-07-09",endDate:"2026-07-14",category:"dog",notes:""},
+  {id:"hc-2",name:"Dina",  startDate:"2026-07-15",endDate:"2026-07-17",category:"dog",notes:""},
+  {id:"hc-3",name:"Talia", startDate:"2026-07-17",endDate:"2026-07-21",category:"dog",notes:""},
+  {id:"hc-4",name:"Dina",  startDate:"2026-07-22",endDate:"2026-07-23",category:"dog",notes:""},
+  {id:"hc-5",name:"Talia", startDate:"2026-07-24",endDate:"2026-07-24",category:"dog",notes:""},
+];
+
 const NEARBY_BY_DATE={
   "2026-07-09":{ctx:"Arriving tonight — late-night options",loc:"Brooklyn / LaGuardia",spots:[{e:"🍕",label:"Late-night food near LGA",q:"restaurants open late near LaGuardia Airport New York"},{e:"🚕",label:"Rideshare pickup at LGA",q:"rideshare taxi LaGuardia Airport New York"},{e:"🏘️",label:"Brooklyn VRBO neighborhood",q:"Herkimer Street Nostrand Avenue Brooklyn New York"}]},
   "2026-07-10":{ctx:"Full NYC day — subway around",loc:"New York City",spots:[{e:"🗽",label:"Staten Island Ferry (free — best views!)",q:"Staten Island Ferry Whitehall Terminal NYC"},{e:"🍕",label:"Joe's Pizza NYC",q:"Joe's Pizza New York City"},{e:"🌉",label:"Brooklyn Bridge",q:"Brooklyn Bridge New York"},{e:"🌳",label:"Central Park coffee & food",q:"coffee food Central Park New York"},{e:"🚇",label:"Subway stations & OMNY info",q:"NYC subway station map"}]},
@@ -549,11 +563,160 @@ function TravelCard({dayDate,travelItems,onAdd,onEdit,onDelete}){
   );
 }
 
+// ── HOME WATCH COMPONENTS ─────────────────────────────────────────────────────
+function HomeCareModal({entry,onSave,onClose}){
+  const isNew=!entry;
+  const [name,setName]=React.useState(entry?.name||"");
+  const [startDate,setStartDate]=React.useState(entry?.startDate||"2026-07-09");
+  const [endDate,setEndDate]=React.useState(entry?.endDate||"2026-07-09");
+  const [category,setCategory]=React.useState(entry?.category||"dog");
+  const [notes,setNotes]=React.useState(entry?.notes||"");
+  const canPick=typeof navigator!=="undefined"&&navigator.contacts!=null&&typeof navigator.contacts.select==="function";
+  const pickContact=async()=>{
+    try{
+      const results=await navigator.contacts.select(["name"],{multiple:false});
+      if(results.length>0&&results[0].name?.length>0)setName(results[0].name[0]);
+    }catch(e){}
+  };
+  const valid=name.trim()&&startDate&&endDate&&startDate<=endDate;
+  const handleSave=()=>{
+    if(!valid)return;
+    onSave({id:entry?.id||`hc-${Date.now()}`,name:name.trim(),startDate,endDate,category,notes:notes.trim()});
+  };
+  return(
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:9000,display:"flex",alignItems:"flex-end"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div style={{width:"100%",maxWidth:480,margin:"0 auto",background:"#fff",borderRadius:"20px 20px 0 0",padding:"24px 20px 32px",boxShadow:"0 -4px 32px rgba(0,0,0,0.18)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+          <div style={{fontWeight:800,fontSize:18,color:S.navy}}>{isNew?"Add Home Watch Entry":"Edit Entry"}</div>
+          <button onClick={onClose} style={{background:"none",border:"none",fontSize:22,cursor:"pointer",color:"#64748b",lineHeight:1}}>×</button>
+        </div>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.05em"}}>Person's Name</div>
+          <div style={{display:"flex",gap:8}}>
+            <input value={name} onChange={e=>setName(e.target.value)} placeholder="Name" style={{flex:1,padding:"10px 14px",border:"1.5px solid #cbd5e1",borderRadius:10,fontSize:15,outline:"none"}}/>
+            {canPick&&<button onClick={pickContact} style={{padding:"10px 14px",background:S.blue,color:"#fff",border:"none",borderRadius:10,fontSize:14,cursor:"pointer"}}>📱</button>}
+          </div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+          <div>
+            <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.05em"}}>Start Date</div>
+            <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={{width:"100%",padding:"10px 10px",border:"1.5px solid #cbd5e1",borderRadius:10,fontSize:14,outline:"none",boxSizing:"border-box"}}/>
+          </div>
+          <div>
+            <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.05em"}}>End Date</div>
+            <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)} style={{width:"100%",padding:"10px 10px",border:"1.5px solid #cbd5e1",borderRadius:10,fontSize:14,outline:"none",boxSizing:"border-box"}}/>
+          </div>
+        </div>
+        <div style={{marginBottom:14}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.05em"}}>Category</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+            {Object.entries(HOME_CARE_CATEGORIES).map(([k,v])=>(
+              <button key={k} onClick={()=>setCategory(k)}
+                style={{padding:"7px 16px",borderRadius:20,border:`2px solid ${category===k?S.blue:"#cbd5e1"}`,background:category===k?S.blue:"transparent",color:category===k?"#fff":"#475569",fontWeight:700,fontSize:13,cursor:"pointer"}}>
+                {v.icon} {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div style={{marginBottom:20}}>
+          <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.05em"}}>Notes (optional)</div>
+          <textarea value={notes} onChange={e=>setNotes(e.target.value)} placeholder="Any instructions or notes…" rows={2}
+            style={{width:"100%",padding:"10px 14px",border:"1.5px solid #cbd5e1",borderRadius:10,fontSize:14,resize:"none",outline:"none",boxSizing:"border-box"}}/>
+        </div>
+        {startDate>endDate&&<div style={{fontSize:12,color:"#dc2626",marginBottom:10,textAlign:"center"}}>End date must be on or after start date</div>}
+        <button onClick={handleSave} disabled={!valid}
+          style={{width:"100%",padding:"13px",background:valid?S.blue:"#e2e8f0",color:valid?"#fff":"#94a3b8",border:"none",borderRadius:12,fontSize:15,fontWeight:800,cursor:valid?"pointer":"default"}}>
+          {isNew?"Add Entry":"Save Changes"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function HomeWatchSection({dayDate,homeCare,onAdd,onEdit,onDelete}){
+  const [open,setOpen]=React.useState(false);
+  const [modal,setModal]=React.useState(null); // null | "new" | entry object
+  const dayEntries=(homeCare||[]).filter(e=>e.startDate<=dayDate&&e.endDate>=dayDate);
+  const catInfo=c=>HOME_CARE_CATEGORIES[c]||{label:c,icon:"🏠"};
+  const hasWatcher=dayEntries.length>0;
+  const headerBg=hasWatcher?"#dcfce7":"#fef2f2";
+  const headerBorder=hasWatcher?"#86efac":"#fca5a5";
+  const headerText=hasWatcher?"#166534":"#991b1b";
+  return(
+    <div style={{marginBottom:10,borderRadius:14,border:`2px solid ${headerBorder}`,overflow:"hidden",background:headerBg}}>
+      <button onClick={()=>setOpen(o=>!o)}
+        style={{width:"100%",background:"none",border:"none",padding:"11px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:16}}>{hasWatcher?"🏠":"⚠️"}</span>
+          <span style={{fontWeight:700,fontSize:14,color:headerText}}>
+            {hasWatcher?dayEntries.map(e=>`${catInfo(e.category).icon} ${e.name}`).join(" · "):"No home watcher"}
+          </span>
+        </div>
+        <span style={{fontSize:12,color:headerText,fontWeight:700}}>{open?"▲":"▼"}</span>
+      </button>
+      {open&&(
+        <div style={{background:"#fff",padding:"12px 14px 14px"}}>
+          {dayEntries.length===0&&(
+            <div style={{fontSize:13,color:"#dc2626",fontWeight:600,marginBottom:10}}>⚠️ No one confirmed for this day</div>
+          )}
+          {dayEntries.map(e=>(
+            <div key={e.id} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 10px",background:"#f8fafc",borderRadius:10,marginBottom:8}}>
+              <div>
+                <span style={{fontWeight:700,fontSize:14,color:S.navy}}>{catInfo(e.category).icon} {e.name}</span>
+                <span style={{fontSize:12,color:"#64748b",marginLeft:8}}>{e.startDate===e.endDate?e.startDate:`${e.startDate} – ${e.endDate}`}</span>
+                {e.notes&&<div style={{fontSize:12,color:"#475569",marginTop:2}}>{e.notes}</div>}
+              </div>
+              <div style={{display:"flex",gap:6}}>
+                <button onClick={()=>setModal(e)} style={{padding:"5px 10px",fontSize:12,fontWeight:700,color:S.blue,background:"#eff6ff",border:"none",borderRadius:8,cursor:"pointer"}}>Edit</button>
+                <button onClick={()=>onDelete(e.id)} style={{padding:"5px 10px",fontSize:12,fontWeight:700,color:"#dc2626",background:"#fef2f2",border:"none",borderRadius:8,cursor:"pointer"}}>Del</button>
+              </div>
+            </div>
+          ))}
+          <button onClick={()=>setModal("new")}
+            style={{width:"100%",padding:"9px",background:"transparent",color:S.blue,border:"2px dashed #93c5fd",borderRadius:10,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+            + Add watcher for this day
+          </button>
+        </div>
+      )}
+      {modal&&(
+        <HomeCareModal
+          entry={modal==="new"?null:modal}
+          onSave={e=>{modal==="new"?onAdd(e):onEdit(e);setModal(null);}}
+          onClose={()=>setModal(null)}/>
+      )}
+    </div>
+  );
+}
+
+function HomeWatchBanner({homeCare,today}){
+  const watchers=(homeCare||[]).filter(e=>e.startDate<=today&&e.endDate>=today);
+  const catInfo=c=>HOME_CARE_CATEGORIES[c]||{icon:"🏠"};
+  const hasWatcher=watchers.length>0;
+  return(
+    <div style={{
+      borderRadius:12,
+      padding:"10px 14px",
+      marginBottom:12,
+      background:hasWatcher?"#dcfce7":"#fef2f2",
+      border:`1.5px solid ${hasWatcher?"#86efac":"#fca5a5"}`,
+      display:"flex",alignItems:"center",gap:8,
+    }}>
+      <span style={{fontSize:18}}>{hasWatcher?catInfo(watchers[0].category).icon:"⚠️"}</span>
+      <span style={{fontSize:13,fontWeight:700,color:hasWatcher?"#166534":"#991b1b"}}>
+        {hasWatcher
+          ?`Today: ${watchers.map(w=>w.name).join(" & ")} watching the dog`
+          :"No home watcher confirmed for today"}
+      </span>
+    </div>
+  );
+}
+
 // ── DAY DETAIL VIEW (shared: Today tab + Trip tab expanded) ──────────────────
 function DayDetailView({
   day,showHeader,
   checked,toggleCheck,deletedItems,editedItems,coreTasks,toggleCore,customTasks,
   travelItems,addTravelItem,editTravelItem,removeTravelItem,
+  homeCare,addHomeCareEntry,editHomeCareEntry,removeHomeCareEntry,
   fitWarnings,fitStatus,runCheckFit,
   dayPlans,dayPlanStatus,dayPlanError,planDay,dayPlanSuggestion,setDayPlanSuggestion,revertPlan,
   addingTo,setAddingTo,openAddForm,taskText,setTaskText,taskType,setTaskType,handleAddTask,
@@ -570,6 +733,7 @@ function DayDetailView({
       <div style={{marginTop:showHeader?0:12}}>
         <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
       </div>
+      <HomeWatchSection dayDate={day.date} homeCare={homeCare} onAdd={addHomeCareEntry} onEdit={editHomeCareEntry} onDelete={removeHomeCareEntry}/>
       <div style={{...S.label,marginBottom:8}}>Activities</div>
       {day.items.map((it,j)=>{
         const key=`itinerary-${day.date}-${j}`;
@@ -2015,6 +2179,7 @@ function App(){
   const [editedItems,setEditedItems]=useState({});
   const [showTour,setShowTour]=useState(false);
   const [travelItems,setTravelItems]=useState(TRAVEL_SEED);
+  const [homeCare,setHomeCare]=useState(DEFAULT_HOME_CARE);
   const [flappyActive,setFlappyActive]=useState(false);
   const syncTimer=useRef(null);
   const latestPatch=useRef(null);
@@ -2031,7 +2196,7 @@ function App(){
     navigator.geolocation.getCurrentPosition(async pos=>{const{latitude:lat,longitude:lng}=pos.coords;setLocation({lat,lng});setLocLoading(false);setLocLabel(await reverseGeocode(lat,lng));},err=>{setLocLoading(false);if(err.code===1)setLocError("Location denied — check Settings");else setLocError("Location unavailable — tap Retry");},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
   };
 
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems});
+  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems,homeCare});
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks)setCustomTasks(data.customTasks);
@@ -2045,6 +2210,7 @@ function App(){
     if(data.preTripCustom)setPreTripCustom(data.preTripCustom);
     if(data.preTripEdits)setPreTripEdits(data.preTripEdits);
     if(data.travelItems)setTravelItems(data.travelItems);
+    if(data.homeCare)setHomeCare(data.homeCare);
     if(data._by){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
   const syncNow=async(patch)=>{
@@ -2099,6 +2265,9 @@ function App(){
   const addTravelItem=data=>{const id=`ti-${Date.now()}-${Math.random().toString(36).slice(2,5)}`;setTravelItems(p=>{const n=[...p,{...data,id}];syncNow({...getState(),travelItems:n});return n;});};
   const editTravelItem=(id,upd)=>{setTravelItems(p=>{const n=p.map(t=>t.id===id?{...t,...upd}:t);syncNow({...getState(),travelItems:n});return n;});};
   const removeTravelItem=id=>{if(!window.confirm("Remove this item?"))return;setTravelItems(p=>{const n=p.filter(t=>t.id!==id);syncNow({...getState(),travelItems:n});return n;});};
+  const addHomeCareEntry=entry=>{setHomeCare(p=>{const n=[...p,entry];syncNow({...getState(),homeCare:n});return n;});};
+  const editHomeCareEntry=entry=>{setHomeCare(p=>{const n=p.map(e=>e.id===entry.id?entry:e);syncNow({...getState(),homeCare:n});return n;});};
+  const removeHomeCareEntry=id=>{if(!window.confirm("Remove this home watch entry?"))return;setHomeCare(p=>{const n=p.filter(e=>e.id!==id);syncNow({...getState(),homeCare:n});return n;});};
   const addCustomTask=(date,text,type)=>{setCustomTasks(p=>{const n={...p,[date]:[...(p[date]||[]),{text,type}]};syncNow({...getState(),customTasks:n});return n;});};
   const silentRemoveTask=(date,idx)=>{setCustomTasks(p=>{const n={...p,[date]:(p[date]||[]).filter((_,i)=>i!==idx)};syncNow({...getState(),customTasks:n});return n;});};
   const silentRemovePreTripCustom=(id)=>{setPreTripCustom(p=>{const n=p.filter(t=>t.id!==id);syncNow({...getState(),preTripCustom:n});return n;});};
@@ -2335,6 +2504,7 @@ function App(){
                     checked={checked} toggleCheck={toggleCheck} deletedItems={deletedItems} editedItems={editedItems}
                     coreTasks={coreTasks} toggleCore={toggleCore} customTasks={customTasks}
                     travelItems={travelItems} addTravelItem={addTravelItem} editTravelItem={editTravelItem} removeTravelItem={removeTravelItem}
+                    homeCare={homeCare} addHomeCareEntry={addHomeCareEntry} editHomeCareEntry={editHomeCareEntry} removeHomeCareEntry={removeHomeCareEntry}
                     fitWarnings={fitWarnings} fitStatus={fitStatus} runCheckFit={runCheckFit}
                     dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay}
                     dayPlanSuggestion={dayPlanSuggestion} setDayPlanSuggestion={setDayPlanSuggestion} revertPlan={revertPlan}
@@ -2371,6 +2541,7 @@ function App(){
         {/* TRIP TAB */}
         {tab==="trip"&&(
           <div style={{animation:"fadeUp 0.22s ease"}}>
+            <HomeWatchBanner homeCare={homeCare} today={today}/>
             <div style={{...S.label,margin:"4px 0 5px"}}>Full Trip Plan</div>
             <div style={{fontSize:12,color:"#94a3b8",marginBottom:14}}>Tap any day to expand · add or edit tasks</div>
             {ITINERARY.map((day,i)=>{
@@ -2402,6 +2573,7 @@ function App(){
                         checked={checked} toggleCheck={toggleCheck} deletedItems={deletedItems} editedItems={editedItems}
                         coreTasks={coreTasks} toggleCore={toggleCore} customTasks={customTasks}
                         travelItems={travelItems} addTravelItem={addTravelItem} editTravelItem={editTravelItem} removeTravelItem={removeTravelItem}
+                        homeCare={homeCare} addHomeCareEntry={addHomeCareEntry} editHomeCareEntry={editHomeCareEntry} removeHomeCareEntry={removeHomeCareEntry}
                         fitWarnings={fitWarnings} fitStatus={fitStatus} runCheckFit={runCheckFit}
                         dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay}
                         dayPlanSuggestion={dayPlanSuggestion} setDayPlanSuggestion={setDayPlanSuggestion} revertPlan={revertPlan}
