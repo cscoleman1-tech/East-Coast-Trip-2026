@@ -147,6 +147,27 @@ const DEFAULT_HOME_CARE=[
   {id:"hc-5",name:"Talia", startDate:"2026-07-24",endDate:"2026-07-24",category:"dog",notes:""},
 ];
 
+// ── WEATHER COORDS ────────────────────────────────────────────────────────────
+// [lat, lon] per trip date — used for Open-Meteo daily forecast fetch
+const DAY_COORDS={
+  "2026-07-09":[40.68,-73.94],   // NYC/Brooklyn (arrive late)
+  "2026-07-10":[40.68,-73.94],   // NYC
+  "2026-07-11":[40.68,-73.94],   // NYC (train to Philly at 3pm — most of day in NYC)
+  "2026-07-12":[39.95,-75.16],   // Philadelphia / West Chester
+  "2026-07-13":[39.95,-75.16],   // Philly (train to Harrisburg at 4:40pm)
+  "2026-07-14":[40.27,-76.88],   // Harrisburg / Hershey
+  "2026-07-15":[40.27,-76.88],   // Harrisburg
+  "2026-07-16":[40.27,-76.88],   // Harrisburg
+  "2026-07-17":[37.27,-76.71],   // Williamsburg (drive day, show destination)
+  "2026-07-18":[35.95,-75.62],   // OBX / Nags Head (arrive today)
+  "2026-07-19":[35.95,-75.62],   // OBX
+  "2026-07-20":[35.95,-75.62],   // OBX
+  "2026-07-21":[35.95,-75.62],   // OBX
+  "2026-07-22":[35.95,-75.62],   // OBX
+  "2026-07-23":[35.95,-75.62],   // OBX
+  "2026-07-24":[36.85,-76.29],   // Norfolk (fly home from ORF)
+};
+
 const NEARBY_BY_DATE={
   "2026-07-09":{ctx:"Arriving tonight — late-night options",loc:"Brooklyn / LaGuardia",spots:[{e:"🍕",label:"Late-night food near LGA",q:"restaurants open late near LaGuardia Airport New York"},{e:"🚕",label:"Rideshare pickup at LGA",q:"rideshare taxi LaGuardia Airport New York"},{e:"🏘️",label:"Brooklyn VRBO neighborhood",q:"Herkimer Street Nostrand Avenue Brooklyn New York"}]},
   "2026-07-10":{ctx:"Full NYC day — subway around",loc:"New York City",spots:[{e:"🗽",label:"Staten Island Ferry (free — best views!)",q:"Staten Island Ferry Whitehall Terminal NYC"},{e:"🍕",label:"Joe's Pizza NYC",q:"Joe's Pizza New York City"},{e:"🌉",label:"Brooklyn Bridge",q:"Brooklyn Bridge New York"},{e:"🌳",label:"Central Park coffee & food",q:"coffee food Central Park New York"},{e:"🚇",label:"Subway stations & OMNY info",q:"NYC subway station map"}]},
@@ -563,6 +584,72 @@ function TravelCard({dayDate,travelItems,onAdd,onEdit,onDelete}){
   );
 }
 
+// ── WEATHER CHIP ──────────────────────────────────────────────────────────────
+// Module-level cache: { [date]: {status:"ok"|"too-far"|"error", hi, lo, code, fetchedAt} }
+// Not React state — persists for the session without triggering extra renders or syncing.
+const _wxCache={};
+const WX_TTL=3600000; // 1 hour in ms
+const WX_WINDOW_DAYS=16;
+
+const wmoIcon=code=>{
+  if(code===0)return"☀️";
+  if(code<=2)return"🌤️";
+  if(code<=3)return"⛅";
+  if(code<=48)return"☁️";
+  if(code<=57)return"🌦️";
+  if(code<=67)return"🌧️";
+  if(code<=77)return"❄️";
+  if(code<=82)return"🌧️";
+  if(code<=86)return"❄️";
+  return"⛈️";
+};
+
+function WeatherChip({date,coords}){
+  const [wx,setWx]=useState(()=>_wxCache[date]||null);
+  useEffect(()=>{
+    if(!coords)return;
+    // Check if date is beyond forecast window
+    const t=new Date();t.setHours(0,0,0,0);
+    const d=new Date(date+"T00:00:00");
+    const daysOut=Math.round((d-t)/86400000);
+    if(daysOut>WX_WINDOW_DAYS){
+      const v={status:"too-far"};_wxCache[date]=v;setWx(v);return;
+    }
+    // Cache hit check (skip if too-far or fresh ok)
+    const cached=_wxCache[date];
+    if(cached&&(cached.status==="too-far"||(cached.status==="ok"&&Date.now()-cached.fetchedAt<WX_TTL))){
+      setWx(cached);return;
+    }
+    // Fetch from Open-Meteo (no API key required)
+    const[lat,lon]=coords;
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,weathercode&temperature_unit=fahrenheit&timezone=auto&start_date=${date}&end_date=${date}`;
+    setWx({status:"loading"});
+    fetch(url,{signal:AbortSignal.timeout(8000)})
+      .then(r=>r.json())
+      .then(data=>{
+        const hi=Math.round(data.daily.temperature_2m_max[0]);
+        const lo=Math.round(data.daily.temperature_2m_min[0]);
+        const code=data.daily.weathercode[0];
+        const v={status:"ok",hi,lo,code,fetchedAt:Date.now()};
+        _wxCache[date]=v;setWx(v);
+      })
+      .catch(()=>{setWx({status:"error"});});
+  },[date]);
+  if(!coords)return null;
+  if(!wx||wx.status==="loading")return(
+    <span style={{fontSize:11,color:"#94a3b8",fontStyle:"italic",whiteSpace:"nowrap"}}>weather…</span>
+  );
+  if(wx.status==="too-far")return(
+    <span style={{fontSize:11,color:"#94a3b8",fontStyle:"italic",whiteSpace:"nowrap"}}>Forecast closer to date</span>
+  );
+  if(wx.status==="error")return null;
+  return(
+    <span style={{display:"inline-flex",alignItems:"center",gap:3,padding:"3px 9px",borderRadius:20,background:"#f0f9ff",border:"1px solid #bae6fd",fontSize:12,fontWeight:700,color:"#0369a1",whiteSpace:"nowrap",flexShrink:0}}>
+      {wmoIcon(wx.code)} {wx.hi}° / {wx.lo}°
+    </span>
+  );
+}
+
 // ── HOME WATCH COMPONENTS ─────────────────────────────────────────────────────
 function HomeCareModal({entry,onSave,onClose}){
   const isNew=!entry;
@@ -726,11 +813,19 @@ function DayDetailView({
     <div>
       {showHeader&&(
         <div style={{...S.card,padding:"16px 18px",marginBottom:12}}>
-          <div style={{fontWeight:900,fontSize:20,color:S.navy,letterSpacing:"-0.3px"}}>{day.title}</div>
+          <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+            <div style={{fontWeight:900,fontSize:20,color:S.navy,letterSpacing:"-0.3px",flex:"1 1 auto"}}>{day.title}</div>
+            <WeatherChip date={day.date} coords={DAY_COORDS[day.date]}/>
+          </div>
           <div style={{fontSize:13,color:"#64748b",marginTop:4,lineHeight:1.5}}>{day.summary}</div>
         </div>
       )}
-      <div style={{marginTop:showHeader?0:12}}>
+      {!showHeader&&(
+        <div style={{display:"flex",justifyContent:"flex-end",marginTop:10,marginBottom:4}}>
+          <WeatherChip date={day.date} coords={DAY_COORDS[day.date]}/>
+        </div>
+      )}
+      <div style={{marginTop:showHeader?0:4}}>
         <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
       </div>
       <HomeWatchSection dayDate={day.date} homeCare={homeCare} onAdd={addHomeCareEntry} onEdit={editHomeCareEntry} onDelete={removeHomeCareEntry}/>
