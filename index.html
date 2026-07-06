@@ -1822,6 +1822,7 @@ const QUICK_SEARCHES=[
   {e:"🏥",label:"Urgent Care",           q:"urgent care",        bg:"#fff1f2",iconBg:"#fecdd3",tc:"#9f1239"},
   {e:"🏛️",label:"Points of Interest",   q:"tourist attractions",bg:"#fefce8",iconBg:"#fef08a",tc:"#713f12"},
   {e:"🚌",label:"Public Transportation", q:"public transit station",bg:"#ecfeff",iconBg:"#a5f3fc",tc:"#164e63"},
+  {e:"🏄",label:"Rentals",              q:"equipment rental",   bg:"#f0fdfa",iconBg:"#99f6e4",tc:"#115e59"},
 ];
 
 function NearbyTab({tripDayIdx}){
@@ -2369,7 +2370,8 @@ function App(){
         ...day.items.filter((_,j)=>!deletedItems[`itinerary-${date}-${j}`]).map((it,j)=>({key:`trip-${date}-${j}`,text:(editedItems[`itinerary-${date}-${j}`]?.text)||it.text,isCore:!!coreTasks[`trip-${date}-${j}`]})),
         ...(customTasks[date]||[]).map((t,j)=>({key:`trip-${date}-c${j}`,text:t.text,isCore:!!coreTasks[`trip-${date}-c${j}`]})),
       ];
-      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"checkFit",city:day.city,date:day.label,tasks}),signal:AbortSignal.timeout(20000)});
+      const dayHomeCare=homeCare.filter(e=>e.startDate<=date&&e.endDate>=date).map(e=>({name:e.name,category:e.category,notes:e.notes}));
+      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"checkFit",city:day.city,date:day.label,tasks,homeCare:dayHomeCare}),signal:AbortSignal.timeout(20000)});
       if(!resp.ok){let d="Status "+resp.status;try{const e=await resp.json();d=e.error||d;}catch{}throw new Error(d);}
       const result=await resp.json();
       const warnMap={};
