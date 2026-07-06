@@ -240,6 +240,25 @@ Rules:
         ? `\nWeather awareness: The forecast is ${weather.hi}°F high / ${weather.lo}°F low, ${weather.condition}. If this is notable (heat >88°F, rain, storms, fog), add a concise "Weather tip: ..." line directly after the relevant activity step — e.g. move outdoor activities earlier if afternoon rain expected, flag hydration on hot days, suggest an indoor alternative if severe weather. Keep tips to 1–2 sentences max, only where genuinely useful. Do not add weather tips if conditions are mild and benign.`
         : "";
 
+      const schedulingRules = `
+Scheduling rules — apply strictly in this priority order:
+
+STEP 1 — IDENTIFY TIME ANCHORS FIRST:
+Scan every activity for explicit time-of-day language. Any activity containing words like "night," "at night," "evening," "sunset," "sunrise," "morning," "midnight," "breakfast," "lunch," "dinner," "brunch," or a specific clock time (e.g. "7pm," "10am") is TIME-ANCHORED and must be placed at its appropriate time slot regardless of where it appeared in the input list. Examples:
+  • "Times Square at night" → schedule late evening (8pm+)
+  • "sunset sail / sunset view" → schedule to align with actual sunset
+  • "breakfast at X" → first slot of the day
+  • "dinner reservation" → evening meal slot
+  • "lunch at Y" → midday
+
+STEP 2 — SEQUENCE NON-ANCHORED ACTIVITIES AROUND THOSE FIXED POINTS:
+For all remaining activities (no time cues), arrange them geographically to minimize backtracking and total transit time. Group nearby locations together. Fill the schedule around the anchored slots established in Step 1.
+
+STEP 3 — APPLY OPENING-HOURS AND CROWD LOGIC:
+Within the non-anchored sequence, use common sense: visit popular attractions early before crowds, hit museums/indoor spots in midday heat, schedule restaurants at natural meal windows. Arrive early for timed-entry or high-demand spots.
+
+CRITICAL: The input activity list is an UNORDERED SET. Completely ignore the order items appear in that list. The only order that matters is the optimized schedule you produce.`;
+
       let prompt;
       if (suggestion && currentPlan) {
         prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.${weatherContext}
@@ -250,21 +269,20 @@ ${currentPlan}
 
 The family wants to make this change: "${suggestion}"
 
-Revise the itinerary to incorporate their suggestion. Keep it efficient — minimize backtracking and transit time. ${transitGuide}${weatherInstruction}
+Revise the itinerary to incorporate their suggestion. Re-evaluate time anchors (any activity with "night," "evening," "sunset," "morning," "breakfast/lunch/dinner" cues must stay at its correct time slot). Minimize backtracking for non-anchored items. ${transitGuide}${weatherInstruction}
 
-Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise.`;
+Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise. For weather tips, use the exact format "Weather tip: ..." on its own line directly after the relevant step.`;
       } else {
         prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.${weatherContext}
 
-Their activities for the day:
-${activities.map((a, i) => `${i + 1}. ${a}`).join("\n")}
+Activities for the day (INPUT ORDER IS IRRELEVANT — treat as an unordered set):
+${activities.map(a => `• ${a}`).join("\n")}
+${schedulingRules}
 
-Create an optimized day plan that:
-1. Orders the activities for maximum efficiency (minimize backtracking and transit time)
-2. Provides specific transit/navigation directions between each stop
-3. ${transitGuide}
-4. Includes rough time estimates at each location
-5. Notes any practical family tips (best time to arrive, what to skip if short on time, etc.)
+For each scheduled step also:
+• Provide specific transit/navigation directions. ${transitGuide}
+• Include a rough time estimate at each location.
+• Add a brief family tip where useful (what to skip if short on time, best photo spot, etc.).
 ${weatherInstruction}
 
 Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise. For weather tips, use the exact format "Weather tip: ..." on its own line directly after the relevant step.`;
