@@ -820,11 +820,6 @@ function DayDetailView({
           <div style={{fontSize:13,color:"#64748b",marginTop:4,lineHeight:1.5}}>{day.summary}</div>
         </div>
       )}
-      {!showHeader&&(
-        <div style={{display:"flex",justifyContent:"flex-end",marginTop:10,marginBottom:4}}>
-          <WeatherChip date={day.date} coords={DAY_COORDS[day.date]}/>
-        </div>
-      )}
       <div style={{marginTop:showHeader?0:4}}>
         <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
       </div>
@@ -2656,6 +2651,7 @@ function App(){
                         {!isPast&&!isToday&&diff<=5&&<span style={{fontSize:10,fontWeight:800,color:"#f97316",background:"#fff7ed",borderRadius:6,padding:"2px 7px"}}>in {diff}d</span>}
                       </div>
                       <div style={{fontSize:12,color:isPast?"#d1d5db":"#64748b",marginTop:2,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{day.title}</div>
+                      {!isPast&&<div style={{marginTop:4}}><WeatherChip date={day.date} coords={DAY_COORDS[day.date]}/></div>}
                     </div>
                     <div style={{display:"flex",alignItems:"center",gap:7,flexShrink:0}}>
                       {done>0&&<div style={{fontSize:12,color:"#22c55e",fontWeight:800}}>{done}/{total}</div>}
