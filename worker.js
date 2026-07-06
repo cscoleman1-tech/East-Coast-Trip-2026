@@ -95,20 +95,24 @@ Rules:
 
       // ── CHECK FIT ───────────────────────────────────────────────────────────
       if (body.action === "checkFit") {
-        const { city = "unknown", date = "", tasks = [] } = body;
+        const { city = "unknown", date = "", tasks = [], homeCare = [], weather = null } = body;
         if (!tasks.length) return json({ error: "No tasks provided" }, 400);
 
         const coreItems = tasks.filter(t => t.isCore);
         const nonCoreItems = tasks.filter(t => !t.isCore);
 
-        if (!nonCoreItems.length) return json({ warnings: [] });
+        if (!nonCoreItems.length) return json({ warnings: [], weatherTips: [] });
 
         const coreList = coreItems.length
           ? coreItems.map(t => `• ${t.text}`).join("\n")
           : "(none flagged as Core — evaluate all items against each other)";
         const nonCoreList = nonCoreItems.map(t => `• [${t.key}] ${t.text}`).join("\n");
 
-        const prompt = `You are a practical family trip logistics evaluator for the Coleman family (2 adults, 3 kids ages 10-16) in ${city} on ${date}.
+        const weatherLine = weather
+          ? `\nWeather forecast: High ${weather.hi}°F / Low ${weather.lo}°F, ${weather.condition}.`
+          : "";
+
+        const prompt = `You are a practical family trip logistics evaluator for the Coleman family (2 adults, 3 kids ages 10-16) in ${city} on ${date}.${weatherLine}
 
 Core activities (non-negotiable anchors for the day):
 ${coreList}
@@ -118,12 +122,14 @@ ${nonCoreList}
 
 For each "other" activity, decide if it creates a MEANINGFUL logistical problem relative to the core items and city layout: significant detour (30+ extra minutes), major backtracking across the city, or a real time conflict. If it fits fine alongside the core items, do NOT flag it.
 
+${weather ? `Also consider the weather forecast. If the weather is notable (heat >88°F, rain, storms, fog), add 1–2 short weather tips for the family (e.g. hydration on hot days, move outdoor activities earlier if rain expected later, suggest indoor alternatives for severe weather). Only add tips if genuinely useful — omit if weather is mild.` : ""}
+
 Return ONLY valid JSON, no markdown, no explanation:
-{"warnings":[{"key":"EXACT_KEY_FROM_INPUT","reason":"concise reason, under 12 words"}]}
+{"warnings":[{"key":"EXACT_KEY_FROM_INPUT","reason":"concise reason, under 12 words"}],"weatherTips":["tip1","tip2"]}
 
-Use the exact key string from the brackets in the input (e.g. trip-2026-07-10-3). Empty warnings array if everything fits.`;
+Use the exact key string from the brackets in the input. Empty arrays if nothing to flag.`;
 
-        const text = await callAnthropic(apiKey, prompt, 400);
+        const text = await callAnthropic(apiKey, prompt, 500);
         const match = text.match(/\{[\s\S]*\}/);
         if (!match) return json({ error: "AI returned no JSON", raw: text }, 502);
         return json(JSON.parse(match[0]));
@@ -214,7 +220,7 @@ Rules:
       }
 
       // ── DAY PLANNER ─────────────────────────────────────────────────────────
-      const { city = "unknown city", date = "", activities = [], suggestion = null, currentPlan = null } = body;
+      const { city = "unknown city", date = "", activities = [], suggestion = null, currentPlan = null, weather = null } = body;
 
       if (!activities.length && !suggestion) return json({ error: "No activities provided" }, 400);
 
@@ -227,9 +233,16 @@ Rules:
         transitGuide = "The family has a car or is using rideshare. Include driving directions, approximate drive times between stops, and any parking or access tips.";
       }
 
+      const weatherContext = weather
+        ? `\nWeather forecast for ${date}: High ${weather.hi}°F / Low ${weather.lo}°F, ${weather.condition}.`
+        : "";
+      const weatherInstruction = weather
+        ? `\nWeather awareness: The forecast is ${weather.hi}°F high / ${weather.lo}°F low, ${weather.condition}. If this is notable (heat >88°F, rain, storms, fog), add a concise "Weather tip: ..." line directly after the relevant activity step — e.g. move outdoor activities earlier if afternoon rain expected, flag hydration on hot days, suggest an indoor alternative if severe weather. Keep tips to 1–2 sentences max, only where genuinely useful. Do not add weather tips if conditions are mild and benign.`
+        : "";
+
       let prompt;
       if (suggestion && currentPlan) {
-        prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.
+        prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.${weatherContext}
 
 Here is the current day itinerary:
 
@@ -237,11 +250,11 @@ ${currentPlan}
 
 The family wants to make this change: "${suggestion}"
 
-Revise the itinerary to incorporate their suggestion. Keep it efficient — minimize backtracking and transit time. ${transitGuide}
+Revise the itinerary to incorporate their suggestion. Keep it efficient — minimize backtracking and transit time. ${transitGuide}${weatherInstruction}
 
 Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise.`;
       } else {
-        prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.
+        prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.${weatherContext}
 
 Their activities for the day:
 ${activities.map((a, i) => `${i + 1}. ${a}`).join("\n")}
@@ -252,8 +265,9 @@ Create an optimized day plan that:
 3. ${transitGuide}
 4. Includes rough time estimates at each location
 5. Notes any practical family tips (best time to arrive, what to skip if short on time, etc.)
+${weatherInstruction}
 
-Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise.`;
+Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise. For weather tips, use the exact format "Weather tip: ..." on its own line directly after the relevant step.`;
       }
 
       const plan = await callAnthropic(apiKey, prompt, 1024);

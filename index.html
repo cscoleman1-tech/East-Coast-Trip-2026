@@ -603,6 +603,18 @@ const wmoIcon=code=>{
   if(code<=86)return"❄️";
   return"⛈️";
 };
+const wmoLabel=code=>{
+  if(code===0)return"sunny";
+  if(code<=2)return"mostly clear";
+  if(code<=3)return"partly cloudy";
+  if(code<=48)return"foggy/overcast";
+  if(code<=57)return"light rain/drizzle";
+  if(code<=67)return"rain";
+  if(code<=77)return"snow";
+  if(code<=82)return"rain showers";
+  if(code<=86)return"snow showers";
+  return"thunderstorms";
+};
 
 function WeatherChip({date,coords}){
   const [wx,setWx]=useState(()=>_wxCache[date]||null);
@@ -804,7 +816,7 @@ function DayDetailView({
   checked,toggleCheck,deletedItems,editedItems,coreTasks,toggleCore,customTasks,
   travelItems,addTravelItem,editTravelItem,removeTravelItem,
   homeCare,addHomeCareEntry,editHomeCareEntry,removeHomeCareEntry,
-  fitWarnings,fitStatus,runCheckFit,
+  fitWarnings,fitWeatherTips,fitStatus,runCheckFit,
   dayPlans,dayPlanStatus,dayPlanError,planDay,dayPlanSuggestion,setDayPlanSuggestion,revertPlan,
   addingTo,setAddingTo,openAddForm,taskText,setTaskText,taskType,setTaskType,handleAddTask,
   removeTask,editTask,deleteItem,editBuiltinItem,
@@ -844,6 +856,16 @@ function DayDetailView({
         {fitStatus[day.date]==="loading"?"Checking fit…":"⚡ Check Fit"}
       </button>
       {fitStatus[day.date]==="error"&&<div style={{fontSize:12,color:"#dc2626",textAlign:"center",marginTop:6}}>Check fit failed — try again</div>}
+      {(fitWeatherTips[day.date]||[]).length>0&&(
+        <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:5}}>
+          {(fitWeatherTips[day.date]||[]).map((tip,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"flex-start",gap:8,background:"#dbeafe",borderRadius:10,padding:"8px 11px",border:"1px solid #93c5fd"}}>
+              <span style={{fontSize:15,flexShrink:0}}>🌦️</span>
+              <span style={{fontSize:12,fontWeight:700,color:"#1d4ed8",lineHeight:1.5}}>{tip}</span>
+            </div>
+          ))}
+        </div>
+      )}
       <PlanMyDaySection day={day} dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay} customTasks={customTasks} suggestion={dayPlanSuggestion[day.date]||""} setSuggestion={s=>setDayPlanSuggestion(p=>({...p,[day.date]:s}))} revertPlan={revertPlan}/>
     </div>
   );
@@ -1953,6 +1975,7 @@ function PlanRenderer({text,compact}){
       if((m=plain.match(/^Why\s+first:?\s*(.+)/i))) {flush();blocks.push({t:'why',    text:m[1]});continue;}
       if((m=plain.match(/^Family\s+tip:?\s*(.+)/i))){flush();blocks.push({t:'tip',    text:m[1]});continue;}
       if((m=plain.match(/^(?:Note|Tip|Pro\s+tip):?\s*(.+)/i))){flush();blocks.push({t:'tip',text:m[1]});continue;}
+      if((m=plain.match(/^Weather\s+tip:?\s*(.+)/i))){flush();blocks.push({t:'weather',text:m[1]});continue;}
       if((m=plain.match(/^(?:Transit|Getting\s+there|Subway|Train|Bus|Drive|Walk|Parking|Directions?):?\s*(.+)/i))){flush();blocks.push({t:'transit',text:m[1]});continue;}
       if((m=line.match(/^[-*•]\s+(.+)/)))           {bullets.push(m[1]);continue;}
       flush();
@@ -2007,6 +2030,7 @@ function PlanRenderer({text,compact}){
                   );
                   if(b.t==='why')return <div key={bi} style={{fontSize:compact?11:12,color:'#4338ca',fontWeight:600,lineHeight:1.55}}>⭐ <em>{fmt(b.text)}</em></div>;
                   if(b.t==='tip')return <div key={bi} style={{fontSize:compact?11:12,color:'#92400e',fontWeight:600,lineHeight:1.55}}>💡 {fmt(b.text)}</div>;
+                  if(b.t==='weather')return <div key={bi} style={{fontSize:compact?11:12,color:'#1d4ed8',fontWeight:700,lineHeight:1.55,background:'#dbeafe',borderRadius:7,padding:'5px 9px',border:'1px solid #93c5fd'}}>🌦️ Weather tip: {fmt(b.text)}</div>;
                   if(b.t==='transit')return <div key={bi} style={{fontSize:compact?11:12,color:'#1e40af',fontWeight:600,lineHeight:1.55,background:'#eff6ff',borderRadius:7,padding:'4px 9px'}}>🚇 {fmt(b.text)}</div>;
                   if(b.t==='bullets')return(
                     <div key={bi} style={{paddingLeft:2}}>
@@ -2265,6 +2289,7 @@ function App(){
   const [dayPlanSuggestion,setDayPlanSuggestion]=useState({});
   const [coreTasks,setCoreTasks]=useState({});
   const [fitWarnings,setFitWarnings]=useState({});
+  const [fitWeatherTips,setFitWeatherTips]=useState({});
   const [fitStatus,setFitStatus]=useState({});
   const [editedItems,setEditedItems]=useState({});
   const [showTour,setShowTour]=useState(false);
@@ -2371,12 +2396,15 @@ function App(){
         ...(customTasks[date]||[]).map((t,j)=>({key:`trip-${date}-c${j}`,text:t.text,isCore:!!coreTasks[`trip-${date}-c${j}`]})),
       ];
       const dayHomeCare=homeCare.filter(e=>e.startDate<=date&&e.endDate>=date).map(e=>({name:e.name,category:e.category,notes:e.notes}));
-      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"checkFit",city:day.city,date:day.label,tasks,homeCare:dayHomeCare}),signal:AbortSignal.timeout(20000)});
+      const wxEntry=_wxCache[date];
+      const weather=wxEntry?.status==='ok'?{hi:wxEntry.hi,lo:wxEntry.lo,condition:wmoLabel(wxEntry.code)}:null;
+      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"checkFit",city:day.city,date:day.label,tasks,homeCare:dayHomeCare,weather}),signal:AbortSignal.timeout(20000)});
       if(!resp.ok){let d="Status "+resp.status;try{const e=await resp.json();d=e.error||d;}catch{}throw new Error(d);}
       const result=await resp.json();
       const warnMap={};
       (result.warnings||[]).forEach(w=>{warnMap[w.key]=w.reason;});
       setFitWarnings(p=>({...p,[date]:warnMap}));
+      setFitWeatherTips(p=>({...p,[date]:result.weatherTips||[]}));
       setFitStatus(p=>({...p,[date]:"done"}));
     }catch(e){
       console.error("checkFit:",e);
@@ -2396,10 +2424,12 @@ function App(){
         return;
       }
       const currentPlan=suggestion?dayPlans[day.date]?.plan:null;
+      const wxEntry=_wxCache[day.date];
+      const weather=wxEntry?.status==='ok'?{hi:wxEntry.hi,lo:wxEntry.lo,condition:wmoLabel(wxEntry.code)}:null;
       const resp=await fetch(WORKER_URL,{
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({city:day.city,date:day.label,activities:allItems,...(suggestion&&currentPlan?{suggestion,currentPlan}:{})}),
+        body:JSON.stringify({city:day.city,date:day.label,activities:allItems,weather,...(suggestion&&currentPlan?{suggestion,currentPlan}:{})}),
         signal:AbortSignal.timeout(30000),
       });
       if(!resp.ok){
@@ -2596,7 +2626,7 @@ function App(){
                     coreTasks={coreTasks} toggleCore={toggleCore} customTasks={customTasks}
                     travelItems={travelItems} addTravelItem={addTravelItem} editTravelItem={editTravelItem} removeTravelItem={removeTravelItem}
                     homeCare={homeCare} addHomeCareEntry={addHomeCareEntry} editHomeCareEntry={editHomeCareEntry} removeHomeCareEntry={removeHomeCareEntry}
-                    fitWarnings={fitWarnings} fitStatus={fitStatus} runCheckFit={runCheckFit}
+                    fitWarnings={fitWarnings} fitWeatherTips={fitWeatherTips} fitStatus={fitStatus} runCheckFit={runCheckFit}
                     dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay}
                     dayPlanSuggestion={dayPlanSuggestion} setDayPlanSuggestion={setDayPlanSuggestion} revertPlan={revertPlan}
                     addingTo={addingTo} setAddingTo={setAddingTo} openAddForm={openAddForm}
@@ -2666,7 +2696,7 @@ function App(){
                         coreTasks={coreTasks} toggleCore={toggleCore} customTasks={customTasks}
                         travelItems={travelItems} addTravelItem={addTravelItem} editTravelItem={editTravelItem} removeTravelItem={removeTravelItem}
                         homeCare={homeCare} addHomeCareEntry={addHomeCareEntry} editHomeCareEntry={editHomeCareEntry} removeHomeCareEntry={removeHomeCareEntry}
-                        fitWarnings={fitWarnings} fitStatus={fitStatus} runCheckFit={runCheckFit}
+                        fitWarnings={fitWarnings} fitWeatherTips={fitWeatherTips} fitStatus={fitStatus} runCheckFit={runCheckFit}
                         dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay}
                         dayPlanSuggestion={dayPlanSuggestion} setDayPlanSuggestion={setDayPlanSuggestion} revertPlan={revertPlan}
                         addingTo={addingTo} setAddingTo={setAddingTo} openAddForm={openAddForm}
