@@ -136,7 +136,11 @@ const STILL_NEEDED_ITEMS=["9/11 Museum timed entry — book NOW","Independence H
 // ── HOME CARE DATA ────────────────────────────────────────────────────────────
 const HOME_CARE_CATEGORIES={
   dog:{label:"Dog",icon:"🐕"},
-  // add more categories here later (mail, plants, house-sitter, etc.)
+  bunny:{label:"Bunnies",icon:"🐰"},
+  cat:{label:"Cat",icon:"🐈"},
+  plant:{label:"Plants",icon:"🪴"},
+  mail:{label:"Mail",icon:"📬"},
+  house:{label:"House",icon:"🏠"},
 };
 
 const DEFAULT_HOME_CARE=[
@@ -145,6 +149,7 @@ const DEFAULT_HOME_CARE=[
   {id:"hc-3",name:"Talia", startDate:"2026-07-17",endDate:"2026-07-21",category:"dog",notes:""},
   {id:"hc-4",name:"Dina",  startDate:"2026-07-22",endDate:"2026-07-23",category:"dog",notes:""},
   {id:"hc-5",name:"Talia", startDate:"2026-07-24",endDate:"2026-07-24",category:"dog",notes:""},
+  {id:"hc-beth",name:"Beth",startDate:"2026-07-09",endDate:"2026-07-24",category:"bunny",notes:"Watching the bunnies"},
 ];
 
 // ── WEATHER COORDS ────────────────────────────────────────────────────────────
@@ -668,7 +673,11 @@ function HomeCareModal({entry,onSave,onClose}){
   const [name,setName]=React.useState(entry?.name||"");
   const [startDate,setStartDate]=React.useState(entry?.startDate||"2026-07-09");
   const [endDate,setEndDate]=React.useState(entry?.endDate||"2026-07-09");
-  const [category,setCategory]=React.useState(entry?.category||"dog");
+  const knownKeys=Object.keys(HOME_CARE_CATEGORIES);
+  const initCat=entry?.category||"dog";
+  const [category,setCategory]=React.useState(knownKeys.includes(initCat)?initCat:"_custom");
+  const [customCat,setCustomCat]=React.useState(knownKeys.includes(initCat)?"":initCat);
+  const effectiveCat=category==="_custom"?(customCat.trim()||"other"):category;
   const [notes,setNotes]=React.useState(entry?.notes||"");
   const canPick=typeof navigator!=="undefined"&&navigator.contacts!=null&&typeof navigator.contacts.select==="function";
   const pickContact=async()=>{
@@ -677,10 +686,10 @@ function HomeCareModal({entry,onSave,onClose}){
       if(results.length>0&&results[0].name?.length>0)setName(results[0].name[0]);
     }catch(e){}
   };
-  const valid=name.trim()&&startDate&&endDate&&startDate<=endDate;
+  const valid=name.trim()&&startDate&&endDate&&startDate<=endDate&&(category!=="_custom"||customCat.trim());
   const handleSave=()=>{
     if(!valid)return;
-    onSave({id:entry?.id||`hc-${Date.now()}`,name:name.trim(),startDate,endDate,category,notes:notes.trim()});
+    onSave({id:entry?.id||`hc-${Date.now()}`,name:name.trim(),startDate,endDate,category:effectiveCat,notes:notes.trim()});
   };
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.45)",zIndex:9000,display:"flex",alignItems:"flex-end"}} onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
@@ -715,7 +724,15 @@ function HomeCareModal({entry,onSave,onClose}){
                 {v.icon} {v.label}
               </button>
             ))}
+            <button onClick={()=>setCategory("_custom")}
+              style={{padding:"7px 16px",borderRadius:20,border:`2px solid ${category==="_custom"?S.blue:"#cbd5e1"}`,background:category==="_custom"?S.blue:"transparent",color:category==="_custom"?"#fff":"#475569",fontWeight:700,fontSize:13,cursor:"pointer"}}>
+              ✏️ Custom
+            </button>
           </div>
+          {category==="_custom"&&(
+            <input value={customCat} onChange={e=>setCustomCat(e.target.value)} placeholder="e.g. Fish, Chickens, Garden…"
+              style={{marginTop:9,width:"100%",padding:"9px 12px",border:"1.5px solid #cbd5e1",borderRadius:10,fontSize:14,outline:"none",boxSizing:"border-box"}}/>
+          )}
         </div>
         <div style={{marginBottom:20}}>
           <div style={{fontSize:12,fontWeight:700,color:"#64748b",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.05em"}}>Notes (optional)</div>
@@ -2350,7 +2367,12 @@ function App(){
   const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems,homeCare,packOrder});
   const applyRemoteData=(data)=>{
     if(!data)return;
-    if(data.customTasks)setCustomTasks(data.customTasks);
+    if(data.customTasks){
+      // Migrate: remove "Beth watching the bunnies" activity tasks (now a Home Watch entry)
+      const isBethBunny=t=>/beth/i.test(t.text)&&/bunn/i.test(t.text);
+      const cleaned=Object.fromEntries(Object.entries(data.customTasks).map(([d,tasks])=>[d,(tasks||[]).filter(t=>!isBethBunny(t))]));
+      setCustomTasks(cleaned);
+    }
     if(data.checked)setChecked(data.checked);
     if(data.packChecked)setPackChecked(data.packChecked);
     if(data.customPackItems){const cpi={...data.customPackItems};if(cpi.Master&&!cpi.General){cpi.General=cpi.Master;delete cpi.Master;}setCustomPackItems(cpi);}
@@ -2429,14 +2451,17 @@ function App(){
     setFitStatus(p=>({...p,[date]:"loading"}));
     setFitWarnings(p=>({...p,[date]:{}}));
     try{
+      // Only evaluate non-Core items — Core items are assumed correct and excluded
       const tasks=[
-        ...day.items.filter((_,j)=>!deletedItems[`itinerary-${date}-${j}`]).map((it,j)=>({key:`trip-${date}-${j}`,text:(editedItems[`itinerary-${date}-${j}`]?.text)||it.text,isCore:!!coreTasks[`trip-${date}-${j}`]})),
-        ...(customTasks[date]||[]).map((t,j)=>({key:`trip-${date}-c${j}`,text:t.text,isCore:!!coreTasks[`trip-${date}-c${j}`]})),
+        ...day.items.filter((_,j)=>!deletedItems[`itinerary-${date}-${j}`]&&!coreTasks[`trip-${date}-${j}`]).map((it,j)=>({key:`trip-${date}-${j}`,text:(editedItems[`itinerary-${date}-${j}`]?.text)||it.text})),
+        ...(customTasks[date]||[]).filter((_,j)=>!coreTasks[`trip-${date}-c${j}`]).map((t,j)=>({key:`trip-${date}-c${j}`,text:t.text})),
       ];
+      if(!tasks.length){setFitStatus(p=>({...p,[date]:"done"}));return;}
       const dayHomeCare=homeCare.filter(e=>e.startDate<=date&&e.endDate>=date).map(e=>({name:e.name,category:e.category,notes:e.notes}));
       const wxEntry=_wxCache[date];
       const weather=wxEntry?.status==='ok'?{hi:wxEntry.hi,lo:wxEntry.lo,condition:wmoLabel(wxEntry.code)}:null;
-      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"checkFit",city:day.city,date:day.label,tasks,homeCare:dayHomeCare,weather}),signal:AbortSignal.timeout(20000)});
+      const corePlan=dayPlans[date]?.plan||null;
+      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"checkFit",city:day.city,date:day.label,tasks,homeCare:dayHomeCare,weather,corePlan}),signal:AbortSignal.timeout(20000)});
       if(!resp.ok){let d="Status "+resp.status;try{const e=await resp.json();d=e.error||d;}catch{}throw new Error(d);}
       const result=await resp.json();
       const warnMap={};
@@ -2450,11 +2475,12 @@ function App(){
     }
   };
   const planDay=async(day,suggestion=null)=>{
+    // Plan only Core-starred items; non-core items are evaluated separately via Check Fit
     const allItems=[
-      ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]).map((it,j)=>(editedItems[`itinerary-${day.date}-${j}`]?.text)||it.text),
-      ...(customTasks[day.date]||[]).map(t=>t.text),
+      ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]&&coreTasks[`trip-${day.date}-${j}`]).map((it,j)=>(editedItems[`itinerary-${day.date}-${j}`]?.text)||it.text),
+      ...(customTasks[day.date]||[]).filter((_,j)=>coreTasks[`trip-${day.date}-c${j}`]).map(t=>t.text),
     ];
-    if(allItems.length<2)return;
+    if(allItems.length<1)return;
     setDayPlanStatus(p=>({...p,[day.date]:"loading"}));
     try{
       if(!WORKER_URL||WORKER_URL.includes("YOUR-WORKER")){

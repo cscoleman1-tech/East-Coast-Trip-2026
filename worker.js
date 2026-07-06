@@ -95,44 +95,39 @@ Rules:
 
       // ── CHECK FIT ───────────────────────────────────────────────────────────
       if (body.action === "checkFit") {
-        const { city = "unknown", date = "", tasks = [], homeCare = [], weather = null } = body;
-        if (!tasks.length) return json({ error: "No tasks provided" }, 400);
+        const { city = "unknown", date = "", tasks = [], homeCare = [], weather = null, corePlan = null } = body;
+        if (!tasks.length) return json({ warnings: [], weatherTips: [] });
 
-        const coreItems = tasks.filter(t => t.isCore);
-        const nonCoreItems = tasks.filter(t => !t.isCore);
-
-        if (!nonCoreItems.length) return json({ warnings: [], weatherTips: [] });
-
-        const coreList = coreItems.length
-          ? coreItems.map(t => `• ${t.text}`).join("\n")
-          : "(none flagged as Core — evaluate all items against each other)";
-        const nonCoreList = nonCoreItems.map(t => `• [${t.key}] ${t.text}`).join("\n");
+        const taskList = tasks.map(t => `• [${t.key}] ${t.text}`).join("\n");
 
         const weatherLine = weather
           ? `\nWeather forecast: High ${weather.hi}°F / Low ${weather.lo}°F, ${weather.condition}.`
           : "";
 
+        const planContext = corePlan
+          ? `\nThe Core-only itinerary already planned for the day:\n${corePlan}\n\nEvaluate each optional activity against this specific schedule — check whether it can realistically slot in given the timing and locations above.`
+          : `\nNo Core-only plan exists yet. Evaluate each optional activity for general logistical fit in ${city} (significant detour 30+ min, major backtracking, or time conflict).`;
+
         const prompt = `You are a practical family trip logistics evaluator for the Coleman family (2 adults, 3 kids ages 10-16) in ${city} on ${date}.${weatherLine}
+${planContext}
 
-Core activities (non-negotiable anchors for the day):
-${coreList}
+Optional (non-Core) activities to evaluate:
+${taskList}
 
-Other activities to evaluate for fit:
-${nonCoreList}
+For each optional activity, decide if it creates a MEANINGFUL logistical problem: significant detour (30+ extra minutes), major backtracking, or a real time conflict with the Core schedule. If it fits fine, do NOT flag it.
 
-For each "other" activity, decide if it creates a MEANINGFUL logistical problem relative to the core items and city layout: significant detour (30+ extra minutes), major backtracking across the city, or a real time conflict. If it fits fine alongside the core items, do NOT flag it.
-
-${weather ? `Also consider the weather forecast. If the weather is notable (heat >88°F, rain, storms, fog), add 1–2 short weather tips for the family (e.g. hydration on hot days, move outdoor activities earlier if rain expected later, suggest indoor alternatives for severe weather). Only add tips if genuinely useful — omit if weather is mild.` : ""}
+${weather ? `Also consider the weather. If weather is notable (heat >88°F, rain, storms), add 1–2 short weather tips. Omit if mild.` : ""}
 
 Return ONLY valid JSON, no markdown, no explanation:
 {"warnings":[{"key":"EXACT_KEY_FROM_INPUT","reason":"concise reason, under 12 words"}],"weatherTips":["tip1","tip2"]}
 
-Use the exact key string from the brackets in the input. Empty arrays if nothing to flag.`;
+Use exact key strings from the brackets. Empty arrays if nothing to flag.`;
 
         const text = await callAnthropic(apiKey, prompt, 500);
         const match = text.match(/\{[\s\S]*\}/);
         if (!match) return json({ error: "AI returned no JSON", raw: text }, 502);
-        return json(JSON.parse(match[0]));
+        try { return json(JSON.parse(match[0])); }
+        catch { return json({ error: "Invalid JSON from AI", raw: text }, 502); }
       }
 
       // ── UNIVERSAL COMMAND PARSER ─────────────────────────────────────────────
