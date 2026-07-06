@@ -1183,7 +1183,7 @@ function UniversalCommandBar({
 }
 
 // ── PACKING TAB ───────────────────────────────────────────────────────────────
-function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems,packPerson,setPackPerson,deletedItems,onDeleteItem,silentDeleteItem}){
+function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems,packPerson,setPackPerson,deletedItems,onDeleteItem,silentDeleteItem,packOrder,updatePackOrder}){
   const [addingCat,setAddingCat]=useState(null);
   const [newItem,setNewItem]=useState("");
   const persons=["General","Chris","McKenna","Sawyer","Pierce","Bennett"];
@@ -1196,8 +1196,40 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
     return a+all.filter((_,i)=>{const isBase=i<it.length;return(!isBase||!isBaseDeleted(c,i))&&packChecked[`pack-${packPerson}-${c}-${i}`];}).length;
   },0);
   const pct=total>0?Math.round((done/total)*100):0;
-  const addIt=(cat)=>{if(!newItem.trim())return;setCustomPackItems(p=>({...p,[packPerson]:{...(p[packPerson]||{}),[cat]:[...((p[packPerson]||{})[cat]||[]),newItem.trim()]}}));setNewItem("");setAddingCat(null);};
-  const removeIt=(cat,idx,bl)=>{const ci=idx-bl;setCustomPackItems(p=>({...p,[packPerson]:{...(p[packPerson]||{}),[cat]:((p[packPerson]||{})[cat]||[]).filter((_,i)=>i!==ci)}}));};
+  const getVisibleOrder=(cat,base,cust)=>{
+    const all=[...base,...cust];
+    const allIdxs=all.map((_,i)=>i);
+    const stored=(packOrder[packPerson]||{})[cat];
+    let order;
+    if(!stored){order=allIdxs;}
+    else{const inStored=new Set(stored);const newOnes=allIdxs.filter(i=>!inStored.has(i));order=[...stored.filter(i=>i<all.length),...newOnes];}
+    return order.filter(i=>!(i<base.length&&isBaseDeleted(cat,i)));
+  };
+  const addIt=(cat)=>{
+    if(!newItem.trim())return;
+    setCustomPackItems(p=>({...p,[packPerson]:{...(p[packPerson]||{}),[cat]:[...((p[packPerson]||{})[cat]||[]),newItem.trim()]}}));
+    setNewItem("");setAddingCat(null);
+  };
+  const removeIt=(cat,origIdx,base)=>{
+    const ci=origIdx-base.length;
+    setCustomPackItems(p=>({...p,[packPerson]:{...(p[packPerson]||{}),[cat]:((p[packPerson]||{})[cat]||[]).filter((_,i)=>i!==ci)}}));
+    const stored=(packOrder[packPerson]||{})[cat];
+    if(stored){
+      const newOrd=stored.filter(i=>i!==origIdx).map(i=>i>origIdx?i-1:i);
+      updatePackOrder(packPerson,cat,newOrd);
+    }
+  };
+  const moveItem=(cat,visIdx,dir,visibleOrder)=>{
+    const newOrd=[...visibleOrder];
+    [newOrd[visIdx],newOrd[visIdx+dir]]=[newOrd[visIdx+dir],newOrd[visIdx]];
+    updatePackOrder(packPerson,cat,newOrd);
+  };
+  const arrowBtn=(label,onClick,disabled)=>(
+    <button onClick={e=>{e.stopPropagation();if(!disabled)onClick();}}
+      style={{display:"block",background:"none",border:"none",padding:"1px 3px",fontSize:10,lineHeight:1,color:disabled?"#e2e8f0":"#94a3b8",cursor:disabled?"default":"pointer",fontWeight:700,userSelect:"none"}}>
+      {label}
+    </button>
+  );
   return(
     <div>
       <div style={{display:"flex",gap:7,overflowX:"auto",paddingBottom:8,marginBottom:14}}>
@@ -1218,32 +1250,35 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
         {pct===100&&<div style={{fontSize:13,color:"#16a34a",marginTop:8,textAlign:"center",fontWeight:700,animation:"popIn 0.3s ease"}}>🎉 All packed!</div>}
       </div>
       {Object.entries(packData).map(([cat,base])=>{
-        const cust=(custom[cat]||[]),all=[...base,...cust];
-        const activeAll=all.filter((_,i)=>!(i<base.length&&isBaseDeleted(cat,i)));
-        const cd=all.reduce((acc,_,i)=>{const isBase=i<base.length;if(isBase&&isBaseDeleted(cat,i))return acc;return acc+(packChecked[`pack-${packPerson}-${cat}-${i}`]?1:0);},0);
+        const cust=(custom[cat]||[]);
+        const visibleOrder=getVisibleOrder(cat,base,cust);
+        const all=[...base,...cust];
+        const cd=visibleOrder.reduce((acc,i)=>acc+(packChecked[`pack-${packPerson}-${cat}-${i}`]?1:0),0);
         return(
           <div key={cat} style={{...S.card,marginBottom:10,overflow:"hidden"}}>
             <div style={{background:"linear-gradient(90deg,#f8fafc,#f1f5f9)",padding:"11px 16px",borderBottom:"1px solid #f1f5f9",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
               <div style={{fontWeight:800,fontSize:14,color:S.navy}}>{cat}</div>
-              <div style={{fontSize:13,fontWeight:700,color:cd===activeAll.length&&activeAll.length>0?"#16a34a":"#94a3b8"}}>{cd}/{activeAll.length}</div>
+              <div style={{fontSize:13,fontWeight:700,color:cd===visibleOrder.length&&visibleOrder.length>0?"#16a34a":"#94a3b8"}}>{cd}/{visibleOrder.length}</div>
             </div>
             <div style={{padding:"8px 16px"}}>
-              {all.map((item,i)=>{
-                const isBase=i<base.length;
-                if(isBase&&isBaseDeleted(cat,i))return null;
-                const key=`pack-${packPerson}-${cat}-${i}`;
+              {visibleOrder.map((origIdx,visIdx)=>{
+                const item=all[origIdx];
+                const isBase=origIdx<base.length;
+                const key=`pack-${packPerson}-${cat}-${origIdx}`;
                 const dk=!!packChecked[key];
-                const visibleAll=all.filter((_,j)=>!(j<base.length&&isBaseDeleted(cat,j)));
-                const visIdx=visibleAll.indexOf(item);
                 return(
-                  <div key={i} onClick={()=>onTogglePack(key)} style={{display:"flex",alignItems:"center",gap:11,padding:"10px 0",borderBottom:visIdx<visibleAll.length-1?"1px solid #f8fafc":"none",cursor:"pointer"}}>
+                  <div key={origIdx} onClick={()=>onTogglePack(key)} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 0",borderBottom:visIdx<visibleOrder.length-1?"1px solid #f8fafc":"none",cursor:"pointer"}}>
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",flexShrink:0,gap:0}}>
+                      {arrowBtn("▲",()=>moveItem(cat,visIdx,-1,visibleOrder),visIdx===0)}
+                      {arrowBtn("▼",()=>moveItem(cat,visIdx,1,visibleOrder),visIdx===visibleOrder.length-1)}
+                    </div>
                     <div style={{width:22,height:22,borderRadius:7,border:dk?"none":"2px solid #e2e8f0",background:dk?"#22c55e":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.15s",boxShadow:dk?"0 2px 6px rgba(34,197,94,0.3)":"none"}}>
                       {dk&&<span style={{color:"white",fontSize:12,fontWeight:900}}>✓</span>}
                     </div>
                     <div style={{fontSize:14,color:dk?"#94a3b8":"#334155",textDecoration:dk?"line-through":"none",textDecorationColor:"#cbd5e1",flex:1,lineHeight:1.4}}>{item}</div>
                     {isBase
-                      ?<span onClick={e=>{e.stopPropagation();onDeleteItem(`pack-base-${packPerson}-${cat}-${i}`);}} style={{color:"#e2e8f0",fontSize:20,cursor:"pointer",flexShrink:0,lineHeight:1}}>×</span>
-                      :<span onClick={e=>{e.stopPropagation();removeIt(cat,i,base.length);}} style={{color:"#e2e8f0",fontSize:20,cursor:"pointer",flexShrink:0,lineHeight:1}}>×</span>
+                      ?<span onClick={e=>{e.stopPropagation();onDeleteItem(`pack-base-${packPerson}-${cat}-${origIdx}`);}} style={{color:"#e2e8f0",fontSize:20,cursor:"pointer",flexShrink:0,lineHeight:1}}>×</span>
+                      :<span onClick={e=>{e.stopPropagation();removeIt(cat,origIdx,base);}} style={{color:"#e2e8f0",fontSize:20,cursor:"pointer",flexShrink:0,lineHeight:1}}>×</span>
                     }
                   </div>
                 );
@@ -2266,6 +2301,7 @@ function App(){
   const [checked,setChecked]=useState({});
   const [packChecked,setPackChecked]=useState({});
   const [customPackItems,setCustomPackItems]=useState({General:{},Chris:{},McKenna:{},Sawyer:{},Pierce:{},Bennett:{}});
+  const [packOrder,setPackOrder]=useState({});
   const [deletedItems,setDeletedItems]=useState({});
   const [packPerson,setPackPerson]=useState("General");
   const [addingTo,setAddingTo]=useState(null);
@@ -2311,7 +2347,7 @@ function App(){
     navigator.geolocation.getCurrentPosition(async pos=>{const{latitude:lat,longitude:lng}=pos.coords;setLocation({lat,lng});setLocLoading(false);setLocLabel(await reverseGeocode(lat,lng));},err=>{setLocLoading(false);if(err.code===1)setLocError("Location denied — check Settings");else setLocError("Location unavailable — tap Retry");},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
   };
 
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems,homeCare});
+  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems,homeCare,packOrder});
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks)setCustomTasks(data.customTasks);
@@ -2326,6 +2362,7 @@ function App(){
     if(data.preTripEdits)setPreTripEdits(data.preTripEdits);
     if(data.travelItems)setTravelItems(data.travelItems);
     if(data.homeCare)setHomeCare(data.homeCare);
+    if(data.packOrder)setPackOrder(data.packOrder);
     if(data._by){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
   const syncNow=async(patch)=>{
@@ -2369,6 +2406,7 @@ function App(){
   const removeTask=(date,idx)=>{if(!window.confirm("Remove this task?"))return;setCustomTasks(p=>{const n={...p,[date]:(p[date]||[]).filter((_,i)=>i!==idx)};syncNow({...getState(),customTasks:n});return n;});};
   const editTask=(date,idx,upd)=>{setCustomTasks(p=>{const n={...p,[date]:(p[date]||[]).map((t,i)=>i===idx?{...t,...upd}:t)};syncNow({...getState(),customTasks:n});return n;});};
   const updatePackItems=fn=>{setCustomPackItems(p=>{const n=typeof fn==="function"?fn(p):fn;syncNow({...getState(),customPackItems:n});return n;});};
+  const updatePackOrder=(person,cat,newOrder)=>{setPackOrder(p=>{const n={...p,[person]:{...(p[person]||{}),[cat]:newOrder}};debouncedSync({...getState(),packOrder:n});return n;});};
   const openAddForm=dateKey=>{setAddingTo(dateKey);setTaskDate(dateKey);setTaskText("");setTaskType("confirm");};
   const toggleCore=key=>{setCoreTasks(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),coreTasks:n});return n;});};
   const editBuiltinItem=(key,upd)=>{setEditedItems(p=>{const n={...p,[key]:{...(p[key]||{}),...upd}};syncNow({...getState(),editedItems:n});return n;});};
@@ -2714,7 +2752,7 @@ function App(){
         {/* PACK TAB */}
         {tab==="pack"&&(
           <div style={{animation:"fadeUp 0.22s ease"}}>
-            <PackingTab packChecked={packChecked} onTogglePack={togglePack} customPackItems={customPackItems} setCustomPackItems={updatePackItems} packPerson={packPerson} setPackPerson={setPackPerson} deletedItems={deletedItems} onDeleteItem={deleteItem} silentDeleteItem={silentDeleteItem}/>
+            <PackingTab packChecked={packChecked} onTogglePack={togglePack} customPackItems={customPackItems} setCustomPackItems={updatePackItems} packPerson={packPerson} setPackPerson={setPackPerson} deletedItems={deletedItems} onDeleteItem={deleteItem} silentDeleteItem={silentDeleteItem} packOrder={packOrder} updatePackOrder={updatePackOrder}/>
           </div>
         )}
 
