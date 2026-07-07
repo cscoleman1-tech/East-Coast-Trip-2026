@@ -413,6 +413,17 @@ function App(){
   const [expandedDay,setExpandedDay]=useState(null);
   const [flappyActive,setFlappyActive]=useState(false);
 
+  // Lodging overrides + day plans (synced)
+  const [lodgingOverrides,setLodgingOverrides]=useState({});
+  const [dayPlans,setDayPlans]=useState({});
+  // Plan My Day UI state (ephemeral)
+  const [planStatus,setPlanStatus]=useState({});
+  const [editingLodgingDate,setEditingLodgingDate]=useState(null);
+  const [lodgingInput,setLodgingInput]=useState("");
+  const [showPlanOverride,setShowPlanOverride]=useState({});
+  const [planOverrideStart,setPlanOverrideStart]=useState({});
+  const [planOverrideEnd,setPlanOverrideEnd]=useState({});
+
   // Location
   const [locLabel,setLocLabel]=useState(null);
   const [locError,setLocError]=useState(null);
@@ -464,7 +475,7 @@ function App(){
   };
 
   // ── Cloud Sync ────────────────────────────────────────────────────────────
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,bookingChecked,coreTasks});
+  const getState=()=>({customTasks,checked,packChecked,customPackItems,bookingChecked,coreTasks,lodgingOverrides,dayPlans});
 
   const applyRemoteData=(data)=>{
     if(!data)return;
@@ -474,6 +485,8 @@ function App(){
     if(data.customPackItems)setCustomPackItems(data.customPackItems);
     if(data.bookingChecked)setBookingChecked(data.bookingChecked);
     if(data.coreTasks)setCoreTasks(data.coreTasks);
+    if(data.lodgingOverrides)setLodgingOverrides(data.lodgingOverrides);
+    if(data.dayPlans)setDayPlans(data.dayPlans);
     if(data._by&&data._by!==(userName||"")){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
 
@@ -529,6 +542,45 @@ function App(){
     setCustomTasks(p=>{const n={...p,[date]:(p[date]||[]).map((t,i)=>i===idx?{...t,...upd}:t)};syncNow({...getState(),customTasks:n});return n;});
   };
   const toggleCore=key=>{setCoreTasks(p=>{const n={...p,[key]:!p[key]};syncNow({...getState(),coreTasks:n});return n;});};
+
+  // ── Lodging helpers ───────────────────────────────────────────────────────
+  const getLodging=day=>lodgingOverrides[day.date]!==undefined?lodgingOverrides[day.date]:(day.lodging||"");
+  const saveLodging=date=>{
+    const val=lodgingInput.trim();
+    setLodgingOverrides(p=>{const n={...p,[date]:val};syncNow({...getState(),lodgingOverrides:n});return n;});
+    setEditingLodgingDate(null);
+  };
+  const clearLodging=date=>{
+    setLodgingOverrides(p=>{const n={...p,[date]:""}; syncNow({...getState(),lodgingOverrides:n});return n;});
+  };
+
+  // ── Plan My Day ───────────────────────────────────────────────────────────
+  const planDay=async(day)=>{
+    const date=day.date;
+    const cust=customTasks[date]||[];
+    const activities=[...day.items.map(it=>it.text),...cust.map(t=>t.text)];
+    if(!activities.length)return;
+    const baseLodging=getLodging(day);
+    let lodgingStr=baseLodging;
+    if(showPlanOverride[date]){
+      const st=(planOverrideStart[date]||"").trim()||baseLodging;
+      const en=(planOverrideEnd[date]||"").trim()||baseLodging;
+      if(st&&en&&st!==en)lodgingStr=`Starts at: ${st} — Ends at: ${en}`;
+      else lodgingStr=st||en||"";
+    }
+    setPlanStatus(p=>({...p,[date]:"loading"}));
+    try{
+      const resp=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({city:day.city,date:day.label,activities,...(lodgingStr?{lodging:lodgingStr}:{})}),
+        signal:AbortSignal.timeout(30000)});
+      const data=await resp.json();
+      if(data.plan){
+        setDayPlans(p=>{const n={...p,[date]:{plan:data.plan}};syncNow({...getState(),dayPlans:n});return n;});
+        setPlanStatus(p=>({...p,[date]:"done"}));
+      }else{setPlanStatus(p=>({...p,[date]:"error"}));}
+    }catch{setPlanStatus(p=>({...p,[date]:"error"}));}
+  };
+
   const runCheckFit=async(day)=>{
     const date=day.date;
     const cust=customTasks[date]||[];
@@ -797,7 +849,29 @@ function App(){
                 <div style={{background:"white",borderRadius:14,padding:"14px 16px",marginBottom:10,boxShadow:"0 1px 4px rgba(0,0,0,0.08)"}}>
                   <div style={{fontWeight:700,fontSize:18,color:"#1a3a5c"}}>{ITINERARY[dayIdx].title}</div>
                   <div style={{fontSize:13,color:"#666",marginTop:2}}>{ITINERARY[dayIdx].summary}</div>
-                  {ITINERARY[dayIdx].lodging&&<div style={{marginTop:8,fontSize:12,color:"#888",background:"#f8f9fa",borderRadius:6,padding:"6px 10px"}}>🏨 {ITINERARY[dayIdx].lodging}</div>}
+                  {(()=>{const d2=ITINERARY[dayIdx];const eff=getLodging(d2);return editingLodgingDate===d2.date?(
+                    <div style={{marginTop:8,display:"flex",gap:6,alignItems:"center"}}>
+                      <input value={lodgingInput} onChange={e=>setLodgingInput(e.target.value)}
+                        onKeyDown={e=>{if(e.key==="Enter")saveLodging(d2.date);if(e.key==="Escape")setEditingLodgingDate(null);}}
+                        autoFocus placeholder="e.g. Brooklyn VRBO"
+                        style={{flex:1,padding:"6px 10px",borderRadius:8,border:"1px solid #93c5fd",fontSize:13}}/>
+                      <button onClick={()=>saveLodging(d2.date)} style={{padding:"5px 10px",background:"#1a3a5c",color:"white",border:"none",borderRadius:7,fontSize:12,cursor:"pointer"}}>Save</button>
+                      <button onClick={()=>setEditingLodgingDate(null)} style={{padding:"5px 8px",background:"white",color:"#999",border:"1px solid #ddd",borderRadius:7,fontSize:12,cursor:"pointer"}}>✕</button>
+                    </div>
+                  ):eff?(
+                    <div style={{marginTop:8,display:"flex",alignItems:"center",gap:6}}>
+                      <div onClick={()=>{setEditingLodgingDate(d2.date);setLodgingInput(eff);}}
+                        style={{fontSize:12,color:"#888",background:"#f8f9fa",borderRadius:6,padding:"6px 10px",flex:1,cursor:"pointer"}}>
+                        🏨 {eff} <span style={{opacity:0.4,fontSize:11}}>✏️</span>
+                      </div>
+                      <button onClick={()=>clearLodging(d2.date)} style={{color:"#d1d5db",fontSize:20,background:"none",border:"none",cursor:"pointer",lineHeight:1,padding:0,flexShrink:0}}>×</button>
+                    </div>
+                  ):(
+                    <button onClick={()=>{setEditingLodgingDate(ITINERARY[dayIdx].date);setLodgingInput("");}}
+                      style={{marginTop:6,fontSize:12,color:"#2d7dd2",background:"none",border:"none",cursor:"pointer",padding:0,display:"block"}}>
+                      🏨 + Add lodging
+                    </button>
+                  );})()}
                   {ITINERARY[dayIdx].transit&&<div style={{marginTop:6,fontSize:12,color:"#888",background:"#f8f9fa",borderRadius:6,padding:"6px 10px"}}>🚌 {ITINERARY[dayIdx].transit}</div>}
                 </div>
                 {ITINERARY[dayIdx].confirmations?.map((c,i)=>(
@@ -821,7 +895,40 @@ function App(){
                 ):(
                   <button onClick={()=>openAddForm(ITINERARY[dayIdx].date)} style={{width:"100%",padding:"11px",background:"white",color:"#1a3a5c",border:"2px dashed #b8ccdf",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12}}>+ Add a task</button>
                 )}
-                {dayIdx!==tripDayIdx&&<button onClick={()=>setDayIdx(tripDayIdx)} style={{width:"100%",marginTop:4,padding:"11px",background:"#1a3a5c",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer"}}>Jump to Today</button>}
+                {/* Plan My Day — Today tab */}
+                {(()=>{const d2=ITINERARY[dayIdx];return(
+                  <div style={{marginTop:12}}>
+                    <button onClick={()=>planDay(d2)} disabled={planStatus[d2.date]==="loading"}
+                      style={{width:"100%",padding:"11px",background:"#1a3a5c",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:planStatus[d2.date]==="loading"?"not-allowed":"pointer",opacity:planStatus[d2.date]==="loading"?0.7:1}}>
+                      {planStatus[d2.date]==="loading"?"🗓️ Planning…":dayPlans[d2.date]?"🗓️ Re-plan My Day":"🗓️ Plan My Day"}
+                    </button>
+                    <div style={{textAlign:"center",marginTop:3}}>
+                      <button onClick={()=>setShowPlanOverride(p=>({...p,[d2.date]:!p[d2.date]}))}
+                        style={{fontSize:12,color:"#888",background:"none",border:"none",cursor:"pointer",textDecoration:"underline"}}>
+                        {showPlanOverride[d2.date]?"Hide start/end":"Change start/end ↓"}
+                      </button>
+                    </div>
+                    {showPlanOverride[d2.date]&&(
+                      <div style={{background:"#f8fafc",borderRadius:10,padding:"10px 12px",marginTop:4,display:"flex",flexDirection:"column",gap:6}}>
+                        <div style={{fontSize:11,color:"#888",fontWeight:600}}>Override start/end for planning (not saved):</div>
+                        <input value={planOverrideStart[d2.date]||""} onChange={e=>setPlanOverrideStart(p=>({...p,[d2.date]:e.target.value}))}
+                          placeholder={`Start: ${getLodging(d2)||"e.g. Hotel name"}`}
+                          style={{padding:"7px 10px",borderRadius:8,border:"1px solid #ddd",fontSize:13,boxSizing:"border-box"}}/>
+                        <input value={planOverrideEnd[d2.date]||""} onChange={e=>setPlanOverrideEnd(p=>({...p,[d2.date]:e.target.value}))}
+                          placeholder={`End: ${getLodging(d2)||"e.g. Next hotel"}`}
+                          style={{padding:"7px 10px",borderRadius:8,border:"1px solid #ddd",fontSize:13,boxSizing:"border-box"}}/>
+                      </div>
+                    )}
+                    {planStatus[d2.date]==="error"&&<div style={{fontSize:12,color:"#dc2626",textAlign:"center",marginTop:4}}>Plan failed — try again</div>}
+                    {dayPlans[d2.date]&&(
+                      <div style={{background:"#f0f4ff",borderRadius:12,padding:"14px 16px",marginTop:10,border:"1px solid #c7d2fe"}}>
+                        <div style={{fontWeight:700,fontSize:11,color:"#4338ca",marginBottom:8,textTransform:"uppercase",letterSpacing:"0.06em"}}>🗓️ Day Plan</div>
+                        <div style={{fontSize:14,color:"#333",lineHeight:1.65,whiteSpace:"pre-wrap"}}>{dayPlans[d2.date].plan}</div>
+                      </div>
+                    )}
+                  </div>
+                );})()}
+                {dayIdx!==tripDayIdx&&<button onClick={()=>setDayIdx(tripDayIdx)} style={{width:"100%",marginTop:8,padding:"11px",background:"#1a3a5c",color:"white",border:"none",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer"}}>Jump to Today</button>}
               </div>
             )}
 
@@ -866,9 +973,31 @@ function App(){
                   </div>
                   {isOpen&&(
                     <div style={{padding:"0 14px 14px",borderTop:"1px solid #f3f4f6"}}>
-                      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:10,marginBottom:10}}>
-                        {day.lodging&&<div style={{fontSize:11,background:"#eff6ff",color:"#1e40af",borderRadius:6,padding:"3px 8px"}}>🏨 {day.lodging}</div>}
-                        {day.transit&&<div style={{fontSize:11,background:"#f0fdf4",color:"#166634",borderRadius:6,padding:"3px 8px"}}>🚌 {day.transit}</div>}
+                      <div style={{marginTop:10,marginBottom:8}}>
+                        {(()=>{const eff=getLodging(day);return editingLodgingDate===day.date?(
+                          <div style={{display:"flex",gap:6,alignItems:"center",marginBottom:6}}>
+                            <input value={lodgingInput} onChange={e=>setLodgingInput(e.target.value)}
+                              onKeyDown={e=>{if(e.key==="Enter")saveLodging(day.date);if(e.key==="Escape")setEditingLodgingDate(null);}}
+                              autoFocus placeholder="e.g. Brooklyn VRBO · Herkimer St"
+                              style={{flex:1,padding:"6px 10px",borderRadius:8,border:"1px solid #93c5fd",fontSize:12,boxSizing:"border-box"}}/>
+                            <button onClick={()=>saveLodging(day.date)} style={{padding:"5px 10px",background:"#1a3a5c",color:"white",border:"none",borderRadius:7,fontSize:12,cursor:"pointer"}}>Save</button>
+                            <button onClick={()=>setEditingLodgingDate(null)} style={{padding:"5px 8px",background:"white",color:"#999",border:"1px solid #ddd",borderRadius:7,fontSize:12,cursor:"pointer"}}>✕</button>
+                          </div>
+                        ):eff?(
+                          <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}>
+                            <div onClick={()=>{setEditingLodgingDate(day.date);setLodgingInput(eff);}}
+                              style={{fontSize:11,background:"#eff6ff",color:"#1e40af",borderRadius:6,padding:"3px 8px",cursor:"pointer",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                              🏨 {eff} <span style={{opacity:0.4,fontSize:10}}>✏️</span>
+                            </div>
+                            <button onClick={()=>clearLodging(day.date)} style={{color:"#d1d5db",fontSize:20,background:"none",border:"none",cursor:"pointer",lineHeight:1,flexShrink:0,padding:"0 2px"}}>×</button>
+                          </div>
+                        ):(
+                          <button onClick={()=>{setEditingLodgingDate(day.date);setLodgingInput("");}}
+                            style={{fontSize:11,color:"#2d7dd2",background:"none",border:"none",cursor:"pointer",padding:"2px 0",display:"block",marginBottom:2}}>
+                            🏨 + Add lodging
+                          </button>
+                        );})()}
+                        {day.transit&&<div style={{fontSize:11,background:"#f0fdf4",color:"#166634",borderRadius:6,padding:"3px 8px",display:"inline-block",marginTop:2}}>🚌 {day.transit}</div>}
                       </div>
                       {day.confirmations?.map((c,ci)=>(
                         <div key={ci} style={{background:"#e8f4fd",borderRadius:8,padding:"8px 12px",marginBottom:8,border:"1px solid #b3d9f5"}}>
@@ -894,6 +1023,35 @@ function App(){
                       </button>
                       {fitStatus[day.date]==="error"&&<div style={{fontSize:12,color:"#dc2626",textAlign:"center",marginTop:4}}>Check failed — try again</div>}
                       {fitStatus[day.date]==="done"&&!Object.keys(fitWarnings[day.date]||{}).length&&<div style={{fontSize:12,color:"#16a34a",textAlign:"center",marginTop:4}}>✓ Everything fits well for this day!</div>}
+                      {/* Plan My Day */}
+                      <button onClick={()=>planDay(day)} disabled={planStatus[day.date]==="loading"}
+                        style={{width:"100%",marginTop:6,padding:"9px",background:"#1a3a5c",color:"white",border:"none",borderRadius:8,fontSize:13,fontWeight:600,cursor:planStatus[day.date]==="loading"?"not-allowed":"pointer",opacity:planStatus[day.date]==="loading"?0.7:1}}>
+                        {planStatus[day.date]==="loading"?"🗓️ Planning…":dayPlans[day.date]?"🗓️ Re-plan My Day":"🗓️ Plan My Day"}
+                      </button>
+                      <div style={{textAlign:"center",marginTop:2}}>
+                        <button onClick={()=>setShowPlanOverride(p=>({...p,[day.date]:!p[day.date]}))}
+                          style={{fontSize:11,color:"#888",background:"none",border:"none",cursor:"pointer",textDecoration:"underline"}}>
+                          {showPlanOverride[day.date]?"Hide start/end":"Change start/end ↓"}
+                        </button>
+                      </div>
+                      {showPlanOverride[day.date]&&(
+                        <div style={{background:"#f8fafc",borderRadius:8,padding:"10px",marginTop:4,display:"flex",flexDirection:"column",gap:6}}>
+                          <div style={{fontSize:11,color:"#888",fontWeight:600}}>Override for planning only (not saved):</div>
+                          <input value={planOverrideStart[day.date]||""} onChange={e=>setPlanOverrideStart(p=>({...p,[day.date]:e.target.value}))}
+                            placeholder={`Start: ${getLodging(day)||"e.g. Hotel name"}`}
+                            style={{padding:"7px 10px",borderRadius:8,border:"1px solid #ddd",fontSize:12,boxSizing:"border-box"}}/>
+                          <input value={planOverrideEnd[day.date]||""} onChange={e=>setPlanOverrideEnd(p=>({...p,[day.date]:e.target.value}))}
+                            placeholder={`End: ${getLodging(day)||"e.g. Next hotel"}`}
+                            style={{padding:"7px 10px",borderRadius:8,border:"1px solid #ddd",fontSize:12,boxSizing:"border-box"}}/>
+                        </div>
+                      )}
+                      {planStatus[day.date]==="error"&&<div style={{fontSize:12,color:"#dc2626",textAlign:"center",marginTop:4}}>Plan failed — try again</div>}
+                      {dayPlans[day.date]&&(
+                        <div style={{background:"#f0f4ff",borderRadius:10,padding:"12px 14px",marginTop:8,border:"1px solid #c7d2fe"}}>
+                          <div style={{fontWeight:700,fontSize:11,color:"#4338ca",marginBottom:6,textTransform:"uppercase",letterSpacing:"0.06em"}}>🗓️ Day Plan</div>
+                          <div style={{fontSize:13,color:"#333",lineHeight:1.65,whiteSpace:"pre-wrap"}}>{dayPlans[day.date].plan}</div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

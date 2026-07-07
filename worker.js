@@ -215,7 +215,7 @@ Rules:
       }
 
       // ── DAY PLANNER ─────────────────────────────────────────────────────────
-      const { city = "unknown city", date = "", activities = [], suggestion = null, currentPlan = null, weather = null } = body;
+      const { city = "unknown city", date = "", activities = [], suggestion = null, currentPlan = null, weather = null, lodging = null } = body;
 
       if (!activities.length && !suggestion) return json({ error: "No activities provided" }, 400);
 
@@ -231,6 +231,7 @@ Rules:
       const weatherContext = weather
         ? `\nWeather forecast for ${date}: High ${weather.hi}°F / Low ${weather.lo}°F, ${weather.condition}.`
         : "";
+      const lodgingLine = lodging ? `\nThe family starts and ends the day at: ${lodging}.` : "";
       const weatherInstruction = weather
         ? `\nWeather awareness: The forecast is ${weather.hi}°F high / ${weather.lo}°F low, ${weather.condition}. If this is notable (heat >88°F, rain, storms, fog), add a concise "Weather tip: ..." line directly after the relevant activity step — e.g. move outdoor activities earlier if afternoon rain expected, flag hydration on hot days, suggest an indoor alternative if severe weather. Keep tips to 1–2 sentences max, only where genuinely useful. Do not add weather tips if conditions are mild and benign.`
         : "";
@@ -256,7 +257,7 @@ CRITICAL: The input activity list is an UNORDERED SET. Completely ignore the ord
 
       let prompt;
       if (suggestion && currentPlan) {
-        prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.${weatherContext}
+        prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.${weatherContext}${lodgingLine}
 
 Here is the current day itinerary:
 
@@ -266,9 +267,15 @@ The family wants to make this change: "${suggestion}"
 
 Revise the itinerary to incorporate their suggestion. Re-evaluate time anchors (any activity with "night," "evening," "sunset," "morning," "breakfast/lunch/dinner" cues must stay at its correct time slot). Minimize backtracking for non-anchored items. ${transitGuide}${weatherInstruction}
 
+CHAIN/MULTI-LOCATION: If any item could refer to a chain or multi-location venue, pick the specific location nearest to where the family will be at that point in the schedule. Name it by neighborhood or address in the directions.
+
+MEAL COVERAGE: Review the revised schedule for natural lunch (~12–1pm) and dinner (~6–7pm) windows. If a mealtime window has no food item planned nearby, add a brief suggestion on its own line in that slot, clearly labeled:
+"→ Not on your list, but nearby: [Name] — [one-line reason it fits]"
+Only suggest when genuinely missing a meal; skip if the day already has food covered.
+
 Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise. For weather tips, use the exact format "Weather tip: ..." on its own line directly after the relevant step.`;
       } else {
-        prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.${weatherContext}
+        prompt = `You are a practical family travel planner helping the Coleman family (2 adults + 3 kids ages ~10-16) plan their day in ${city} on ${date}.${weatherContext}${lodgingLine}
 
 Activities for the day (INPUT ORDER IS IRRELEVANT — treat as an unordered set):
 ${activities.map(a => `• ${a}`).join("\n")}
@@ -279,6 +286,12 @@ For each scheduled step also:
 • Include a rough time estimate at each location.
 • Add a brief family tip where useful (what to skip if short on time, best photo spot, etc.).
 ${weatherInstruction}
+
+CHAIN/MULTI-LOCATION: If any listed activity or food item could refer to a chain or multi-location venue (e.g. "Joe's Pizza", "Shake Shack", any restaurant chain), pick the specific location nearest to where the family will be at that point in the schedule. State the specific neighborhood or address in the directions step.
+
+MEAL COVERAGE: After scheduling the listed activities, review the day for natural lunch (~12–1pm) and dinner (~6–7pm) windows. If either window has no food item planned nearby, add a brief suggestion on its own line in that slot, clearly labeled:
+"→ Not on your list, but nearby: [Name] — [one-line reason it fits]"
+Only suggest when genuinely missing a meal; skip if the day already has food covered at those times.
 
 Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise. For weather tips, use the exact format "Weather tip: ..." on its own line directly after the relevant step.`;
       }
