@@ -599,8 +599,8 @@ const WX_WINDOW_DAYS=16;
 const wmoIcon=code=>{
   if(code===0)return"☀️";
   if(code<=2)return"🌤️";
-  if(code<=3)return"⛅";
-  if(code<=48)return"☁️";
+  if(code<=3)return"☁️";
+  if(code<=48)return"🌫️";
   if(code<=57)return"🌦️";
   if(code<=67)return"🌧️";
   if(code<=77)return"❄️";
@@ -611,9 +611,9 @@ const wmoIcon=code=>{
 const wmoLabel=code=>{
   if(code===0)return"sunny";
   if(code<=2)return"mostly clear";
-  if(code<=3)return"partly cloudy";
-  if(code<=48)return"foggy/overcast";
-  if(code<=57)return"light rain/drizzle";
+  if(code<=3)return"overcast";
+  if(code<=48)return"fog";
+  if(code<=57)return"drizzle";
   if(code<=67)return"rain";
   if(code<=77)return"snow";
   if(code<=82)return"rain showers";
@@ -644,9 +644,13 @@ function WeatherChip({date,coords}){
     fetch(url,{signal:AbortSignal.timeout(8000)})
       .then(r=>r.json())
       .then(data=>{
-        const hi=Math.round(data.daily.temperature_2m_max[0]);
-        const lo=Math.round(data.daily.temperature_2m_min[0]);
-        const code=data.daily.weathercode[0];
+        const rawHi=data?.daily?.temperature_2m_max?.[0];
+        const rawLo=data?.daily?.temperature_2m_min?.[0];
+        const code=data?.daily?.weathercode?.[0];
+        if(rawHi==null||rawLo==null||code==null){setWx({status:"too-far"});return;}
+        const hi=Math.round(rawHi);
+        const lo=Math.round(rawLo);
+        if(!isFinite(hi)||!isFinite(lo)){setWx({status:"too-far"});return;}
         const v={status:"ok",hi,lo,code,fetchedAt:Date.now()};
         _wxCache[date]=v;setWx(v);
       })
