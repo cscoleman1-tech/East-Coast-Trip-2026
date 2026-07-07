@@ -296,7 +296,7 @@ Only suggest when genuinely missing a meal; skip if the day already has food cov
 Format the response as a clean numbered itinerary. Start immediately with "1." — no preamble. Keep it practical and concise. For weather tips, use the exact format "Weather tip: ..." on its own line directly after the relevant step.`;
       }
 
-      const plan = await callAnthropic(apiKey, prompt, 1024);
+      const plan = await callAnthropic(apiKey, prompt, 2048);
       if (!plan) return json({ error: "No plan returned from AI" }, 502);
       return json({ plan });
 
