@@ -831,10 +831,37 @@ function HomeWatchBanner({homeCare,today}){
   );
 }
 
+function TodoItem({text,ck,checked,onToggle,onRemove,onEdit}){
+  const [editing,setEditing]=useState(false);
+  const [editText,setEditText]=useState(text);
+  const done=!!checked[ck];
+  const save=()=>{if(editText.trim())onEdit(editText.trim());setEditing(false);};
+  if(editing)return(
+    <div style={{display:"flex",gap:6,alignItems:"center",padding:"8px 0",borderBottom:"1px solid #f0f4f8"}}>
+      <input value={editText} onChange={e=>setEditText(e.target.value)}
+        onKeyDown={e=>{if(e.key==="Enter")save();if(e.key==="Escape")setEditing(false);}}
+        autoFocus style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1px solid #93c5fd",fontSize:14}}/>
+      <button onClick={save} style={{padding:"5px 10px",background:S.navy,color:"white",border:"none",borderRadius:7,fontSize:12,cursor:"pointer"}}>Save</button>
+      <button onClick={()=>setEditing(false)} style={{padding:"5px 8px",background:"white",color:"#888",border:"1px solid #ddd",borderRadius:7,fontSize:12,cursor:"pointer"}}>✕</button>
+    </div>
+  );
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid #f9fafb"}}>
+      <div onClick={()=>onToggle(ck)} style={{width:22,height:22,borderRadius:6,border:done?"none":"2px solid #d1d5db",background:done?"#22c55e":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}}>
+        {done&&<span style={{color:"white",fontSize:13,fontWeight:800}}>✓</span>}
+      </div>
+      <div onClick={()=>onToggle(ck)} style={{flex:1,fontSize:14,color:done?"#9ca3af":"#374151",textDecoration:done?"line-through":"none",cursor:"pointer",lineHeight:1.4}}>{text}</div>
+      {!done&&<span onClick={e=>{e.stopPropagation();setEditText(text);setEditing(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.35,flexShrink:0}}>✏️</span>}
+      <span onClick={onRemove} style={{color:"#d1d5db",fontSize:20,cursor:"pointer",lineHeight:1,flexShrink:0}}>×</span>
+    </div>
+  );
+}
+
 // ── DAY DETAIL VIEW (shared: Today tab + Trip tab expanded) ──────────────────
 function DayDetailView({
   day,showHeader,
   checked,toggleCheck,deletedItems,editedItems,coreTasks,toggleCore,customTasks,
+  todoItems,addTodo,removeTodo,editTodo,secOpen,toggleSec,addingTodoDate,setAddingTodoDate,todoInputText,setTodoInputText,
   travelItems,addTravelItem,editTravelItem,removeTravelItem,
   homeCare,addHomeCareEntry,editHomeCareEntry,removeHomeCareEntry,
   fitWarnings,fitWeatherTips,fitStatus,runCheckFit,
@@ -842,6 +869,7 @@ function DayDetailView({
   addingTo,setAddingTo,openAddForm,taskText,setTaskText,taskType,setTaskType,handleAddTask,
   removeTask,editTask,deleteItem,editBuiltinItem,
 }){
+  const todos=todoItems[day.date]||[];
   return(
     <div>
       {showHeader&&(
@@ -857,23 +885,58 @@ function DayDetailView({
         <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
       </div>
       <HomeWatchSection dayDate={day.date} homeCare={homeCare} onAdd={addHomeCareEntry} onEdit={editHomeCareEntry} onDelete={removeHomeCareEntry}/>
-      <div style={{...S.label,marginBottom:8}}>Activities</div>
-      {day.items.map((it,j)=>{
-        const key=`itinerary-${day.date}-${j}`;
-        const ck=`trip-${day.date}-${j}`;
-        if(deletedItems[key])return null;
-        return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);
-      })}
-      {(customTasks[day.date]||[]).map((t,j)=>(
-        <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)} isCore={!!coreTasks[`trip-${day.date}-c${j}`]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[`trip-${day.date}-c${j}`]}/>
-      ))}
-      {addingTo===day.date?(
-        <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
-      ):(
-        <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:9,padding:"11px",background:"#f8fafc",color:S.blue,border:"2px dashed #cbd5e1",borderRadius:12,fontSize:13,fontWeight:700}}>+ Add task to this day</button>
+      {/* Activities section — collapsible */}
+      <div onClick={()=>toggleSec(`${day.date}-acts`)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",cursor:"pointer",borderBottom:"1px solid #f3f4f6",marginBottom:6,userSelect:"none"}}>
+        <div style={{...S.label,marginBottom:0}}>Activities</div>
+        <span style={{color:"#d1d5db",fontSize:18,transition:"transform 0.15s",display:"inline-block",transform:secOpen(`${day.date}-acts`)?"rotate(90deg)":"none"}}>›</span>
+      </div>
+      {secOpen(`${day.date}-acts`)&&(
+        <div>
+          {day.items.map((it,j)=>{
+            const key=`itinerary-${day.date}-${j}`;
+            const ck=`trip-${day.date}-${j}`;
+            if(deletedItems[key])return null;
+            return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);
+          })}
+          {(customTasks[day.date]||[]).map((t,j)=>(
+            <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)} isCore={!!coreTasks[`trip-${day.date}-c${j}`]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[`trip-${day.date}-c${j}`]}/>
+          ))}
+          {addingTo===day.date?(
+            <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
+          ):(
+            <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:6,padding:"10px",background:"#f8fafc",color:S.blue,border:"2px dashed #cbd5e1",borderRadius:12,fontSize:13,fontWeight:700}}>+ Add activity</button>
+          )}
+        </div>
       )}
+      {/* To-do section — collapsible */}
+      <div style={{marginTop:8}}>
+        <div onClick={()=>toggleSec(`${day.date}-todo`)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",cursor:"pointer",borderBottom:"1px solid #f3f4f6",marginBottom:6,userSelect:"none"}}>
+          <div style={{...S.label,marginBottom:0}}>To-do{todos.length>0?` (${todos.length})`:""}</div>
+          <span style={{color:"#d1d5db",fontSize:18,transition:"transform 0.15s",display:"inline-block",transform:secOpen(`${day.date}-todo`)?"rotate(90deg)":"none"}}>›</span>
+        </div>
+        {secOpen(`${day.date}-todo`)&&(
+          <div>
+            {todos.map((td,j)=>(
+              <TodoItem key={j} text={td.text} ck={`todo-${day.date}-${j}`} checked={checked} onToggle={toggleCheck}
+                onRemove={()=>removeTodo(day.date,j)} onEdit={t=>editTodo(day.date,j,t)}/>
+            ))}
+            {addingTodoDate===day.date?(
+              <div style={{display:"flex",gap:6,marginTop:6}}>
+                <input value={todoInputText} onChange={e=>setTodoInputText(e.target.value)}
+                  onKeyDown={e=>{if(e.key==="Enter"){addTodo(day.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}if(e.key==="Escape"){setAddingTodoDate(null);setTodoInputText("");}}}
+                  autoFocus placeholder="Add to-do item…"
+                  style={{flex:1,padding:"10px 12px",borderRadius:9,border:"1px solid #93c5fd",fontSize:14}}/>
+                <button onClick={()=>{addTodo(day.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}} style={{padding:"10px 16px",background:S.navy,color:"white",border:"none",borderRadius:9,fontSize:14,cursor:"pointer"}}>+</button>
+                <button onClick={()=>{setAddingTodoDate(null);setTodoInputText("");}} style={{padding:"10px 12px",background:"white",color:"#888",border:"1px solid #ddd",borderRadius:9,fontSize:14,cursor:"pointer"}}>✕</button>
+              </div>
+            ):(
+              <button onClick={()=>{setAddingTodoDate(day.date);setTodoInputText("");}} style={{width:"100%",marginTop:4,padding:"10px",background:"#f8fafc",color:"#6b7280",border:"2px dashed #e2e8f0",borderRadius:12,fontSize:13,fontWeight:700}}>+ Add to-do</button>
+            )}
+          </div>
+        )}
+      </div>
       <button onClick={()=>runCheckFit(day)} disabled={fitStatus[day.date]==="loading"}
-        style={{width:"100%",marginTop:8,padding:"11px",background:fitStatus[day.date]==="loading"?"#e2e8f0":"#0d9488",color:fitStatus[day.date]==="loading"?"#94a3b8":"white",border:"none",borderRadius:12,fontSize:13,fontWeight:700,cursor:fitStatus[day.date]==="loading"?"default":"pointer"}}>
+        style={{width:"100%",marginTop:10,padding:"11px",background:fitStatus[day.date]==="loading"?"#e2e8f0":"#0d9488",color:fitStatus[day.date]==="loading"?"#94a3b8":"white",border:"none",borderRadius:12,fontSize:13,fontWeight:700,cursor:fitStatus[day.date]==="loading"?"default":"pointer"}}>
         {fitStatus[day.date]==="loading"?"Checking fit…":"⚡ Check Fit"}
       </button>
       {fitStatus[day.date]==="error"&&<div style={{fontSize:12,color:"#dc2626",textAlign:"center",marginTop:6}}>Check fit failed — try again</div>}
@@ -2345,6 +2408,10 @@ function App(){
   const [dayPlanError,setDayPlanError]=useState({});
   const [dayPlanSuggestion,setDayPlanSuggestion]=useState({});
   const [coreTasks,setCoreTasks]=useState({});
+  const [todoItems,setTodoItems]=useState({});
+  const [openSections,setOpenSections]=useState({});
+  const [addingTodoDate,setAddingTodoDate]=useState(null);
+  const [todoInputText,setTodoInputText]=useState("");
   const [fitWarnings,setFitWarnings]=useState({});
   const [fitWeatherTips,setFitWeatherTips]=useState({});
   const [fitStatus,setFitStatus]=useState({});
@@ -2368,7 +2435,7 @@ function App(){
     navigator.geolocation.getCurrentPosition(async pos=>{const{latitude:lat,longitude:lng}=pos.coords;setLocation({lat,lng});setLocLoading(false);setLocLabel(await reverseGeocode(lat,lng));},err=>{setLocLoading(false);if(err.code===1)setLocError("Location denied — check Settings");else setLocError("Location unavailable — tap Retry");},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
   };
 
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems,homeCare,packOrder});
+  const getState=()=>({customTasks,todoItems,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems,homeCare,packOrder});
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks){
@@ -2389,6 +2456,7 @@ function App(){
     if(data.travelItems)setTravelItems(data.travelItems);
     if(data.homeCare)setHomeCare(data.homeCare);
     if(data.packOrder)setPackOrder(data.packOrder);
+    if(data.todoItems)setTodoItems(data.todoItems);
     if(data._by){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
   const syncNow=async(patch)=>{
@@ -2435,6 +2503,11 @@ function App(){
   const updatePackOrder=(person,cat,newOrder)=>{setPackOrder(p=>{const n={...p,[person]:{...(p[person]||{}),[cat]:newOrder}};debouncedSync({...getState(),packOrder:n});return n;});};
   const openAddForm=dateKey=>{setAddingTo(dateKey);setTaskDate(dateKey);setTaskText("");setTaskType("confirm");};
   const toggleCore=key=>{setCoreTasks(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),coreTasks:n});return n;});};
+  const addTodo=(date,text)=>{if(!text.trim())return;setTodoItems(p=>{const n={...p,[date]:[...(p[date]||[]),{text:text.trim()}]};syncNow({...getState(),todoItems:n});return n;});};
+  const removeTodo=(date,idx)=>{setTodoItems(p=>{const n={...p,[date]:(p[date]||[]).filter((_,i)=>i!==idx)};syncNow({...getState(),todoItems:n});return n;});};
+  const editTodo=(date,idx,text)=>{if(!text.trim())return;setTodoItems(p=>{const n={...p,[date]:(p[date]||[]).map((t,i)=>i===idx?{...t,text:text.trim()}:t)};syncNow({...getState(),todoItems:n});return n;});};
+  const secOpen=(key)=>openSections[key]!==false;
+  const toggleSec=(key)=>setOpenSections(p=>({...p,[key]:p[key]===false}));
   const editBuiltinItem=(key,upd)=>{setEditedItems(p=>{const n={...p,[key]:{...(p[key]||{}),...upd}};syncNow({...getState(),editedItems:n});return n;});};
   const addPreTripTask=(text,type,dueDate)=>{const id=`ptc-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;setPreTripCustom(p=>{const n=[...p,{id,text,type,dueDate:dueDate||null}];syncNow({...getState(),preTripCustom:n});return n;});};
   const editPreTripCustom=(id,upd)=>{setPreTripCustom(p=>{const n=p.map(t=>t.id===id?{...t,...upd}:t);syncNow({...getState(),preTripCustom:n});return n;});};
@@ -2692,6 +2765,9 @@ function App(){
                   <DayDetailView day={day} showHeader
                     checked={checked} toggleCheck={toggleCheck} deletedItems={deletedItems} editedItems={editedItems}
                     coreTasks={coreTasks} toggleCore={toggleCore} customTasks={customTasks}
+                    todoItems={todoItems} addTodo={addTodo} removeTodo={removeTodo} editTodo={editTodo}
+                    secOpen={secOpen} toggleSec={toggleSec} addingTodoDate={addingTodoDate} setAddingTodoDate={setAddingTodoDate}
+                    todoInputText={todoInputText} setTodoInputText={setTodoInputText}
                     travelItems={travelItems} addTravelItem={addTravelItem} editTravelItem={editTravelItem} removeTravelItem={removeTravelItem}
                     homeCare={homeCare} addHomeCareEntry={addHomeCareEntry} editHomeCareEntry={editHomeCareEntry} removeHomeCareEntry={removeHomeCareEntry}
                     fitWarnings={fitWarnings} fitWeatherTips={fitWeatherTips} fitStatus={fitStatus} runCheckFit={runCheckFit}
@@ -2762,6 +2838,9 @@ function App(){
                       <DayDetailView day={day}
                         checked={checked} toggleCheck={toggleCheck} deletedItems={deletedItems} editedItems={editedItems}
                         coreTasks={coreTasks} toggleCore={toggleCore} customTasks={customTasks}
+                        todoItems={todoItems} addTodo={addTodo} removeTodo={removeTodo} editTodo={editTodo}
+                        secOpen={secOpen} toggleSec={toggleSec} addingTodoDate={addingTodoDate} setAddingTodoDate={setAddingTodoDate}
+                        todoInputText={todoInputText} setTodoInputText={setTodoInputText}
                         travelItems={travelItems} addTravelItem={addTravelItem} editTravelItem={editTravelItem} removeTravelItem={removeTravelItem}
                         homeCare={homeCare} addHomeCareEntry={addHomeCareEntry} editHomeCareEntry={editHomeCareEntry} removeHomeCareEntry={removeHomeCareEntry}
                         fitWarnings={fitWarnings} fitWeatherTips={fitWeatherTips} fitStatus={fitStatus} runCheckFit={runCheckFit}
