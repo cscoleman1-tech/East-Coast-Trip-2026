@@ -156,7 +156,7 @@ async function cloudSave(data){
 
 // ── COMPONENTS ────────────────────────────────────────────────────────────────
 
-function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggleCore,fitWarning}){
+function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggleCore,fitWarning,onMenu}){
   const [editing,setEditing]=useState(false);
   const [editText,setEditText]=useState(task.text);
   const [editType,setEditType]=useState(task.type);
@@ -190,9 +190,10 @@ function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggl
         </div>
         <div style={{display:"flex",gap:5,flexShrink:0,alignItems:"center"}}>
           {onToggleCore&&<span onClick={e=>{e.stopPropagation();onToggleCore(checkKey);}} style={{fontSize:15,cursor:"pointer",opacity:isCore?1:0.2}} title={isCore?"Remove Core flag":"Mark as Core anchor"}>⭐</span>}
-          {onEdit&&!done&&<span onClick={()=>{setEditText(task.text);setEditType(task.type);setEditing(true);}} style={{fontSize:15,cursor:"pointer",opacity:0.4}}>✏️</span>}
-          {!onEdit&&!onRemove&&<span style={{fontSize:12,opacity:0.15}}>🔒</span>}
-          {onRemove&&<span onClick={onRemove} style={{color:"#d1d5db",fontSize:22,cursor:"pointer",lineHeight:1}}>×</span>}
+          {onEdit&&!done&&<span onClick={e=>{e.stopPropagation();setEditText(task.text);setEditType(task.type);setEditing(true);}} style={{fontSize:15,cursor:"pointer",opacity:0.4}}>✏️</span>}
+          {onMenu&&<span onClick={e=>{e.stopPropagation();onMenu();}} style={{fontSize:18,cursor:"pointer",opacity:0.3,letterSpacing:-1,userSelect:"none",fontWeight:900,lineHeight:1}}>···</span>}
+          {!onEdit&&!onRemove&&!onMenu&&<span style={{fontSize:12,opacity:0.15}}>🔒</span>}
+          {onRemove&&<span onClick={e=>{e.stopPropagation();onRemove();}} style={{color:"#d1d5db",fontSize:22,cursor:"pointer",lineHeight:1}}>×</span>}
         </div>
       </div>
       {fitWarning&&(
@@ -218,6 +219,74 @@ function AddTaskForm({taskText,setTaskText,taskType,setTaskType,taskDate,today,o
       <div style={{display:"flex",gap:8}}>
         <button onClick={onAdd} style={{flex:1,padding:"10px",background:"#1a3a5c",color:"white",border:"none",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer"}}>Add Task</button>
         <button onClick={onCancel} style={{padding:"10px 16px",background:"white",color:"#666",border:"1px solid #ddd",borderRadius:8,fontSize:14,cursor:"pointer"}}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function TodoItem({text,ck,checked,onToggle,onRemove,onEdit,onMenu}){
+  const [editing,setEditing]=useState(false);
+  const [editText,setEditText]=useState(text);
+  const done=!!checked[ck];
+  const save=()=>{if(editText.trim())onEdit(editText.trim());setEditing(false);};
+  if(editing) return(
+    <div style={{background:"#f0f9ff",borderRadius:10,padding:"10px 12px",marginBottom:7,border:"1px solid #7dd3fc"}}>
+      <input value={editText} onChange={e=>setEditText(e.target.value)}
+        onKeyDown={e=>{if(e.key==="Enter")save();if(e.key==="Escape")setEditing(false);}} autoFocus
+        style={{width:"100%",padding:"7px 10px",borderRadius:8,border:"1px solid #7dd3fc",fontSize:15,marginBottom:8,boxSizing:"border-box"}}/>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={save} style={{flex:1,padding:"8px",background:"#0369a1",color:"white",border:"none",borderRadius:8,fontSize:14,fontWeight:600,cursor:"pointer"}}>Save</button>
+        <button onClick={()=>setEditing(false)} style={{padding:"8px 14px",background:"white",color:"#666",border:"1px solid #ddd",borderRadius:8,fontSize:14,cursor:"pointer"}}>Cancel</button>
+      </div>
+    </div>
+  );
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"9px 12px",background:done?"#f9fafb":"#f0f9ff",borderRadius:10,marginBottom:6,border:`1px solid ${done?"#e5e7eb":"#bae6fd"}`}}>
+      <div onClick={()=>onToggle(ck)} style={{width:22,height:22,borderRadius:6,border:done?"none":"2px solid #7dd3fc",background:done?"#6b7280":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}}>
+        {done&&<span style={{color:"white",fontSize:13,fontWeight:800}}>✓</span>}
+      </div>
+      <div onClick={()=>onToggle(ck)} style={{flex:1,fontSize:14,color:done?"#9ca3af":"#1e293b",textDecoration:done?"line-through":"none",cursor:"pointer",lineHeight:1.4}}>{text}</div>
+      <div style={{display:"flex",gap:5,flexShrink:0,alignItems:"center"}}>
+        {onMenu&&<span onClick={e=>{e.stopPropagation();onMenu();}} style={{fontSize:18,cursor:"pointer",opacity:0.3,letterSpacing:-1,userSelect:"none",fontWeight:900,lineHeight:1}}>···</span>}
+        {!done&&<span onClick={e=>{e.stopPropagation();setEditText(text);setEditing(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.4}}>✏️</span>}
+        <span onClick={e=>{e.stopPropagation();onRemove();}} style={{color:"#d1d5db",fontSize:22,cursor:"pointer",lineHeight:1}}>×</span>
+      </div>
+    </div>
+  );
+}
+
+function ActionSheet({item,onMoveStart,onCopy,onCancel}){
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:2000,display:"flex",flexDirection:"column",justifyContent:"flex-end",background:"rgba(0,0,0,0.3)"}} onClick={onCancel}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:"20px 20px 0 0",padding:"16px 16px 36px",boxShadow:"0 -4px 24px rgba(0,0,0,0.15)"}}>
+        <div style={{width:40,height:4,background:"#e5e7eb",borderRadius:2,margin:"0 auto 16px"}}/>
+        <div style={{fontSize:13,color:"#999",marginBottom:14,textAlign:"center",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",maxWidth:"100%",paddingLeft:8,paddingRight:8,fontStyle:"italic"}}>{item.task.text}</div>
+        {item.canMove&&<button onClick={onMoveStart} style={{display:"block",width:"100%",padding:"15px 16px",textAlign:"left",background:"none",border:"none",borderTop:"1px solid #f3f4f6",fontSize:16,cursor:"pointer",color:"#1a3a5c",fontWeight:500}}>📅 Move to day…</button>}
+        <button onClick={onCopy} style={{display:"block",width:"100%",padding:"15px 16px",textAlign:"left",background:"none",border:"none",borderTop:"1px solid #f3f4f6",fontSize:16,cursor:"pointer",color:"#1a3a5c",fontWeight:500}}>📋 Copy</button>
+        <button onClick={onCancel} style={{display:"block",width:"100%",padding:"15px 16px",textAlign:"center",background:"none",border:"none",borderTop:"1px solid #f3f4f6",fontSize:16,cursor:"pointer",color:"#888",marginTop:4}}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function DayPickerModal({sourceDate,onPick,onCancel}){
+  return(
+    <div style={{position:"fixed",inset:0,zIndex:2000,display:"flex",flexDirection:"column",justifyContent:"flex-end",background:"rgba(0,0,0,0.3)"}} onClick={onCancel}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:"20px 20px 0 0",padding:"16px 0 36px",boxShadow:"0 -4px 24px rgba(0,0,0,0.15)",maxHeight:"75vh",display:"flex",flexDirection:"column"}}>
+        <div style={{width:40,height:4,background:"#e5e7eb",borderRadius:2,margin:"0 auto 14px"}}/>
+        <div style={{fontWeight:700,fontSize:16,color:"#1a3a5c",textAlign:"center",marginBottom:10,paddingLeft:16,paddingRight:16}}>Move to which day?</div>
+        <div style={{overflowY:"auto",flex:1}}>
+          {ITINERARY.filter(d=>d.date!==sourceDate).map((d,i)=>(
+            <button key={i} onClick={()=>onPick(d.date)} style={{display:"flex",alignItems:"center",gap:12,width:"100%",padding:"12px 20px",background:"none",border:"none",borderTop:i===0?"none":"1px solid #f3f4f6",fontSize:15,cursor:"pointer",color:"#1a3a5c",textAlign:"left"}}>
+              <span style={{fontSize:22,flexShrink:0}}>{d.emoji}</span>
+              <div>
+                <div style={{fontWeight:600,fontSize:14,color:"#1a3a5c"}}>{d.label}</div>
+                <div style={{fontSize:12,color:"#888",marginTop:1}}>{d.title}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+        <button onClick={onCancel} style={{display:"block",width:"100%",padding:"15px 16px",textAlign:"center",background:"none",border:"none",borderTop:"1px solid #f3f4f6",fontSize:16,cursor:"pointer",color:"#888",marginTop:4}}>Cancel</button>
       </div>
     </div>
   );
@@ -395,6 +464,7 @@ function App(){
 
   // All synced state
   const [customTasks,setCustomTasks]=useState({});
+  const [todoItems,setTodoItems]=useState({});
   const [checked,setChecked]=useState({});
   const [packChecked,setPackChecked]=useState({});
   const [customPackItems,setCustomPackItems]=useState({Master:{},Chris:{},McKenna:{},Sawyer:{},Pierce:{},Bennett:{}});
@@ -436,6 +506,14 @@ function App(){
   const [syncLabel,setSyncLabel]=useState("Tap ↻ to sync");
   const [lastBy,setLastBy]=useState(null);
 
+  // Move/copy/paste (ephemeral)
+  const [activityClipboard,setActivityClipboard]=useState(null);
+  const [todoClipboard,setTodoClipboard]=useState(null);
+  const [actionMenu,setActionMenu]=useState(null); // {itemType,date,idx,task,canMove}
+  const [movingItem,setMovingItem]=useState(null); // {itemType,date,idx,task}
+  const [addingTodoDate,setAddingTodoDate]=useState(null);
+  const [todoInputText,setTodoInputText]=useState("");
+
   // Chat
   const [chatMessages,setChatMessages]=useState([{role:"assistant",text:"Hey! 👋 Ask me anything about the trip — directions, what's booked, activities, food, transit — whatever you need."}]);
   const [chatInput,setChatInput]=useState("");
@@ -475,11 +553,12 @@ function App(){
   };
 
   // ── Cloud Sync ────────────────────────────────────────────────────────────
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,bookingChecked,coreTasks,lodgingOverrides,dayPlans});
+  const getState=()=>({customTasks,todoItems,checked,packChecked,customPackItems,bookingChecked,coreTasks,lodgingOverrides,dayPlans});
 
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks)setCustomTasks(data.customTasks);
+    if(data.todoItems)setTodoItems(data.todoItems);
     if(data.checked)setChecked(data.checked);
     if(data.packChecked)setPackChecked(data.packChecked);
     if(data.customPackItems)setCustomPackItems(data.customPackItems);
@@ -542,6 +621,46 @@ function App(){
     setCustomTasks(p=>{const n={...p,[date]:(p[date]||[]).map((t,i)=>i===idx?{...t,...upd}:t)};syncNow({...getState(),customTasks:n});return n;});
   };
   const toggleCore=key=>{setCoreTasks(p=>{const n={...p,[key]:!p[key]};syncNow({...getState(),coreTasks:n});return n;});};
+
+  // ── Todo handlers ─────────────────────────────────────────────────────────
+  const addTodo=(date,text)=>{
+    if(!text.trim())return;
+    setTodoItems(p=>{const n={...p,[date]:[...(p[date]||[]),{text:text.trim()}]};syncNow({...getState(),todoItems:n});return n;});
+  };
+  const removeTodo=(date,idx)=>{
+    setTodoItems(p=>{const n={...p,[date]:(p[date]||[]).filter((_,i)=>i!==idx)};syncNow({...getState(),todoItems:n});return n;});
+  };
+  const editTodo=(date,idx,text)=>{
+    setTodoItems(p=>{const n={...p,[date]:(p[date]||[]).map((t,i)=>i===idx?{text}:t)};syncNow({...getState(),todoItems:n});return n;});
+  };
+
+  // ── Move/Copy/Paste handlers ──────────────────────────────────────────────
+  const handleActionMenu=(itemType,date,idx,task,canMove)=>setActionMenu({itemType,date,idx,task,canMove});
+  const handleCopy=()=>{
+    if(!actionMenu)return;
+    if(actionMenu.itemType==="activity")setActivityClipboard({...actionMenu.task});
+    else setTodoClipboard({text:actionMenu.task.text});
+    setActionMenu(null);
+  };
+  const handleMoveStart=()=>{if(actionMenu){setMovingItem(actionMenu);setActionMenu(null);}};
+  const handleMoveTo=(targetDate)=>{
+    if(!movingItem)return;
+    const{itemType,date:srcDate,idx,task}=movingItem;
+    if(itemType==="activity"){
+      setCustomTasks(p=>{const src=(p[srcDate]||[]).filter((_,i)=>i!==idx);const tgt=[...(p[targetDate]||[]),{...task}];const n={...p,[srcDate]:src,[targetDate]:tgt};syncNow({...getState(),customTasks:n});return n;});
+    } else {
+      setTodoItems(p=>{const src=(p[srcDate]||[]).filter((_,i)=>i!==idx);const tgt=[...(p[targetDate]||[]),{text:task.text}];const n={...p,[srcDate]:src,[targetDate]:tgt};syncNow({...getState(),todoItems:n});return n;});
+    }
+    setMovingItem(null);
+  };
+  const pasteActivity=(targetDate)=>{
+    if(!activityClipboard)return;
+    setCustomTasks(p=>{const n={...p,[targetDate]:[...(p[targetDate]||[]),{...activityClipboard}]};syncNow({...getState(),customTasks:n});return n;});
+  };
+  const pasteTodo=(targetDate)=>{
+    if(!todoClipboard)return;
+    setTodoItems(p=>{const n={...p,[targetDate]:[...(p[targetDate]||[]),{...todoClipboard}]};syncNow({...getState(),todoItems:n});return n;});
+  };
 
   // ── Lodging helpers ───────────────────────────────────────────────────────
   const getLodging=day=>lodgingOverrides[day.date]!==undefined?lodgingOverrides[day.date]:(day.lodging||"");
@@ -880,6 +999,30 @@ function App(){
                     <div style={{fontSize:12,color:"#555",marginTop:2}}>{c.detail}</div>
                   </div>
                 ))}
+                {/* To-do section — Today tab */}
+                {(()=>{const d=ITINERARY[dayIdx];const todos=todoItems[d.date]||[];return(
+                  <div style={{marginBottom:10}}>
+                    <div style={{fontWeight:600,fontSize:12,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>To-do</div>
+                    {todos.map((t,j)=>(
+                      <TodoItem key={j} text={t.text} ck={`todo-${d.date}-${j}`} checked={checked} onToggle={toggleCheck}
+                        onRemove={()=>removeTodo(d.date,j)} onEdit={txt=>editTodo(d.date,j,txt)}
+                        onMenu={()=>handleActionMenu("todo",d.date,j,t,true)}/>
+                    ))}
+                    {todoClipboard&&<button onClick={()=>pasteTodo(d.date)} style={{width:"100%",padding:"8px",background:"#e0f2fe",color:"#0369a1",border:"1px dashed #7dd3fc",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:6}}>📋 Paste "{todoClipboard.text.slice(0,28)}{todoClipboard.text.length>28?"…":""}"</button>}
+                    {addingTodoDate===d.date?(
+                      <div style={{display:"flex",gap:8,marginBottom:6}}>
+                        <input value={todoInputText} onChange={e=>setTodoInputText(e.target.value)}
+                          onKeyDown={e=>{if(e.key==="Enter"&&todoInputText.trim()){addTodo(d.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}if(e.key==="Escape"){setTodoInputText("");setAddingTodoDate(null);}}}
+                          autoFocus placeholder="Add to-do item…"
+                          style={{flex:1,padding:"9px 12px",borderRadius:8,border:"1px solid #7dd3fc",fontSize:14,boxSizing:"border-box"}}/>
+                        <button onClick={()=>{if(todoInputText.trim()){addTodo(d.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}}} style={{padding:"9px 14px",background:"#0369a1",color:"white",border:"none",borderRadius:8,fontSize:14,cursor:"pointer"}}>+</button>
+                        <button onClick={()=>{setTodoInputText("");setAddingTodoDate(null);}} style={{padding:"9px 12px",background:"white",color:"#888",border:"1px solid #ddd",borderRadius:8,fontSize:14,cursor:"pointer"}}>✕</button>
+                      </div>
+                    ):(
+                      <button onClick={()=>setAddingTodoDate(d.date)} style={{width:"100%",padding:"8px",background:"white",color:"#0369a1",border:"1px dashed #7dd3fc",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:2}}>+ Add to-do</button>
+                    )}
+                  </div>
+                );})()}
                 <div style={{fontWeight:600,fontSize:12,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Activities</div>
                 {(()=>{const d=ITINERARY[dayIdx];const cust2=customTasks[d.date]||[];
                   return[...d.items.map((it,j)=>({task:it,ck:`trip-${d.date}-${j}`,bi:true,idx:j})),...cust2.map((t,j)=>({task:t,ck:`trip-${d.date}-c${j}`,bi:false,idx:j}))]
@@ -887,9 +1030,11 @@ function App(){
                       <TaskItem key={ck} task={task} checkKey={ck} checked={checked} onToggle={toggleCheck}
                         onRemove={bi?null:()=>removeTask(d.date,idx)} onEdit={bi?null:u=>editTask(d.date,idx,u)}
                         isCore={!!coreTasks[ck]} onToggleCore={toggleCore}
-                        fitWarning={(fitWarnings[d.date]||{})[ck]||null}/>
+                        fitWarning={(fitWarnings[d.date]||{})[ck]||null}
+                        onMenu={()=>handleActionMenu("activity",d.date,idx,task,!bi)}/>
                     ));
                 })()}
+                {activityClipboard&&<button onClick={()=>pasteActivity(ITINERARY[dayIdx].date)} style={{width:"100%",padding:"8px",background:"#e0f2fe",color:"#0369a1",border:"1px dashed #7dd3fc",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer",marginBottom:6}}>📋 Paste "{activityClipboard.text.slice(0,28)}{activityClipboard.text.length>28?"…":""}"</button>}
                 {addingTo===ITINERARY[dayIdx].date?(
                   <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} taskDate={taskDate} today={today} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
                 ):(
@@ -1005,13 +1150,39 @@ function App(){
                           <div style={{fontSize:11,color:"#555",marginTop:1}}>{c.detail}</div>
                         </div>
                       ))}
+                      {/* To-do section — Trip tab */}
+                      {(()=>{const todos2=todoItems[day.date]||[];return(
+                        <div style={{marginBottom:8}}>
+                          <div style={{fontWeight:600,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>To-do</div>
+                          {todos2.map((t,j)=>(
+                            <TodoItem key={j} text={t.text} ck={`todo-${day.date}-${j}`} checked={checked} onToggle={toggleCheck}
+                              onRemove={()=>removeTodo(day.date,j)} onEdit={txt=>editTodo(day.date,j,txt)}
+                              onMenu={()=>handleActionMenu("todo",day.date,j,t,true)}/>
+                          ))}
+                          {todoClipboard&&<button onClick={()=>pasteTodo(day.date)} style={{width:"100%",padding:"7px",background:"#e0f2fe",color:"#0369a1",border:"1px dashed #7dd3fc",borderRadius:7,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:4}}>📋 Paste "{todoClipboard.text.slice(0,28)}{todoClipboard.text.length>28?"…":""}"</button>}
+                          {addingTodoDate===day.date?(
+                            <div style={{display:"flex",gap:6,marginBottom:4}}>
+                              <input value={todoInputText} onChange={e=>setTodoInputText(e.target.value)}
+                                onKeyDown={e=>{if(e.key==="Enter"&&todoInputText.trim()){addTodo(day.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}if(e.key==="Escape"){setTodoInputText("");setAddingTodoDate(null);}}}
+                                autoFocus placeholder="Add to-do item…"
+                                style={{flex:1,padding:"7px 10px",borderRadius:7,border:"1px solid #7dd3fc",fontSize:13,boxSizing:"border-box"}}/>
+                              <button onClick={()=>{if(todoInputText.trim()){addTodo(day.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}}} style={{padding:"7px 12px",background:"#0369a1",color:"white",border:"none",borderRadius:7,fontSize:13,cursor:"pointer"}}>+</button>
+                              <button onClick={()=>{setTodoInputText("");setAddingTodoDate(null);}} style={{padding:"7px 10px",background:"white",color:"#888",border:"1px solid #ddd",borderRadius:7,fontSize:13,cursor:"pointer"}}>✕</button>
+                            </div>
+                          ):(
+                            <button onClick={()=>setAddingTodoDate(day.date)} style={{width:"100%",padding:"7px",background:"transparent",color:"#0369a1",border:"1px dashed #7dd3fc",borderRadius:7,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:0}}>+ Add to-do</button>
+                          )}
+                        </div>
+                      );})()}
                       <div style={{fontWeight:600,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Activities</div>
                       {[...day.items.map((it,j)=>({task:it,ck:`trip-${day.date}-${j}`,bi:true,idx:j})),...cust.map((t,j)=>({task:t,ck:`trip-${day.date}-c${j}`,bi:false,idx:j}))].map(({task,ck,bi,idx})=>(
                         <TaskItem key={ck} task={task} checkKey={ck} checked={checked} onToggle={toggleCheck}
                           onRemove={bi?null:()=>removeTask(day.date,idx)} onEdit={bi?null:u=>editTask(day.date,idx,u)}
                           isCore={!!coreTasks[ck]} onToggleCore={toggleCore}
-                          fitWarning={(fitWarnings[day.date]||{})[ck]||null}/>
+                          fitWarning={(fitWarnings[day.date]||{})[ck]||null}
+                          onMenu={()=>handleActionMenu("activity",day.date,idx,task,!bi)}/>
                       ))}
+                      {activityClipboard&&<button onClick={()=>pasteActivity(day.date)} style={{width:"100%",padding:"7px",background:"#e0f2fe",color:"#0369a1",border:"1px dashed #7dd3fc",borderRadius:7,fontSize:12,fontWeight:600,cursor:"pointer",marginBottom:4}}>📋 Paste "{activityClipboard.text.slice(0,28)}{activityClipboard.text.length>28?"…":""}"</button>}
                       {addingTo===day.date?(
                         <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} taskDate={taskDate} today={today} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
                       ):(
@@ -1095,6 +1266,8 @@ function App(){
       </div>
 
       {flappyActive&&<FlappyGame onExit={()=>setFlappyActive(false)}/>}
+      {actionMenu&&<ActionSheet item={actionMenu} onMoveStart={handleMoveStart} onCopy={handleCopy} onCancel={()=>setActionMenu(null)}/>}
+      {movingItem&&<DayPickerModal sourceDate={movingItem.date} onPick={handleMoveTo} onCancel={()=>setMovingItem(null)}/>}
     </div>
   );
 }
