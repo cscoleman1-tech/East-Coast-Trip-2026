@@ -205,6 +205,32 @@ function TaskItem({task,checkKey,checked,onToggle,onRemove,onEdit,isCore,onToggl
   );
 }
 
+function TodoItem({text,ck,checked,onToggle,onRemove,onEdit}){
+  const [editing,setEditing]=useState(false);
+  const [editText,setEditText]=useState(text);
+  const done=!!checked[ck];
+  const save=()=>{if(editText.trim())onEdit(editText.trim());setEditing(false);};
+  if(editing)return(
+    <div style={{display:"flex",gap:6,alignItems:"center",padding:"8px 0",borderBottom:"1px solid #f0f4f8"}}>
+      <input value={editText} onChange={e=>setEditText(e.target.value)}
+        onKeyDown={e=>{if(e.key==="Enter")save();if(e.key==="Escape")setEditing(false);}}
+        autoFocus style={{flex:1,padding:"7px 10px",borderRadius:8,border:"1px solid #93c5fd",fontSize:14}}/>
+      <button onClick={save} style={{padding:"5px 10px",background:"#1a3a5c",color:"white",border:"none",borderRadius:7,fontSize:12,cursor:"pointer"}}>Save</button>
+      <button onClick={()=>setEditing(false)} style={{padding:"5px 8px",background:"white",color:"#888",border:"1px solid #ddd",borderRadius:7,fontSize:12,cursor:"pointer"}}>✕</button>
+    </div>
+  );
+  return(
+    <div style={{display:"flex",alignItems:"center",gap:10,padding:"9px 0",borderBottom:"1px solid #f9fafb"}}>
+      <div onClick={()=>onToggle(ck)} style={{width:22,height:22,borderRadius:6,border:done?"none":"2px solid #d1d5db",background:done?"#22c55e":"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,cursor:"pointer"}}>
+        {done&&<span style={{color:"white",fontSize:13,fontWeight:800}}>✓</span>}
+      </div>
+      <div onClick={()=>onToggle(ck)} style={{flex:1,fontSize:14,color:done?"#9ca3af":"#374151",textDecoration:done?"line-through":"none",cursor:"pointer",lineHeight:1.4}}>{text}</div>
+      {!done&&<span onClick={e=>{e.stopPropagation();setEditText(text);setEditing(true);}} style={{fontSize:14,cursor:"pointer",opacity:0.35,flexShrink:0}}>✏️</span>}
+      <span onClick={onRemove} style={{color:"#d1d5db",fontSize:20,cursor:"pointer",lineHeight:1,flexShrink:0}}>×</span>
+    </div>
+  );
+}
+
 function AddTaskForm({taskText,setTaskText,taskType,setTaskType,taskDate,today,onAdd,onCancel}){
   return(
     <div style={{background:"#f8fafc",borderRadius:12,padding:12,border:"1px dashed #cbd5e1",marginBottom:8}}>
@@ -400,6 +426,7 @@ function App(){
   const [customPackItems,setCustomPackItems]=useState({Master:{},Chris:{},McKenna:{},Sawyer:{},Pierce:{},Bennett:{}});
   const [bookingChecked,setBookingChecked]=useState({});
   const [coreTasks,setCoreTasks]=useState({});
+  const [todoItems,setTodoItems]=useState({});
 
   // UI state (ephemeral — not synced)
   const [fitWarnings,setFitWarnings]=useState({});
@@ -423,6 +450,9 @@ function App(){
   const [showPlanOverride,setShowPlanOverride]=useState({});
   const [planOverrideStart,setPlanOverrideStart]=useState({});
   const [planOverrideEnd,setPlanOverrideEnd]=useState({});
+  const [openSections,setOpenSections]=useState({});
+  const [addingTodoDate,setAddingTodoDate]=useState(null);
+  const [todoInputText,setTodoInputText]=useState("");
 
   // Location
   const [locLabel,setLocLabel]=useState(null);
@@ -475,7 +505,7 @@ function App(){
   };
 
   // ── Cloud Sync ────────────────────────────────────────────────────────────
-  const getState=()=>({customTasks,checked,packChecked,customPackItems,bookingChecked,coreTasks,lodgingOverrides,dayPlans});
+  const getState=()=>({customTasks,todoItems,checked,packChecked,customPackItems,bookingChecked,coreTasks,lodgingOverrides,dayPlans});
 
   const applyRemoteData=(data)=>{
     if(!data)return;
@@ -487,6 +517,7 @@ function App(){
     if(data.coreTasks)setCoreTasks(data.coreTasks);
     if(data.lodgingOverrides)setLodgingOverrides(data.lodgingOverrides);
     if(data.dayPlans)setDayPlans(data.dayPlans);
+    if(data.todoItems)setTodoItems(data.todoItems);
     if(data._by&&data._by!==(userName||"")){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
 
@@ -542,6 +573,23 @@ function App(){
     setCustomTasks(p=>{const n={...p,[date]:(p[date]||[]).map((t,i)=>i===idx?{...t,...upd}:t)};syncNow({...getState(),customTasks:n});return n;});
   };
   const toggleCore=key=>{setCoreTasks(p=>{const n={...p,[key]:!p[key]};syncNow({...getState(),coreTasks:n});return n;});};
+
+  // ── To-do helpers ─────────────────────────────────────────────────────────
+  const addTodo=(date,text)=>{
+    if(!text.trim())return;
+    setTodoItems(p=>{const n={...p,[date]:[...(p[date]||[]),{text:text.trim()}]};syncNow({...getState(),todoItems:n});return n;});
+  };
+  const removeTodo=(date,idx)=>{
+    setTodoItems(p=>{const n={...p,[date]:(p[date]||[]).filter((_,i)=>i!==idx)};syncNow({...getState(),todoItems:n});return n;});
+  };
+  const editTodo=(date,idx,text)=>{
+    if(!text.trim())return;
+    setTodoItems(p=>{const n={...p,[date]:(p[date]||[]).map((t,i)=>i===idx?{...t,text:text.trim()}:t)};syncNow({...getState(),todoItems:n});return n;});
+  };
+
+  // ── Section collapse helpers ───────────────────────────────────────────────
+  const secOpen=(key)=>openSections[key]!==false;
+  const toggleSec=(key)=>setOpenSections(p=>({...p,[key]:p[key]===false}));
 
   // ── Lodging helpers ───────────────────────────────────────────────────────
   const getLodging=day=>lodgingOverrides[day.date]!==undefined?lodgingOverrides[day.date]:(day.lodging||"");
@@ -880,21 +928,60 @@ function App(){
                     <div style={{fontSize:12,color:"#555",marginTop:2}}>{c.detail}</div>
                   </div>
                 ))}
-                <div style={{fontWeight:600,fontSize:12,color:"#888",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:8}}>Activities</div>
-                {(()=>{const d=ITINERARY[dayIdx];const cust2=customTasks[d.date]||[];
-                  return[...d.items.map((it,j)=>({task:it,ck:`trip-${d.date}-${j}`,bi:true,idx:j})),...cust2.map((t,j)=>({task:t,ck:`trip-${d.date}-c${j}`,bi:false,idx:j}))]
-                    .map(({task,ck,bi,idx})=>(
-                      <TaskItem key={ck} task={task} checkKey={ck} checked={checked} onToggle={toggleCheck}
-                        onRemove={bi?null:()=>removeTask(d.date,idx)} onEdit={bi?null:u=>editTask(d.date,idx,u)}
-                        isCore={!!coreTasks[ck]} onToggleCore={toggleCore}
-                        fitWarning={(fitWarnings[d.date]||{})[ck]||null}/>
-                    ));
-                })()}
-                {addingTo===ITINERARY[dayIdx].date?(
-                  <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} taskDate={taskDate} today={today} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
-                ):(
-                  <button onClick={()=>openAddForm(ITINERARY[dayIdx].date)} style={{width:"100%",padding:"11px",background:"white",color:"#1a3a5c",border:"2px dashed #b8ccdf",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:12}}>+ Add a task</button>
-                )}
+                {/* Activities section — collapsible */}
+                {(()=>{const d=ITINERARY[dayIdx];const cust2=customTasks[d.date]||[];return(
+                  <div>
+                    <div onClick={()=>toggleSec(`${d.date}-acts`)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",cursor:"pointer",borderBottom:"1px solid #f3f4f6",marginBottom:6,userSelect:"none"}}>
+                      <div style={{fontWeight:600,fontSize:12,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.08em"}}>Activities</div>
+                      <span style={{color:"#d1d5db",fontSize:16,transition:"transform 0.15s",display:"inline-block",transform:secOpen(`${d.date}-acts`)?"rotate(90deg)":"none"}}>›</span>
+                    </div>
+                    {secOpen(`${d.date}-acts`)&&(
+                      <div>
+                        {[...d.items.map((it,j)=>({task:it,ck:`trip-${d.date}-${j}`,bi:true,idx:j})),...cust2.map((t,j)=>({task:t,ck:`trip-${d.date}-c${j}`,bi:false,idx:j}))]
+                          .map(({task,ck,bi,idx})=>(
+                            <TaskItem key={ck} task={task} checkKey={ck} checked={checked} onToggle={toggleCheck}
+                              onRemove={bi?null:()=>removeTask(d.date,idx)} onEdit={bi?null:u=>editTask(d.date,idx,u)}
+                              isCore={!!coreTasks[ck]} onToggleCore={toggleCore}
+                              fitWarning={(fitWarnings[d.date]||{})[ck]||null}/>
+                          ))}
+                        {addingTo===d.date?(
+                          <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} taskDate={taskDate} today={today} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
+                        ):(
+                          <button onClick={()=>openAddForm(d.date)} style={{width:"100%",padding:"11px",background:"white",color:"#1a3a5c",border:"2px dashed #b8ccdf",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer",marginBottom:8}}>+ Add activity</button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );})()}
+                {/* To-do section — collapsible */}
+                {(()=>{const d=ITINERARY[dayIdx];const todos=todoItems[d.date]||[];return(
+                  <div style={{marginTop:8,marginBottom:12}}>
+                    <div onClick={()=>toggleSec(`${d.date}-todo`)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",cursor:"pointer",borderBottom:"1px solid #f3f4f6",marginBottom:6,userSelect:"none"}}>
+                      <div style={{fontWeight:600,fontSize:12,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.08em"}}>To-do{todos.length>0?` (${todos.length})`:""}</div>
+                      <span style={{color:"#d1d5db",fontSize:16,transition:"transform 0.15s",display:"inline-block",transform:secOpen(`${d.date}-todo`)?"rotate(90deg)":"none"}}>›</span>
+                    </div>
+                    {secOpen(`${d.date}-todo`)&&(
+                      <div>
+                        {todos.map((td,j)=>(
+                          <TodoItem key={j} text={td.text} ck={`todo-${d.date}-${j}`} checked={checked} onToggle={toggleCheck}
+                            onRemove={()=>removeTodo(d.date,j)} onEdit={t=>editTodo(d.date,j,t)}/>
+                        ))}
+                        {addingTodoDate===d.date?(
+                          <div style={{display:"flex",gap:6,marginTop:6}}>
+                            <input value={todoInputText} onChange={e=>setTodoInputText(e.target.value)}
+                              onKeyDown={e=>{if(e.key==="Enter"){addTodo(d.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}if(e.key==="Escape"){setAddingTodoDate(null);setTodoInputText("");}}}
+                              autoFocus placeholder="Add to-do item…"
+                              style={{flex:1,padding:"10px 12px",borderRadius:9,border:"1px solid #93c5fd",fontSize:14}}/>
+                            <button onClick={()=>{addTodo(d.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}} style={{padding:"10px 16px",background:"#1a3a5c",color:"white",border:"none",borderRadius:9,fontSize:14,cursor:"pointer"}}>+</button>
+                            <button onClick={()=>{setAddingTodoDate(null);setTodoInputText("");}} style={{padding:"10px 12px",background:"white",color:"#888",border:"1px solid #ddd",borderRadius:9,fontSize:14,cursor:"pointer"}}>✕</button>
+                          </div>
+                        ):(
+                          <button onClick={()=>{setAddingTodoDate(d.date);setTodoInputText("");}} style={{width:"100%",padding:"11px",background:"white",color:"#6b7280",border:"2px dashed #e2e8f0",borderRadius:10,fontSize:14,fontWeight:600,cursor:"pointer"}}>+ Add to-do</button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );})()}
                 {/* Plan My Day — Today tab */}
                 {(()=>{const d2=ITINERARY[dayIdx];return(
                   <div style={{marginTop:12}}>
@@ -1005,18 +1092,55 @@ function App(){
                           <div style={{fontSize:11,color:"#555",marginTop:1}}>{c.detail}</div>
                         </div>
                       ))}
-                      <div style={{fontWeight:600,fontSize:11,color:"#aaa",textTransform:"uppercase",letterSpacing:"0.08em",marginBottom:6}}>Activities</div>
-                      {[...day.items.map((it,j)=>({task:it,ck:`trip-${day.date}-${j}`,bi:true,idx:j})),...cust.map((t,j)=>({task:t,ck:`trip-${day.date}-c${j}`,bi:false,idx:j}))].map(({task,ck,bi,idx})=>(
-                        <TaskItem key={ck} task={task} checkKey={ck} checked={checked} onToggle={toggleCheck}
-                          onRemove={bi?null:()=>removeTask(day.date,idx)} onEdit={bi?null:u=>editTask(day.date,idx,u)}
-                          isCore={!!coreTasks[ck]} onToggleCore={toggleCore}
-                          fitWarning={(fitWarnings[day.date]||{})[ck]||null}/>
-                      ))}
-                      {addingTo===day.date?(
-                        <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} taskDate={taskDate} today={today} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
-                      ):(
-                        <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:8,padding:"9px",background:"#f8fafc",color:"#2d6a9f",border:"2px dashed #b8ccdf",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Add task to this day</button>
+                      {/* Activities section — collapsible */}
+                      <div onClick={()=>toggleSec(`${day.date}-acts`)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",cursor:"pointer",borderBottom:"1px solid #f3f4f6",marginBottom:6,userSelect:"none"}}>
+                        <div style={{fontWeight:600,fontSize:11,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.08em"}}>Activities</div>
+                        <span style={{color:"#d1d5db",fontSize:15,transition:"transform 0.15s",display:"inline-block",transform:secOpen(`${day.date}-acts`)?"rotate(90deg)":"none"}}>›</span>
+                      </div>
+                      {secOpen(`${day.date}-acts`)&&(
+                        <div>
+                          {[...day.items.map((it,j)=>({task:it,ck:`trip-${day.date}-${j}`,bi:true,idx:j})),...cust.map((t,j)=>({task:t,ck:`trip-${day.date}-c${j}`,bi:false,idx:j}))].map(({task,ck,bi,idx})=>(
+                            <TaskItem key={ck} task={task} checkKey={ck} checked={checked} onToggle={toggleCheck}
+                              onRemove={bi?null:()=>removeTask(day.date,idx)} onEdit={bi?null:u=>editTask(day.date,idx,u)}
+                              isCore={!!coreTasks[ck]} onToggleCore={toggleCore}
+                              fitWarning={(fitWarnings[day.date]||{})[ck]||null}/>
+                          ))}
+                          {addingTo===day.date?(
+                            <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} taskDate={taskDate} today={today} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
+                          ):(
+                            <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:4,padding:"8px",background:"#f8fafc",color:"#2d6a9f",border:"2px dashed #b8ccdf",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Add activity</button>
+                          )}
+                        </div>
                       )}
+                      {/* To-do section — collapsible */}
+                      {(()=>{const todos=todoItems[day.date]||[];return(
+                        <div style={{marginTop:6}}>
+                          <div onClick={()=>toggleSec(`${day.date}-todo`)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",cursor:"pointer",borderBottom:"1px solid #f3f4f6",marginBottom:6,userSelect:"none"}}>
+                            <div style={{fontWeight:600,fontSize:11,color:"#94a3b8",textTransform:"uppercase",letterSpacing:"0.08em"}}>To-do{todos.length>0?` (${todos.length})`:""}</div>
+                            <span style={{color:"#d1d5db",fontSize:15,transition:"transform 0.15s",display:"inline-block",transform:secOpen(`${day.date}-todo`)?"rotate(90deg)":"none"}}>›</span>
+                          </div>
+                          {secOpen(`${day.date}-todo`)&&(
+                            <div>
+                              {todos.map((td,j)=>(
+                                <TodoItem key={j} text={td.text} ck={`todo-${day.date}-${j}`} checked={checked} onToggle={toggleCheck}
+                                  onRemove={()=>removeTodo(day.date,j)} onEdit={t=>editTodo(day.date,j,t)}/>
+                              ))}
+                              {addingTodoDate===day.date?(
+                                <div style={{display:"flex",gap:6,marginTop:6}}>
+                                  <input value={todoInputText} onChange={e=>setTodoInputText(e.target.value)}
+                                    onKeyDown={e=>{if(e.key==="Enter"){addTodo(day.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}if(e.key==="Escape"){setAddingTodoDate(null);setTodoInputText("");}}}
+                                    autoFocus placeholder="Add to-do item…"
+                                    style={{flex:1,padding:"8px 10px",borderRadius:8,border:"1px solid #93c5fd",fontSize:13}}/>
+                                  <button onClick={()=>{addTodo(day.date,todoInputText);setTodoInputText("");setAddingTodoDate(null);}} style={{padding:"8px 12px",background:"#1a3a5c",color:"white",border:"none",borderRadius:8,fontSize:13,cursor:"pointer"}}>+</button>
+                                  <button onClick={()=>{setAddingTodoDate(null);setTodoInputText("");}} style={{padding:"8px 10px",background:"white",color:"#888",border:"1px solid #ddd",borderRadius:8,fontSize:13,cursor:"pointer"}}>✕</button>
+                                </div>
+                              ):(
+                                <button onClick={()=>{setAddingTodoDate(day.date);setTodoInputText("");}} style={{width:"100%",marginTop:4,padding:"8px",background:"#f8fafc",color:"#6b7280",border:"2px dashed #e2e8f0",borderRadius:8,fontSize:13,fontWeight:600,cursor:"pointer"}}>+ Add to-do</button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );})()}
                       <button onClick={()=>runCheckFit(day)} disabled={fitStatus[day.date]==="loading"}
                         style={{width:"100%",marginTop:6,padding:"9px",background:"#0f766e",color:"white",border:"none",borderRadius:8,fontSize:13,fontWeight:600,cursor:fitStatus[day.date]==="loading"?"not-allowed":"pointer",opacity:fitStatus[day.date]==="loading"?0.7:1}}>
                         {fitStatus[day.date]==="loading"?"🔍 Checking fit…":"🔍 Check Fit"}
