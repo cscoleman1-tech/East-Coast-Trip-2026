@@ -2183,7 +2183,7 @@ function PlanMyDaySection({day,dayPlans,dayPlanStatus,dayPlanError,planDay,custo
   const status=dayPlanStatus[day.date];
   const plan=dayPlans[day.date];
   const totalItems=[...day.items,...(customTasks[day.date]||[])].length;
-  if(totalItems<2)return null;
+  if(totalItems<1)return null;
   const submitSuggestion=()=>{
     const s=(suggestion||"").trim();
     if(!s)return;
@@ -2554,11 +2554,17 @@ function App(){
     }
   };
   const planDay=async(day,suggestion=null)=>{
-    // Plan only Core-starred items; non-core items are evaluated separately via Check Fit
-    const allItems=[
+    // Prefer Core-starred items; fall back to all items if none are starred
+    let allItems=[
       ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]&&coreTasks[`trip-${day.date}-${j}`]).map((it,j)=>(editedItems[`itinerary-${day.date}-${j}`]?.text)||it.text),
       ...(customTasks[day.date]||[]).filter((_,j)=>coreTasks[`trip-${day.date}-c${j}`]).map(t=>t.text),
     ];
+    if(allItems.length<1){
+      allItems=[
+        ...day.items.filter((_,j)=>!deletedItems[`itinerary-${day.date}-${j}`]).map((it,j)=>(editedItems[`itinerary-${day.date}-${j}`]?.text)||it.text),
+        ...(customTasks[day.date]||[]).map(t=>t.text),
+      ];
+    }
     if(allItems.length<1)return;
     setDayPlanStatus(p=>({...p,[day.date]:"loading"}));
     try{
