@@ -885,31 +885,8 @@ function DayDetailView({
         <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
       </div>
       <HomeWatchSection dayDate={day.date} homeCare={homeCare} onAdd={addHomeCareEntry} onEdit={editHomeCareEntry} onDelete={removeHomeCareEntry}/>
-      {/* Activities section — collapsible */}
-      <div onClick={()=>toggleSec(`${day.date}-acts`)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",cursor:"pointer",borderBottom:"1px solid #f3f4f6",marginBottom:6,userSelect:"none"}}>
-        <div style={{...S.label,marginBottom:0}}>Activities</div>
-        <span style={{color:"#d1d5db",fontSize:18,transition:"transform 0.15s",display:"inline-block",transform:secOpen(`${day.date}-acts`)?"rotate(90deg)":"none"}}>›</span>
-      </div>
-      {secOpen(`${day.date}-acts`)&&(
-        <div>
-          {day.items.map((it,j)=>{
-            const key=`itinerary-${day.date}-${j}`;
-            const ck=`trip-${day.date}-${j}`;
-            if(deletedItems[key])return null;
-            return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);
-          })}
-          {(customTasks[day.date]||[]).map((t,j)=>(
-            <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)} isCore={!!coreTasks[`trip-${day.date}-c${j}`]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[`trip-${day.date}-c${j}`]}/>
-          ))}
-          {addingTo===day.date?(
-            <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
-          ):(
-            <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:6,padding:"10px",background:"#f8fafc",color:S.blue,border:"2px dashed #cbd5e1",borderRadius:12,fontSize:13,fontWeight:700}}>+ Add activity</button>
-          )}
-        </div>
-      )}
       {/* To-do section — collapsible */}
-      <div style={{marginTop:8}}>
+      <div style={{marginTop:4}}>
         <div onClick={()=>toggleSec(`${day.date}-todo`)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",cursor:"pointer",borderBottom:"1px solid #f3f4f6",marginBottom:6,userSelect:"none"}}>
           <div style={{...S.label,marginBottom:0}}>To-do{todos.length>0?` (${todos.length})`:""}</div>
           <span style={{color:"#d1d5db",fontSize:18,transition:"transform 0.15s",display:"inline-block",transform:secOpen(`${day.date}-todo`)?"rotate(90deg)":"none"}}>›</span>
@@ -931,6 +908,31 @@ function DayDetailView({
               </div>
             ):(
               <button onClick={()=>{setAddingTodoDate(day.date);setTodoInputText("");}} style={{width:"100%",marginTop:4,padding:"10px",background:"#f8fafc",color:"#6b7280",border:"2px dashed #e2e8f0",borderRadius:12,fontSize:13,fontWeight:700}}>+ Add to-do</button>
+            )}
+          </div>
+        )}
+      </div>
+      {/* Activities section — collapsible */}
+      <div style={{marginTop:8}}>
+        <div onClick={()=>toggleSec(`${day.date}-acts`)} style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"8px 0",cursor:"pointer",borderBottom:"1px solid #f3f4f6",marginBottom:6,userSelect:"none"}}>
+          <div style={{...S.label,marginBottom:0}}>Activities</div>
+          <span style={{color:"#d1d5db",fontSize:18,transition:"transform 0.15s",display:"inline-block",transform:secOpen(`${day.date}-acts`)?"rotate(90deg)":"none"}}>›</span>
+        </div>
+        {secOpen(`${day.date}-acts`)&&(
+          <div>
+            {day.items.map((it,j)=>{
+              const key=`itinerary-${day.date}-${j}`;
+              const ck=`trip-${day.date}-${j}`;
+              if(deletedItems[key])return null;
+              return(<TaskItem key={j} task={{...it,...(editedItems[key]||{})}} checkKey={ck} checked={checked} onToggle={toggleCheck} onRemove={()=>deleteItem(key)} onEdit={u=>editBuiltinItem(key,u)} isCore={!!coreTasks[ck]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[ck]}/>);
+            })}
+            {(customTasks[day.date]||[]).map((t,j)=>(
+              <TaskItem key={`c${j}`} task={t} checkKey={`trip-${day.date}-c${j}`} checked={checked} onToggle={toggleCheck} onRemove={()=>removeTask(day.date,j)} onEdit={u=>editTask(day.date,j,u)} isCore={!!coreTasks[`trip-${day.date}-c${j}`]} onToggleCore={toggleCore} fitWarning={(fitWarnings[day.date]||{})[`trip-${day.date}-c${j}`]}/>
+            ))}
+            {addingTo===day.date?(
+              <AddTaskForm taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} onAdd={handleAddTask} onCancel={()=>{setAddingTo(null);setTaskText("");}}/>
+            ):(
+              <button onClick={()=>openAddForm(day.date)} style={{width:"100%",marginTop:6,padding:"10px",background:"#f8fafc",color:S.blue,border:"2px dashed #cbd5e1",borderRadius:12,fontSize:13,fontWeight:700}}>+ Add activity</button>
             )}
           </div>
         )}
