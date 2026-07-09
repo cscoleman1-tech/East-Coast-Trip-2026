@@ -465,6 +465,7 @@ function App(){
   // All synced state
   const [customTasks,setCustomTasks]=useState({});
   const [todoItems,setTodoItems]=useState({});
+  const [feedbackNotes,setFeedbackNotes]=useState([]);
   const [checked,setChecked]=useState({});
   const [packChecked,setPackChecked]=useState({});
   const [customPackItems,setCustomPackItems]=useState({Master:{},Chris:{},McKenna:{},Sawyer:{},Pierce:{},Bennett:{}});
@@ -505,6 +506,10 @@ function App(){
   const [syncStatus,setSyncStatus]=useState("idle");
   const [syncLabel,setSyncLabel]=useState("Tap ↻ to sync");
   const [lastBy,setLastBy]=useState(null);
+
+  // Feedback notes modal (ephemeral)
+  const [showFeedback,setShowFeedback]=useState(false);
+  const [feedbackInput,setFeedbackInput]=useState("");
 
   // Move/copy/paste (ephemeral)
   const [activityClipboard,setActivityClipboard]=useState(null);
@@ -553,12 +558,13 @@ function App(){
   };
 
   // ── Cloud Sync ────────────────────────────────────────────────────────────
-  const getState=()=>({customTasks,todoItems,checked,packChecked,customPackItems,bookingChecked,coreTasks,lodgingOverrides,dayPlans});
+  const getState=()=>({customTasks,todoItems,feedbackNotes,checked,packChecked,customPackItems,bookingChecked,coreTasks,lodgingOverrides,dayPlans});
 
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks)setCustomTasks(data.customTasks);
     if(data.todoItems)setTodoItems(data.todoItems);
+    if(data.feedbackNotes)setFeedbackNotes(data.feedbackNotes);
     if(data.checked)setChecked(data.checked);
     if(data.packChecked)setPackChecked(data.packChecked);
     if(data.customPackItems)setCustomPackItems(data.customPackItems);
@@ -632,6 +638,16 @@ function App(){
   };
   const editTodo=(date,idx,text)=>{
     setTodoItems(p=>{const n={...p,[date]:(p[date]||[]).map((t,i)=>i===idx?{text}:t)};syncNow({...getState(),todoItems:n});return n;});
+  };
+
+  // ── Feedback note handlers ────────────────────────────────────────────────
+  const addNote=()=>{
+    if(!feedbackInput.trim())return;
+    setFeedbackNotes(p=>{const n=[...p,{text:feedbackInput.trim()}];syncNow({...getState(),feedbackNotes:n});return n;});
+    setFeedbackInput("");
+  };
+  const removeNote=(idx)=>{
+    setFeedbackNotes(p=>{const n=p.filter((_,i)=>i!==idx);syncNow({...getState(),feedbackNotes:n});return n;});
   };
 
   // ── Move/Copy/Paste handlers ──────────────────────────────────────────────
@@ -824,6 +840,37 @@ function App(){
         </div>
       )}
 
+      {/* ── FEEDBACK NOTES MODAL ── */}
+      {showFeedback&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:24}} onClick={()=>setShowFeedback(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:24,padding:"24px 20px",width:"100%",maxWidth:360,boxShadow:"0 24px 60px rgba(0,0,0,0.3)",maxHeight:"80vh",display:"flex",flexDirection:"column"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:16}}>
+              <div style={{fontWeight:800,fontSize:18,color:"#1a3a5c"}}>📝 Notes</div>
+              <button onClick={()=>setShowFeedback(false)} style={{background:"none",border:"none",fontSize:20,color:"#aaa",cursor:"pointer",lineHeight:1,padding:"0 4px"}}>×</button>
+            </div>
+            <div style={{display:"flex",gap:8,marginBottom:16,flexShrink:0}}>
+              <input value={feedbackInput} onChange={e=>setFeedbackInput(e.target.value)}
+                onKeyDown={e=>{if(e.key==="Enter")addNote();if(e.key==="Escape")setShowFeedback(false);}}
+                placeholder="Add a note…" autoFocus
+                style={{flex:1,padding:"10px 12px",borderRadius:10,border:"1px solid #dde1e7",fontSize:15,boxSizing:"border-box"}}/>
+              <button onClick={addNote} disabled={!feedbackInput.trim()} style={{padding:"10px 16px",background:feedbackInput.trim()?"#1a3a5c":"#e5e7eb",color:feedbackInput.trim()?"white":"#aaa",border:"none",borderRadius:10,fontSize:15,fontWeight:700,cursor:feedbackInput.trim()?"pointer":"default"}}>Add</button>
+            </div>
+            <div style={{overflowY:"auto",flex:1}}>
+              {feedbackNotes.length===0&&<div style={{textAlign:"center",color:"#bbb",fontSize:14,paddingTop:20}}>No notes yet</div>}
+              {[...feedbackNotes].reverse().map((n,ri)=>{
+                const idx=feedbackNotes.length-1-ri;
+                return(
+                  <div key={idx} style={{display:"flex",alignItems:"flex-start",gap:10,padding:"11px 12px",background:"#f8fafc",borderRadius:10,marginBottom:8,border:"1px solid #e8ecf0"}}>
+                    <div style={{flex:1,fontSize:14,color:"#222",lineHeight:1.45,wordBreak:"break-word"}}>{n.text}</div>
+                    <button onClick={()=>removeNote(idx)} style={{color:"#d1d5db",fontSize:22,background:"none",border:"none",cursor:"pointer",lineHeight:1,flexShrink:0,padding:"0 2px"}}>×</button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── HEADER ── */}
       <div style={{background:"linear-gradient(135deg,#1a3a5c 0%,#2d6a9f 100%)",padding:"env(safe-area-inset-top,18px) 16px 0",color:"white"}}>
         <div style={{paddingTop:"max(18px, env(safe-area-inset-top))"}}>
@@ -839,6 +886,8 @@ function App(){
                 <span style={{width:7,height:7,borderRadius:"50%",background:syncStatus==="ok"?"#22c55e":syncStatus==="local"?"#fbbf24":"#93c5fd",display:"inline-block",flexShrink:0}}/>
                 <span style={{fontSize:11,opacity:0.8}}>↻</span>
               </button>
+              {/* Notes button */}
+              <button onClick={()=>setShowFeedback(true)} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"white",fontSize:15,padding:"4px 8px",cursor:"pointer",lineHeight:1}}>📝{feedbackNotes.length>0&&<span style={{fontSize:10,fontWeight:700,marginLeft:2,opacity:0.9}}>{feedbackNotes.length}</span>}</button>
               {/* User switcher */}
               <button onClick={()=>{localStorage.removeItem("trip2026_user");setUserName(null);}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:8,color:"white",fontSize:13,padding:"4px 10px",cursor:"pointer",fontWeight:600}}>
                 {userEmoji} {userName}
