@@ -504,7 +504,7 @@ function App(){
 
   // Sync
   const [syncStatus,setSyncStatus]=useState("idle");
-  const [syncLabel,setSyncLabel]=useState("Tap ↻ to sync");
+  const [syncLabel,setSyncLabel]=useState("");
   const [lastBy,setLastBy]=useState(null);
 
   // Feedback notes modal (ephemeral)
@@ -583,19 +583,19 @@ function App(){
     saveLocal(merged);
     // Try cloud
     const ok=await cloudSave(merged);
-    if(ok){setSyncStatus("ok");setSyncLabel("Synced ✓");}
+    if(ok){setSyncStatus("ok");setSyncLabel("Saved ✓");}
     else{setSyncStatus("local");setSyncLabel("Saved locally");}
   };
 
   const pullSync=async()=>{
-    setSyncStatus("loading");setSyncLabel("Syncing…");
+    setSyncStatus("loading");setSyncLabel("Refreshing…");
     const remote=await cloudLoad();
     if(remote){
       const local=loadLocal();
       // Use whichever is newer
       const useRemote=!local._at||(remote._at&&remote._at>local._at);
       if(useRemote){applyRemoteData(remote);saveLocal(remote);}
-      setSyncStatus("ok");setSyncLabel("Synced ✓");
+      setSyncStatus("ok");setSyncLabel("Saved ✓");
     } else {
       // Fall back to local
       const local=loadLocal();
@@ -887,7 +887,10 @@ function App(){
                 <span style={{fontSize:11,opacity:0.8}}>↻</span>
               </button>
               {/* Notes button */}
-              <button onClick={()=>setShowFeedback(true)} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"white",fontSize:15,padding:"4px 8px",cursor:"pointer",lineHeight:1}}>📝{feedbackNotes.length>0&&<span style={{fontSize:10,fontWeight:700,marginLeft:2,opacity:0.9}}>{feedbackNotes.length}</span>}</button>
+              <button onClick={()=>setShowFeedback(true)} style={{background:"rgba(255,255,255,0.12)",border:"none",borderRadius:8,color:"white",fontSize:12,padding:"4px 8px",cursor:"pointer",display:"flex",alignItems:"center",gap:3,fontWeight:600}}>
+                <span style={{fontSize:14}}>📝</span>
+                <span style={{opacity:0.9}}>Notes{feedbackNotes.length>0?` (${feedbackNotes.length})`:""}</span>
+              </button>
               {/* User switcher */}
               <button onClick={()=>{localStorage.removeItem("trip2026_user");setUserName(null);}} style={{background:"rgba(255,255,255,0.15)",border:"none",borderRadius:8,color:"white",fontSize:13,padding:"4px 10px",cursor:"pointer",fontWeight:600}}>
                 {userEmoji} {userName}
