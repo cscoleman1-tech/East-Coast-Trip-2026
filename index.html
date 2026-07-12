@@ -2299,6 +2299,34 @@ const TOUR_STEPS=[
   {target:"tab-search",title:"Search Everything 🔍",           body:"Search across all tasks, packing items, and activities at once. Tap any result to jump straight to it."},
 ];
 
+function FeedbackModal({notes,onAdd,onRemove,onClose}){
+  const [input,setInput]=React.useState("");
+  const submit=()=>{if(!input.trim())return;onAdd(input);setInput("");};
+  return(
+    <div onClick={onClose} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:800,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div onClick={e=>e.stopPropagation()} style={{background:"white",borderRadius:20,padding:22,width:"100%",maxWidth:360,maxHeight:"80vh",display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{fontWeight:800,fontSize:17,color:"#0f2444"}}>📝 Notes</div>
+          <button onClick={onClose} style={{background:"#f1f5f9",border:"none",borderRadius:10,width:32,height:32,fontSize:18,cursor:"pointer",color:"#64748b",display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()} placeholder="Add a note…" style={{flex:1,padding:"10px 13px",borderRadius:12,border:"1.5px solid #e2e8f0",fontSize:14,outline:"none"}}/>
+          <button onClick={submit} style={{background:"#1e4d8c",color:"white",border:"none",borderRadius:12,padding:"10px 16px",fontWeight:700,fontSize:14,cursor:"pointer"}}>Add</button>
+        </div>
+        <div style={{overflowY:"auto",display:"flex",flexDirection:"column",gap:8}}>
+          {notes.length===0&&<div style={{color:"#94a3b8",fontSize:14,textAlign:"center",padding:"16px 0"}}>No notes yet</div>}
+          {notes.map(n=>(
+            <div key={n.id} style={{display:"flex",alignItems:"flex-start",gap:10,background:"#f8fafc",borderRadius:12,padding:"10px 13px"}}>
+              <span style={{flex:1,fontSize:14,color:"#334155",lineHeight:1.5,wordBreak:"break-word"}}>{n.text}</span>
+              <button onClick={()=>onRemove(n.id)} style={{background:"none",border:"none",color:"#94a3b8",fontSize:18,cursor:"pointer",lineHeight:1,flexShrink:0,padding:0}}>×</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function GuidedTour({onClose}){
   const [step,setStep]=useState(0);
   const [rect,setRect]=useState(null);
@@ -2403,7 +2431,7 @@ function App(){
   const [locAsked,setLocAsked]=useState(false);
   const [location,setLocation]=useState(null);
   const [syncStatus,setSyncStatus]=useState("idle");
-  const [syncLabel,setSyncLabel]=useState("Tap to sync");
+  const [syncLabel,setSyncLabel]=useState("Tap to refresh");
   const [lastBy,setLastBy]=useState(null);
   const [dayPlans,setDayPlans]=useState({});
   const [dayPlanStatus,setDayPlanStatus]=useState({});
@@ -2419,6 +2447,9 @@ function App(){
   const [fitStatus,setFitStatus]=useState({});
   const [editedItems,setEditedItems]=useState({});
   const [showTour,setShowTour]=useState(false);
+  const [showFeedback,setShowFeedback]=useState(false);
+  const [feedbackNotes,setFeedbackNotes]=useState([]);
+  const [feedbackInput,setFeedbackInput]=useState("");
   const [travelItems,setTravelItems]=useState(TRAVEL_SEED);
   const [homeCare,setHomeCare]=useState(DEFAULT_HOME_CARE);
   const [flappyActive,setFlappyActive]=useState(false);
@@ -2437,7 +2468,7 @@ function App(){
     navigator.geolocation.getCurrentPosition(async pos=>{const{latitude:lat,longitude:lng}=pos.coords;setLocation({lat,lng});setLocLoading(false);setLocLabel(await reverseGeocode(lat,lng));},err=>{setLocLoading(false);if(err.code===1)setLocError("Location denied — check Settings");else setLocError("Location unavailable — tap Retry");},{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
   };
 
-  const getState=()=>({customTasks,todoItems,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems,homeCare,packOrder});
+  const getState=()=>({customTasks,todoItems,feedbackNotes,checked,packChecked,customPackItems,deletedItems,dayPlans,coreTasks,editedItems,preTripCustom,preTripEdits,travelItems,homeCare,packOrder});
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks){
@@ -2459,6 +2490,7 @@ function App(){
     if(data.homeCare)setHomeCare(data.homeCare);
     if(data.packOrder)setPackOrder(data.packOrder);
     if(data.todoItems)setTodoItems(data.todoItems);
+    if(data.feedbackNotes)setFeedbackNotes(data.feedbackNotes);
     if(data._by){setLastBy(data._by);setTimeout(()=>setLastBy(null),4000);}
   };
   const syncNow=async(patch)=>{
@@ -2469,8 +2501,8 @@ function App(){
     const data={...patch,_at:ts};
     const ok=await cloudSave(data);
     isSaving.current=false;
-    if(ok){saveLocal(data);setSyncStatus("ok");setSyncLabel("Synced ✓");}
-    else{setSyncStatus("error");setSyncLabel("⚠️ Sync failed — tap to retry");}
+    if(ok){saveLocal(data);setSyncStatus("ok");setSyncLabel("Saved ✓");}
+    else{setSyncStatus("error");setSyncLabel("⚠️ Failed — tap to retry");}
   };
   const debouncedSync=(patch)=>{
     latestPatch.current=patch;
@@ -2479,11 +2511,11 @@ function App(){
   };
   const pullSync=async()=>{
     if(isSaving.current)return;
-    setSyncStatus("loading");setSyncLabel("Syncing…");
+    setSyncStatus("loading");setSyncLabel("Refreshing…");
     const remote=await cloudLoad();
     if(remote){
       if(!remote._at||remote._at>=lastSavedAt.current){applyRemoteData(remote);saveLocal(remote);}
-      setSyncStatus("ok");setSyncLabel("Synced ✓");
+      setSyncStatus("ok");setSyncLabel("Saved ✓");
     }else{const local=loadLocal();if(local)applyRemoteData(local);setSyncStatus("local");setSyncLabel("Offline — cached data");}
   };
   useEffect(()=>{pullSync();},[]);
@@ -2631,7 +2663,7 @@ function App(){
     <div style={{fontFamily:"-apple-system,BlinkMacSystemFont,'Inter',system-ui,sans-serif",background:"#eef1f7",minHeight:"100vh",maxWidth:480,margin:"0 auto",position:"relative"}}>
 
       {/* ── HEADER ── */}
-      <div data-tour="header" style={{background:"linear-gradient(155deg,#091d38 0%,#0f2c52 45%,#1a4b88 100%)",padding:"0 18px",color:"white",boxShadow:"0 4px 32px rgba(9,29,56,0.45)",position:"sticky",top:0,zIndex:100}}>
+      <div data-tour="header" style={{background:"linear-gradient(155deg,#7F1D1D 0%,#991B1B 45%,#B91C1C 100%)",padding:"0 18px",color:"white",boxShadow:"0 4px 32px rgba(127,29,29,0.45)",position:"sticky",top:0,zIndex:100}}>
         <div style={{paddingTop:"max(16px, env(safe-area-inset-top))"}}>
 
           {/* Title row */}
@@ -2641,6 +2673,7 @@ function App(){
               <div style={{fontSize:22,fontWeight:900,letterSpacing:"-0.5px",lineHeight:1}}>Jul 9 – 24, 2026</div>
             </div>
             <div style={{display:"flex",gap:7,alignItems:"center"}}>
+              <button onClick={()=>setShowFeedback(true)} title="Notes" style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:11,color:"white",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,cursor:"pointer",flexShrink:0,backdropFilter:"blur(8px)"}}>📝</button>
               <button onClick={()=>setShowTour(true)} title="App tour" style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.18)",borderRadius:11,color:"white",width:34,height:34,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,cursor:"pointer",flexShrink:0,backdropFilter:"blur(8px)"}}>?</button>
               <button onClick={pullSync} style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:12,color:"white",padding:"8px 12px",cursor:"pointer",display:"flex",alignItems:"center",gap:6,backdropFilter:"blur(8px)"}}>
                 <span style={{width:8,height:8,borderRadius:"50%",background:syncDot,display:"inline-block",flexShrink:0,boxShadow:`0 0 6px ${syncDot}`}}/>
@@ -2900,6 +2933,7 @@ function App(){
         editBuiltinItem={editBuiltinItem} updatePackItems={updatePackItems}
         addTravelItem={addTravelItem} editTravelItem={editTravelItem}/>
       {showTour&&<GuidedTour onClose={()=>setShowTour(false)}/>}
+      {showFeedback&&<FeedbackModal notes={feedbackNotes} onAdd={text=>{if(!text.trim())return;const n=[...feedbackNotes,{id:Date.now(),text:text.trim()}];setFeedbackNotes(n);syncNow({...getState(),feedbackNotes:n});}} onRemove={id=>{const n=feedbackNotes.filter(x=>x.id!==id);setFeedbackNotes(n);syncNow({...getState(),feedbackNotes:n});}} onClose={()=>setShowFeedback(false)}/>}
 
     </div>
     {flappyActive&&<FlappyGame onExit={()=>setFlappyActive(false)}/>}
