@@ -214,6 +214,28 @@ Rules:
         catch { return json({ error: "Invalid JSON from AI", raw: text }, 502); }
       }
 
+      // ── JOURNAL GENERATOR ───────────────────────────────────────────────────
+      if (body.action === "generateJournal") {
+        const { completedActivities = [] } = body;
+        if (!completedActivities.length) return json({ error: "No completed activities provided" }, 400);
+
+        const dayLines = completedActivities.map(d =>
+          `${d.date} — ${d.city}:\n${d.activities.map(a => `  • ${a}`).join("\n")}`
+        ).join("\n\n");
+
+        const prompt = `You are writing a warm, personal travel journal for the Coleman family's East Coast trip in July 2026. Family: Chris and McKenna (parents), Sawyer (14), Pierce (11), Bennett (10), and their dog.
+
+Here are the activities they completed, day by day:
+
+${dayLines}
+
+Write a warm, narrative day-by-day journal in first-person plural ("we"). Format each day with a header like "**Thu Jul 9 — New York City**" followed by 2–4 paragraphs of engaging narrative prose. Make it personal, vivid, and readable — like a real family travel journal, not a bullet list. Capture the energy of each city, the kids' reactions, and little moments. Where activities are transport or logistics (flights, trains, hotel check-in), weave them into the story rather than listing them flatly. Write the full journal from start to finish.`;
+
+        const journal = await callAnthropic(apiKey, prompt, 4096);
+        if (!journal) return json({ error: "No journal returned from AI" }, 502);
+        return json({ journal });
+      }
+
       // ── DAY PLANNER ─────────────────────────────────────────────────────────
       const { city = "unknown city", date = "", activities = [], suggestion = null, currentPlan = null, weather = null, lodging = null } = body;
 

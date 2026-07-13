@@ -466,6 +466,7 @@ function App(){
   const [customTasks,setCustomTasks]=useState({});
   const [todoItems,setTodoItems]=useState({});
   const [feedbackNotes,setFeedbackNotes]=useState([]);
+  const [journalText,setJournalText]=useState("");
   const [checked,setChecked]=useState({});
   const [packChecked,setPackChecked]=useState({});
   const [customPackItems,setCustomPackItems]=useState({Master:{},Chris:{},McKenna:{},Sawyer:{},Pierce:{},Bennett:{}});
@@ -488,6 +489,7 @@ function App(){
   const [lodgingOverrides,setLodgingOverrides]=useState({});
   const [dayPlans,setDayPlans]=useState({});
   // Plan My Day UI state (ephemeral)
+  const [journalStatus,setJournalStatus]=useState("idle");
   const [planStatus,setPlanStatus]=useState({});
   const [editingLodgingDate,setEditingLodgingDate]=useState(null);
   const [lodgingInput,setLodgingInput]=useState("");
@@ -558,13 +560,14 @@ function App(){
   };
 
   // ── Cloud Sync ────────────────────────────────────────────────────────────
-  const getState=()=>({customTasks,todoItems,feedbackNotes,checked,packChecked,customPackItems,bookingChecked,coreTasks,lodgingOverrides,dayPlans});
+  const getState=()=>({customTasks,todoItems,feedbackNotes,journalText,checked,packChecked,customPackItems,bookingChecked,coreTasks,lodgingOverrides,dayPlans});
 
   const applyRemoteData=(data)=>{
     if(!data)return;
     if(data.customTasks)setCustomTasks(data.customTasks);
     if(data.todoItems)setTodoItems(data.todoItems);
     if(data.feedbackNotes)setFeedbackNotes(data.feedbackNotes);
+    if(data.journalText!==undefined)setJournalText(data.journalText);
     if(data.checked)setChecked(data.checked);
     if(data.packChecked)setPackChecked(data.packChecked);
     if(data.customPackItems)setCustomPackItems(data.customPackItems);
@@ -738,6 +741,30 @@ function App(){
   };
   const updatePackItems=fn=>{
     setCustomPackItems(p=>{const n=typeof fn==="function"?fn(p):fn;syncNow({...getState(),customPackItems:n});return n;});
+  };
+
+  const generateJournal=async()=>{
+    const completedDays=ITINERARY.map(day=>{
+      const cust=customTasks[day.date]||[];
+      const items=[
+        ...day.items.map((it,j)=>checked[`trip-${day.date}-${j}`]?it.text:null),
+        ...cust.map((t,j)=>checked[`trip-${day.date}-c${j}`]?t.text:null),
+      ].filter(Boolean);
+      return items.length?{date:day.label,city:day.city,activities:items}:null;
+    }).filter(Boolean);
+    if(!completedDays.length){setJournalStatus("empty");return;}
+    setJournalStatus("loading");
+    try{
+      const r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({action:"generateJournal",completedActivities:completedDays}),
+        signal:AbortSignal.timeout(90000)});
+      const data=await r.json();
+      if(data.journal){
+        setJournalText(data.journal);
+        syncNow({...getState(),journalText:data.journal});
+        setJournalStatus("done");
+      }else{setJournalStatus("error");}
+    }catch{setJournalStatus("error");}
   };
 
   const openAddForm=dateKey=>{setAddingTo(dateKey);setTaskDate(dateKey);setTaskText("");setTaskType("confirm");};
@@ -925,7 +952,7 @@ function App(){
 
           {/* Tabs */}
           <div style={{display:"flex",gap:2}}>
-            {[{id:"today",label:phase==="pretrip"?"Pre-Trip":"Today"},{id:"trip",label:"Trip"},{id:"pack",label:"🎒"},{id:"search",label:"🔍"},{id:"chat",label:"Ask AI"}].map(t=>(
+            {[{id:"today",label:phase==="pretrip"?"Pre-Trip":"Today"},{id:"trip",label:"Trip"},{id:"pack",label:"🎒"},{id:"search",label:"🔍"},{id:"chat",label:"Ask AI"},{id:"journal",label:"📓"}].map(t=>(
               <button key={t.id} onClick={()=>setTab(t.id)} style={{flex:1,padding:"9px 4px",border:"none",cursor:"pointer",background:tab===t.id?"white":"transparent",color:tab===t.id?"#1a3a5c":"rgba(255,255,255,0.75)",fontWeight:tab===t.id?700:500,fontSize:13,borderRadius:"8px 8px 0 0",transition:"all 0.15s"}}>{t.label}</button>
             ))}
           </div>
@@ -1315,6 +1342,55 @@ function App(){
             </div>
           </div>
         )}
+        {/* JOURNAL TAB */}
+        {tab==="journal"&&(()=>{
+          const isPostTrip=today>TRIP_END;
+          return(
+            <div>
+              <div style={{textAlign:"center",marginBottom:20}}>
+                <div style={{fontSize:40,marginBottom:6}}>📓</div>
+                <div style={{fontWeight:800,fontSize:20,color:"#1a3a5c"}}>Trip Journal</div>
+                <div style={{fontSize:13,color:"#888",marginTop:4}}>AI-generated from your completed activities</div>
+              </div>
+              {!isPostTrip&&(
+                <div style={{background:"white",borderRadius:14,padding:"28px 20px",textAlign:"center",boxShadow:"0 1px 4px rgba(0,0,0,0.08)"}}>
+                  <div style={{fontSize:36,marginBottom:12}}>⏳</div>
+                  <div style={{fontWeight:700,fontSize:16,color:"#1a3a5c",marginBottom:8}}>Available after your trip ends</div>
+                  <div style={{fontSize:14,color:"#888",lineHeight:1.5,marginBottom:20}}>Journal generation unlocks after July 24, 2026</div>
+                  <button disabled style={{width:"100%",padding:"13px",background:"#e5e7eb",color:"#9ca3af",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:"not-allowed"}}>Generate Journal</button>
+                </div>
+              )}
+              {isPostTrip&&(
+                <>
+                  {journalStatus==="empty"&&(
+                    <div style={{background:"#fff8e6",borderRadius:14,padding:"20px 16px",textAlign:"center",marginBottom:16,border:"1px solid #fde68a"}}>
+                      <div style={{fontSize:24,marginBottom:8}}>📋</div>
+                      <div style={{fontWeight:700,fontSize:15,color:"#a05e00"}}>No completed activities found</div>
+                      <div style={{fontSize:13,color:"#888",marginTop:4}}>Check off activities on the Trip tab to generate a journal.</div>
+                    </div>
+                  )}
+                  {journalStatus==="error"&&(
+                    <div style={{background:"#fef2f2",borderRadius:12,padding:"12px 16px",marginBottom:12,textAlign:"center",border:"1px solid #fecaca"}}>
+                      <div style={{fontSize:13,color:"#dc2626",fontWeight:600}}>Journal generation failed — try again</div>
+                    </div>
+                  )}
+                  {journalText&&(
+                    <div style={{background:"white",borderRadius:14,padding:"20px 16px",marginBottom:16,boxShadow:"0 1px 4px rgba(0,0,0,0.08)"}}>
+                      <div style={{fontWeight:700,fontSize:11,color:"#4338ca",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.06em"}}>✍️ Your Journal</div>
+                      <div style={{fontSize:14,color:"#222",lineHeight:1.75,whiteSpace:"pre-wrap"}}>{journalText}</div>
+                    </div>
+                  )}
+                  <button onClick={generateJournal} disabled={journalStatus==="loading"}
+                    style={{width:"100%",padding:"14px",background:journalStatus==="loading"?"#9ca3af":"#1a3a5c",color:"white",border:"none",borderRadius:12,fontSize:15,fontWeight:700,cursor:journalStatus==="loading"?"not-allowed":"pointer",marginBottom:8}}>
+                    {journalStatus==="loading"?"✍️ Generating journal…":journalText?"🔄 Regenerate":"✨ Generate Journal"}
+                  </button>
+                  {journalStatus==="loading"&&<div style={{textAlign:"center",fontSize:12,color:"#888"}}>This may take a minute or two…</div>}
+                </>
+              )}
+            </div>
+          );
+        })()}
+
       </div>
 
       {flappyActive&&<FlappyGame onExit={()=>setFlappyActive(false)}/>}
