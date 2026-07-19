@@ -565,6 +565,10 @@ function App(){
   const [tideData,setTideData]=useState({});
   const [sunTideLoading,setSunTideLoading]=useState(true);
 
+  // Beach hazard alerts (ephemeral — fetched once per day, OBX only)
+  const [beachAlerts,setBeachAlerts]=useState(null); // null=not yet fetched, []=no alerts
+  const [beachAlertsDate,setBeachAlertsDate]=useState(null);
+
   // Chat
   const [chatMessages,setChatMessages]=useState([{role:"assistant",text:"Hey! 👋 Ask me anything about the trip — directions, what's booked, activities, food, transit — whatever you need."}]);
   const [chatInput,setChatInput]=useState("");
@@ -675,6 +679,27 @@ function App(){
     fetchSunTide();
     return()=>{cancelled=true;};
   },[]);
+
+  // Fetch NWS beach hazard alerts — OBX only, once per calendar day
+  useEffect(()=>{
+    if(!OBX_DATE_SET.has(today))return;
+    if(beachAlertsDate===today)return;
+    const fetchAlerts=async()=>{
+      try{
+        const r=await fetch("https://api.weather.gov/alerts/active?point=35.9582,-75.6252",{
+          headers:{Accept:"application/geo+json"},signal:AbortSignal.timeout(10000)
+        });
+        if(!r.ok)return;
+        const d=await r.json();
+        const alerts=(d.features||[])
+          .map(f=>({event:f.properties?.event||"Alert",headline:f.properties?.headline||""}))
+          .filter(a=>a.headline);
+        setBeachAlerts(alerts);
+        setBeachAlertsDate(today);
+      }catch(e){console.warn("Beach alerts fetch failed",e);}
+    };
+    fetchAlerts();
+  },[beachAlertsDate]);
 
   // ── State mutators (all sync) ─────────────────────────────────────────────
   const toggleCheck=key=>{setChecked(p=>{const n={...p,[key]:!p[key]};syncNow({...getState(),checked:n});return n;});};
@@ -1108,6 +1133,16 @@ function App(){
                   </div>
                   <button onClick={()=>setDayIdx(Math.min(ITINERARY.length-1,dayIdx+1))} disabled={dayIdx===ITINERARY.length-1} style={{width:36,height:36,borderRadius:10,border:"1px solid #ddd",background:"white",cursor:"pointer",fontSize:18,opacity:dayIdx===ITINERARY.length-1?0.4:1}}>›</button>
                 </div>
+                {OBX_DATE_SET.has(today)&&beachAlerts&&beachAlerts.length>0&&(
+                  <div style={{marginBottom:10,borderRadius:12,overflow:"hidden",border:"1px solid #fbbf24"}}>
+                    {beachAlerts.map((a,i)=>(
+                      <div key={i} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"9px 12px",background:i%2===0?"#fffbeb":"#fef9e7",borderTop:i>0?"1px solid #fde68a":"none"}}>
+                        <span style={{fontSize:14,flexShrink:0,marginTop:1}}>⚠️</span>
+                        <div style={{fontSize:12,color:"#92400e",lineHeight:1.4}}><b>{a.event}:</b> {a.headline}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div style={{background:"white",borderRadius:14,padding:"14px 16px",marginBottom:10,boxShadow:"0 1px 4px rgba(0,0,0,0.08)"}}>
                   <div style={{fontWeight:700,fontSize:18,color:"#1a3a5c"}}>{ITINERARY[dayIdx].title}</div>
                   <div style={{fontSize:13,color:"#666",marginTop:2}}>{ITINERARY[dayIdx].summary}</div>
