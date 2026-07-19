@@ -450,6 +450,45 @@ function PackingTab({packChecked,onTogglePack,customPackItems,setCustomPackItems
   );
 }
 
+// ── OBX SUN/TIDE ─────────────────────────────────────────────────────────────
+const OBX_DATES=["2026-07-18","2026-07-19","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24"];
+const OBX_DATE_SET=new Set(OBX_DATES);
+
+const fmtSunTime=isoStr=>{
+  try{
+    const s=new Date(isoStr).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:"America/New_York",hour12:true});
+    return s.replace(" AM","am").replace(" PM","pm").replace("AM","am").replace("PM","pm");
+  }catch{return"—";}
+};
+const fmtTideTime=t=>{
+  try{const[h,m]=t.split(" ")[1].split(":").map(Number);const ampm=h>=12?"pm":"am";return`${h%12||12}:${String(m).padStart(2,"0")}${ampm}`;}
+  catch{return"—";}
+};
+
+function SunTideInfo({date,sunData,tideData,loading}){
+  const sun=sunData[date];
+  const tide=tideData[date];
+  if(loading&&sun===undefined&&tide===undefined)return(
+    <div style={{marginTop:7,fontSize:11,color:"#94a3b8",background:"#f0f9ff",borderRadius:8,padding:"4px 10px",fontStyle:"italic"}}>🌅 Loading…</div>
+  );
+  if(!sun&&!tide)return(
+    <div style={{marginTop:7,fontSize:11,color:"#94a3b8",background:"#f8fafc",borderRadius:8,padding:"4px 10px",fontStyle:"italic"}}>Tide/sunrise data unavailable</div>
+  );
+  const sunrise=sun?.sunrise?fmtSunTime(sun.sunrise):null;
+  const sunset=sun?.sunset?fmtSunTime(sun.sunset):null;
+  const highs=(tide?.highs||[]).map(fmtTideTime);
+  const lows=(tide?.lows||[]).map(fmtTideTime);
+  return(
+    <div style={{marginTop:7,fontSize:11,color:"#0c4a6e",background:"#e0f2fe",borderRadius:8,padding:"5px 10px",display:"flex",flexWrap:"wrap",gap:"0 8px",alignItems:"center",lineHeight:1.7}}>
+      {sunrise&&<span>🌅 <b>{sunrise}</b></span>}
+      {sunset&&<span>🌇 <b>{sunset}</b></span>}
+      {(highs.length>0||lows.length>0)&&<span style={{color:"#7dd3fc",margin:"0 2px"}}>|</span>}
+      {highs.length>0&&<span>High: <b>{highs.join(", ")}</b></span>}
+      {lows.length>0&&<span>Low: <b>{lows.join(", ")}</b></span>}
+    </div>
+  );
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function App(){
   const phase=getPhase();
@@ -520,6 +559,11 @@ function App(){
   const [movingItem,setMovingItem]=useState(null); // {itemType,date,idx,task}
   const [addingTodoDate,setAddingTodoDate]=useState(null);
   const [todoInputText,setTodoInputText]=useState("");
+
+  // Sun/tide data (ephemeral — fetched on mount)
+  const [sunData,setSunData]=useState({});
+  const [tideData,setTideData]=useState({});
+  const [sunTideLoading,setSunTideLoading]=useState(true);
 
   // Chat
   const [chatMessages,setChatMessages]=useState([{role:"assistant",text:"Hey! 👋 Ask me anything about the trip — directions, what's booked, activities, food, transit — whatever you need."}]);
@@ -611,6 +655,26 @@ function App(){
   useEffect(()=>{pullSync();},[]);
   // Auto-poll every 20s
   useEffect(()=>{const id=setInterval(()=>pullSync(),20000);return()=>clearInterval(id);},[]);
+
+  // Fetch OBX sunrise/sunset + tides on mount
+  useEffect(()=>{
+    let cancelled=false;
+    const fetchSunTide=async()=>{
+      const sunResults={},tideResults={};
+      await Promise.all(OBX_DATES.map(async date=>{
+        const dateCompact=date.replace(/-/g,"");
+        const [sunR,tideR]=await Promise.all([
+          fetch(`https://api.sunrise-sunset.org/json?lat=35.9582&lng=-75.6252&date=${date}&formatted=0`,{signal:AbortSignal.timeout(10000)}).then(r=>r.ok?r.json():null).catch(()=>null),
+          fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&station=8652587&begin_date=${dateCompact}&end_date=${dateCompact}&datum=MLLW&time_zone=lst_ldt&units=english&interval=hilo&format=json`,{signal:AbortSignal.timeout(10000)}).then(r=>r.ok?r.json():null).catch(()=>null),
+        ]);
+        sunResults[date]=sunR?.status==="OK"?{sunrise:sunR.results.sunrise,sunset:sunR.results.sunset}:null;
+        tideResults[date]=tideR?.predictions?{highs:tideR.predictions.filter(p=>p.type==="H").map(p=>p.t),lows:tideR.predictions.filter(p=>p.type==="L").map(p=>p.t)}:null;
+      }));
+      if(!cancelled){setSunData(sunResults);setTideData(tideResults);setSunTideLoading(false);}
+    };
+    fetchSunTide();
+    return()=>{cancelled=true;};
+  },[]);
 
   // ── State mutators (all sync) ─────────────────────────────────────────────
   const toggleCheck=key=>{setChecked(p=>{const n={...p,[key]:!p[key]};syncNow({...getState(),checked:n});return n;});};
@@ -1071,6 +1135,7 @@ function App(){
                     </button>
                   );})()}
                   {ITINERARY[dayIdx].transit&&<div style={{marginTop:6,fontSize:12,color:"#888",background:"#f8f9fa",borderRadius:6,padding:"6px 10px"}}>🚌 {ITINERARY[dayIdx].transit}</div>}
+                  {OBX_DATE_SET.has(ITINERARY[dayIdx].date)&&<SunTideInfo date={ITINERARY[dayIdx].date} sunData={sunData} tideData={tideData} loading={sunTideLoading}/>}
                 </div>
                 {ITINERARY[dayIdx].confirmations?.map((c,i)=>(
                   <div key={i} style={{background:"#e8f4fd",borderRadius:10,padding:"10px 14px",marginBottom:8,border:"1px solid #b3d9f5"}}>
@@ -1222,6 +1287,7 @@ function App(){
                           </button>
                         );})()}
                         {day.transit&&<div style={{fontSize:11,background:"#f0fdf4",color:"#166634",borderRadius:6,padding:"3px 8px",display:"inline-block",marginTop:2}}>🚌 {day.transit}</div>}
+                        {OBX_DATE_SET.has(day.date)&&<SunTideInfo date={day.date} sunData={sunData} tideData={tideData} loading={sunTideLoading}/>}
                       </div>
                       {day.confirmations?.map((c,ci)=>(
                         <div key={ci} style={{background:"#e8f4fd",borderRadius:8,padding:"8px 12px",marginBottom:8,border:"1px solid #b3d9f5"}}>
