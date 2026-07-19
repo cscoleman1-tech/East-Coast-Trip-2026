@@ -868,6 +868,7 @@ function DayDetailView({
   dayPlans,dayPlanStatus,dayPlanError,planDay,dayPlanSuggestion,setDayPlanSuggestion,revertPlan,
   addingTo,setAddingTo,openAddForm,taskText,setTaskText,taskType,setTaskType,handleAddTask,
   removeTask,editTask,deleteItem,editBuiltinItem,
+  sunData,tideData,sunTideLoading,
 }){
   const todos=todoItems[day.date]||[];
   return(
@@ -879,8 +880,10 @@ function DayDetailView({
             <WeatherChip date={day.date} coords={DAY_COORDS[day.date]}/>
           </div>
           <div style={{fontSize:13,color:"#64748b",marginTop:4,lineHeight:1.5}}>{day.summary}</div>
+          {OBX_DATE_SET.has(day.date)&&<SunTideInfo date={day.date} sunData={sunData||{}} tideData={tideData||{}} loading={sunTideLoading??true}/>}
         </div>
       )}
+      {!showHeader&&OBX_DATE_SET.has(day.date)&&<SunTideInfo date={day.date} sunData={sunData||{}} tideData={tideData||{}} loading={sunTideLoading??true}/>}
       <div style={{marginTop:showHeader?0:4}}>
         <TravelCard dayDate={day.date} travelItems={travelItems} onAdd={addTravelItem} onEdit={editTravelItem} onDelete={removeTravelItem}/>
       </div>
@@ -2403,6 +2406,43 @@ function GuidedTour({onClose}){
   );
 }
 
+// ── OBX SUN / TIDE ────────────────────────────────────────────────────────────
+const OBX_DATES=["2026-07-18","2026-07-19","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24"];
+const OBX_DATE_SET=new Set(OBX_DATES);
+
+const fmtSunTime=isoStr=>{
+  try{const s=new Date(isoStr).toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:"America/New_York",hour12:true});return s.replace(" AM","am").replace(" PM","pm").replace("AM","am").replace("PM","pm");}
+  catch{return"—";}
+};
+const fmtTideTime=t=>{
+  try{const[h,m]=t.split(" ")[1].split(":").map(Number);const ampm=h>=12?"pm":"am";return`${h%12||12}:${String(m).padStart(2,"0")}${ampm}`;}
+  catch{return"—";}
+};
+
+function SunTideInfo({date,sunData,tideData,loading}){
+  const sun=sunData[date];
+  const tide=tideData[date];
+  if(loading&&sun===undefined&&tide===undefined)return(
+    <div style={{marginTop:8,fontSize:11,color:"#94a3b8",background:"#f0f9ff",borderRadius:8,padding:"4px 10px",fontStyle:"italic"}}>🌅 Loading sunrise & tides…</div>
+  );
+  if(!sun&&!tide)return(
+    <div style={{marginTop:8,fontSize:11,color:"#94a3b8",background:"#f8fafc",borderRadius:8,padding:"4px 10px",fontStyle:"italic"}}>Tide/sunrise data unavailable</div>
+  );
+  const sunrise=sun?.sunrise?fmtSunTime(sun.sunrise):null;
+  const sunset=sun?.sunset?fmtSunTime(sun.sunset):null;
+  const highs=(tide?.highs||[]).map(fmtTideTime);
+  const lows=(tide?.lows||[]).map(fmtTideTime);
+  return(
+    <div style={{marginTop:8,fontSize:11,color:"#0c4a6e",background:"#e0f2fe",borderRadius:8,padding:"5px 10px",display:"flex",flexWrap:"wrap",gap:"0 8px",alignItems:"center",lineHeight:1.7}}>
+      {sunrise&&<span>🌅 <b>{sunrise}</b></span>}
+      {sunset&&<span>🌇 <b>{sunset}</b></span>}
+      {(highs.length>0||lows.length>0)&&<span style={{color:"#7dd3fc",margin:"0 2px"}}>|</span>}
+      {highs.length>0&&<span>High: <b>{highs.join(", ")}</b></span>}
+      {lows.length>0&&<span>Low: <b>{lows.join(", ")}</b></span>}
+    </div>
+  );
+}
+
 // ── MAIN APP ──────────────────────────────────────────────────────────────────
 function App(){
   const phase=getPhase();
@@ -2442,6 +2482,9 @@ function App(){
   const [openSections,setOpenSections]=useState({});
   const [addingTodoDate,setAddingTodoDate]=useState(null);
   const [todoInputText,setTodoInputText]=useState("");
+  const [sunData,setSunData]=useState({});
+  const [tideData,setTideData]=useState({});
+  const [sunTideLoading,setSunTideLoading]=useState(true);
   const [fitWarnings,setFitWarnings]=useState({});
   const [fitWeatherTips,setFitWeatherTips]=useState({});
   const [fitStatus,setFitStatus]=useState({});
@@ -2520,6 +2563,26 @@ function App(){
   };
   useEffect(()=>{pullSync();},[]);
   useEffect(()=>{const id=setInterval(pullSync,10000);return()=>clearInterval(id);},[]);
+
+  // Fetch OBX sunrise/sunset + tides on mount
+  useEffect(()=>{
+    let cancelled=false;
+    const fetchSunTide=async()=>{
+      const sunResults={},tideResults={};
+      await Promise.all(OBX_DATES.map(async date=>{
+        const dc=date.replace(/-/g,"");
+        const [sunR,tideR]=await Promise.all([
+          fetch(`https://api.sunrise-sunset.org/json?lat=35.9582&lng=-75.6252&date=${date}&formatted=0`,{signal:AbortSignal.timeout(10000)}).then(r=>r.ok?r.json():null).catch(()=>null),
+          fetch(`https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&station=8652587&begin_date=${dc}&end_date=${dc}&datum=MLLW&time_zone=lst_ldt&units=english&interval=hilo&format=json`,{signal:AbortSignal.timeout(10000)}).then(r=>r.ok?r.json():null).catch(()=>null),
+        ]);
+        sunResults[date]=sunR?.status==="OK"?{sunrise:sunR.results.sunrise,sunset:sunR.results.sunset}:null;
+        tideResults[date]=tideR?.predictions?{highs:tideR.predictions.filter(p=>p.type==="H").map(p=>p.t),lows:tideR.predictions.filter(p=>p.type==="L").map(p=>p.t)}:null;
+      }));
+      if(!cancelled){setSunData(sunResults);setTideData(tideResults);setSunTideLoading(false);}
+    };
+    fetchSunTide();
+    return()=>{cancelled=true;};
+  },[]);
   useEffect(()=>{try{if(!localStorage.getItem(TOUR_KEY))setTimeout(()=>setShowTour(true),900);}catch{}},[]);
 
   const toggleCheck=key=>{setChecked(p=>{const n={...p,[key]:!p[key]};debouncedSync({...getState(),checked:n});return n;});};
@@ -2812,6 +2875,7 @@ function App(){
                     travelItems={travelItems} addTravelItem={addTravelItem} editTravelItem={editTravelItem} removeTravelItem={removeTravelItem}
                     homeCare={homeCare} addHomeCareEntry={addHomeCareEntry} editHomeCareEntry={editHomeCareEntry} removeHomeCareEntry={removeHomeCareEntry}
                     fitWarnings={fitWarnings} fitWeatherTips={fitWeatherTips} fitStatus={fitStatus} runCheckFit={runCheckFit}
+                    sunData={sunData} tideData={tideData} sunTideLoading={sunTideLoading}
                     dayPlans={dayPlans} dayPlanStatus={dayPlanStatus} dayPlanError={dayPlanError} planDay={planDay}
                     dayPlanSuggestion={dayPlanSuggestion} setDayPlanSuggestion={setDayPlanSuggestion} revertPlan={revertPlan}
                     addingTo={addingTo} setAddingTo={setAddingTo} openAddForm={openAddForm}
@@ -2890,6 +2954,7 @@ function App(){
                         addingTo={addingTo} setAddingTo={setAddingTo} openAddForm={openAddForm}
                         taskText={taskText} setTaskText={setTaskText} taskType={taskType} setTaskType={setTaskType} handleAddTask={handleAddTask}
                         removeTask={removeTask} editTask={editTask} deleteItem={deleteItem} editBuiltinItem={editBuiltinItem}
+                        sunData={sunData} tideData={tideData} sunTideLoading={sunTideLoading}
                       />
                     </div>
                   )}
